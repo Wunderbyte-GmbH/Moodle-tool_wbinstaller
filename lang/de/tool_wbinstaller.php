@@ -15,31 +15,14 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin administration pages are defined here.
+ * Plugin strings are defined here.
  *
  * @package     tool_wbinstaller
- * @category    admin
+ * @category    string
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-if ($hassiteconfig) {
-    $settings = new admin_settingpage('tool_wbinstaller_settings', new lang_string('pluginname', 'tool_wbinstaller'));
-    $componentname = 'tool_wbinstaller';
-
-    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
-    if ($ADMIN->fulltree) {
-        // TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
-
-    }
-
-    $ADMIN->add(
-        'development',
-        new admin_externalpage(
-            'tool_wbinstaller', get_string('pluginname', 'tool_wbinstaller'),
-            new moodle_url('/admin/tool/wbinstaller/index.php')
-        )
-    );
-}
+$string['pluginname'] = 'Wunderbyte Installer';
