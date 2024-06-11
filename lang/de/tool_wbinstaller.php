@@ -26,3 +26,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Wunderbyte Installer';
+$string['installfromzip'] = 'Install from zip file';
+$string['installplugins'] = 'Install plugins';
+$string['filedownloadfailed'] = 'filedownloadfailed';
