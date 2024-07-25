@@ -76,9 +76,10 @@ class pluginsInstaller extends wbInstaller {
      * @return array
      */
     public function download_install_plugins() {
-        global $CFG;
+        global $CFG, $DB;
         require_once($CFG->libdir . '/filelib.php');
         require_once($CFG->libdir . '/upgradelib.php');
+        require_once($CFG->dirroot . '/cache/lib.php');
 
         $installer = tool_installaddon_installer::instance();
         $feedback = [];
@@ -102,6 +103,17 @@ class pluginsInstaller extends wbInstaller {
         if (!empty($installable)) {
             // Perform the upgrade installation process.
             upgrade_noncore($installable, true, get_string('installfromzip', 'tool_wbinstaller'));
+            // Clear all caches to ensure Moodle recognizes the new plugins.
+            purge_all_caches();
+
+            // Verify that the plugins have been installed.
+            foreach ($installable as $plugin) {
+                if ($DB->record_exists('config_plugins', ['plugin' => $plugin->component])) {
+                    $feedback[$plugin->component] = get_string('installed', 'tool_wbinstaller');
+                } else {
+                    $feedback[$plugin->component] = get_string('installfailed', 'tool_wbinstaller');
+                }
+            }
             $feedback['status'] = 'success';
         } else {
             $feedback['status'] = 'no_installable_files';

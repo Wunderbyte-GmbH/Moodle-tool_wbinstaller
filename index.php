@@ -26,8 +26,9 @@ require(__DIR__.'/../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->libdir.'/moodlelib.php');
 
-admin_externalpage_setup('tool_wbinstaller');
+global $USER;
 
+admin_externalpage_setup('tool_wbinstaller');
 $pluginman = core_plugin_manager::instance();
 $installer = tool_installaddon_installer::instance();
 
@@ -50,11 +51,9 @@ if ($installzipconfirm) {
 
     $PAGE->set_pagelayout('maintenance');
     $PAGE->set_popup_notification_allowed(false);
-    
 
     // List of plugin ZIP file URLs.
     $zipurls = [
-        'https://moodle.org/plugins/download.php/32308/block_timezoneclock_moodle44_2023010907.zip',
         'https://moodle.org/plugins/download.php/32309/tool_clearbackupfiles_moodle44_2024060900.zip',
         'https://moodle.org/plugins/download.php/32294/local_chunkupload_moodle44_2024060400.zip',
         // Add more URLs as needed.
@@ -86,8 +85,13 @@ if ($installzipconfirm) {
         echo $OUTPUT->notification(get_string('nozipfilesfound', 'tool_wbinstaller'), 'notifyproblem');
     }
 }
+$context = context_system::instance();
 
 echo $OUTPUT->header();
+echo $OUTPUT->render_from_template('tool_wbinstaller/initview', [
+  'userid' => $USER->id,
+  'contextid' => $context->id,
+]);
 echo 'hello';
 
 // Show the Install button.
