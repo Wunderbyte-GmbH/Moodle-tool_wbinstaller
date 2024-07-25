@@ -29,3 +29,6 @@ $string['pluginname'] = 'Wunderbyte Installer';
 $string['installfromzip'] = 'Install from zip file';
 $string['installplugins'] = 'Install plugins';
 $string['filedownloadfailed'] = 'filedownloadfailed';
+
+// Capabilities.
+$string['wbinstaller:caninstall'] = 'Darf Rezepte installieren.';

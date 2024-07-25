@@ -27,6 +27,50 @@
  * Custom code to be run on installing the plugin.
  */
 function xmldb_tool_wbinstaller_install() {
+    global $DB;
 
+    $role = $DB->get_record('role', ['shortname' => 'installmanager']);
+    if (empty($role->id)) {
+        $sql = "SELECT MAX(sortorder)+1 AS id FROM {role}";
+        $max = $DB->get_record_sql($sql, []);
+
+        $role = (object) [
+            'name' => 'Install Manager',
+            'shortname' => 'installmanager',
+            'description' => get_string('wbinstallerroledescription', 'tool_wbinstaller'),
+            'sortorder' => $max->id,
+            'archetype' => '',
+        ];
+        $role->id = $DB->insert_record('role', $role);
+    }
+
+    // Ensure, that this role is assigned in the required context levels.
+    $chk = $DB->get_record('role_context_levels', ['roleid' => $role->id, 'contextlevel' => CONTEXT_SYSTEM]);
+    if (empty($chk->id)) {
+        $DB->insert_record('role_context_levels', ['roleid' => $role->id, 'contextlevel' => CONTEXT_SYSTEM]);
+    }
+    // Ensure, that this role has the required capabilities.
+    $ctx = \context_system::instance();
+    $caps = [
+        'tool/wbinstaller:caninstall',
+    ];
+    foreach ($caps as $cap) {
+        $chk = $DB->get_record('role_capabilities', [
+                'contextid' => $ctx->id,
+                'roleid' => $role->id,
+                'capability' => $cap,
+                'permission' => 1,
+            ]);
+        if (empty($chk->id)) {
+            $DB->insert_record('role_capabilities', [
+                'contextid' => $ctx->id,
+                'roleid' => $role->id,
+                'capability' => $cap,
+                'permission' => 1,
+                'timemodified' => time(),
+                'modifierid' => 2,
+            ]);
+        }
+    }
     return true;
 }

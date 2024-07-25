@@ -15,21 +15,23 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin strings are defined here.
+ * Plugin capabilities are defined here.
  *
- * @package     tool_wbinstaller
- * @category    string
- * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     tool_installer
+ * @author      Jacob Viertel
+ * @copyright  2023 Wunderbyte GmbH
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Wunderbyte Installer';
-$string['installfromzip'] = 'Install from zip file';
-$string['installplugins'] = 'Install plugins';
-$string['filedownloadfailed'] = 'filedownloadfailed';
-
-// Capabilities.
-$string['wbinstaller:caninstall'] = 'Is allowed to install recipes.';
-$string['wbinstallerroledescription'] = 'Users with this role are able to export and install recipes.';
+$capabilities = [
+        'tool/wbinstaller:caninstall' => [
+            'captype' => 'write',
+            'contextlevel' => CONTEXT_SYSTEM,
+            'archetypes' => [
+                'manager' => CAP_ALLOW,
+                'teacher' => CAP_ALLOW,
+            ],
+        ],
+    ];
