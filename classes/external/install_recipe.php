@@ -78,18 +78,11 @@ class install_recipe extends external_api {
         $file,
         $filename
     ): array {
-        $params = self::validate_parameters(self::execute_parameters(), [
-            'userid' => $userid,
-            'contextid' => $contextid,
-            'file' => $file,
-            'filename' => $filename,
-        ]);
-
         require_login();
 
-        $context = context::instance_by_id($params['contextid']);
+        $context = context::instance_by_id($contextid);
         require_capability('tool/wbinstaller:caninstall', $context);
-        $wbinstaller = new wbInstaller($params['file'], $params['filename']);
+        $wbinstaller = new wbInstaller($file, $filename);
         return ['result' => $wbinstaller->execute()];
     }
 

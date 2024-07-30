@@ -26,6 +26,8 @@ namespace tool_wbinstaller;
 
 use moodle_url;
 use context_system;
+use core\session\manager;
+use core_plugin_manager;
 use tool_installaddon_installer;
 
 /**
@@ -61,14 +63,23 @@ class pluginsInstaller extends wbInstaller {
         $PAGE->set_url(new moodle_url('/admin/tool/wbinstaller/index.php'));
 
         // Enable maintenance mode before starting the upgrade process.
-        \core\session\manager::write_close();
-        set_config('maintenance_enabled', 1);
+        manager::write_close();
+        //set_config('maintenance_enabled', 1);
 
-        $result = $this->download_install_plugins();
+        //$result = $this->download_install_plugins();
+        $result = $this->download_install_plugins_testing();
         // Disable maintenance mode after the upgrade process is complete
-        set_config('maintenance_enabled', 0);
+        //set_config('maintenance_enabled', 0);
 
         return $result;
+    }
+
+    /**
+     * Exceute the installer.
+     * @return array
+     */
+    public function download_install_plugins_testing() {
+        return 1;
     }
 
     /**
@@ -90,11 +101,15 @@ class pluginsInstaller extends wbInstaller {
             $zipfile = $tempdir . '/' . basename($url);
             if (download_file_content($url, null, null, true, 300, 20, true, $zipfile)) {
                 $component = $installer->detect_plugin_component($zipfile);
-                $feedback[$url] = $component;
-                $installable[] = (object)[
-                    'component' => $component, // Will be detected during the installation process.
-                    'zipfilepath' => $zipfile,
-                ];
+                if ($component) {
+                    $feedback[$url] = $component;
+                    $installable[] = (object)[
+                        'component' => $component,
+                        'zipfilepath' => $zipfile,
+                    ];
+                } else {
+                    $feedback[$url] = get_string('componentdetectfailed', 'tool_wbinstaller', $url);
+                }
             } else {
                 $feedback[$url] = get_string('filedownloadfailed', 'tool_wbinstaller', $url);
             }
@@ -102,7 +117,9 @@ class pluginsInstaller extends wbInstaller {
         }
         if (!empty($installable)) {
             // Perform the upgrade installation process.
-            upgrade_noncore($installable, true, get_string('installfromzip', 'tool_wbinstaller'));
+            upgrade_install_plugins($installable, true, get_string('installfromzip', 'tool_wbinstaller'),
+                new moodle_url('/admin/tool/wbinstaller/index.php', array('installzipconfirm' => 1))
+            );
             // Clear all caches to ensure Moodle recognizes the new plugins.
             purge_all_caches();
 

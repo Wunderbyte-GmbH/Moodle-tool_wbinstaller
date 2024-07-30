@@ -33,3 +33,5 @@ $string['filedownloadfailed'] = 'filedownloadfailed';
 // Capabilities.
 $string['wbinstaller:caninstall'] = 'Is allowed to install recipes.';
 $string['wbinstallerroledescription'] = 'Users with this role are able to export and install recipes.';
+$string['componentdetectfailed'] = 'Users with this role are able to export and install recipes.';
+$string['installfailed'] = 'Users with this role are able to export and install recipes.';

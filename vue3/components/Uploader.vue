@@ -42,6 +42,18 @@
             <li class="list-group-item" v-for="course in courseList" :key="course">{{ course }}</li>
           </ul>
         </div>
+        <div v-if="simulationList.length" class="mt-4">
+          <h3>Simulations in the ZIP:</h3>
+          <ul class="list-group">
+            <li class="list-group-item" v-for="simulation in simulationList" :key="simulation">{{ simulation }}</li>
+          </ul>
+        </div>
+        <div v-if="questionList.length" class="mt-4">
+          <h3>Questions in the ZIP:</h3>
+          <ul class="list-group">
+            <li class="list-group-item" v-for="question in questionList" :key="question">{{ question }}</li>
+          </ul>
+        </div>
         <button
           class="btn btn-primary mt-4"
           @click="installRecipe"
@@ -51,14 +63,12 @@
         </button>
       </div>
     </transition>
-
     <div v-if="isInstalling" class="mt-4">
       <h3>Total Progress:</h3>
       <progress :value="totalProgress" max="100"></progress>
       <h3>Current Task Progress:</h3>
       <progress :value="taskProgress" max="100"></progress>
     </div>
-
   </div>
 </template>
 
@@ -71,6 +81,8 @@ import { useStore } from 'vuex';
 const store = useStore();
 const linkList = ref([]);
 const courseList = ref([]);
+const simulationList = ref([]);
+const questionList = ref([]);
 let uploadedFile = null;
 let uploadedFileName = '';
 
@@ -89,9 +101,10 @@ const installRecipe = async () => {
     startProgressPolling();
 
     try {
+      const base64File = await convertFileToBase64(uploadedFile);
       await store.dispatch('installRecipe',
         {
-          uploadedFile: uploadedFile,
+          uploadedFile: base64File,
           filename: uploadedFileName
         }
       );
@@ -108,8 +121,17 @@ const installRecipe = async () => {
   }
 };
 
+const convertFileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
 const startProgressPolling = () => {
-  progressInterval = setInterval(getProgress, 1000);
+  //progressInterval = setInterval(getProgress, 1000);
 };
 
 const stopProgressPolling = () => {
@@ -138,20 +160,35 @@ const getProgress = async () => {
 const handleFileUpload = async (event) => {
   uploadedFile = event.target.files[0];
   if (uploadedFile && uploadedFile.name.endsWith('.zip')) {
+    uploadedFileName = uploadedFile.name;
     try {
       const zip = new JSZip();
       const content = await zip.loadAsync(uploadedFile);
-      const jsonFile = content.file("plugins_courses.json");
-      if (jsonFile) {
-        const jsonData = await jsonFile.async("text");
-        uploadedFileName = uploadedFile.name
-        uploadedFile = jsonData
-        const data = JSON.parse(jsonData);
-        linkList.value = data.plugins || [];
-        courseList.value = data.courses || [];
-      } else {
-        alert("The ZIP file does not contain plugins_courses.json.");
+      const rootFolder = Object.keys(content.files).filter(file => content.files[file].dir)[0];
+
+      const pluginJsonFile = content.file(`${rootFolder}plugins.json`);
+      if (pluginJsonFile) {
+        const pluginJsonData = await pluginJsonFile.async("text");
+        const pluginData = JSON.parse(pluginJsonData);
+        linkList.value = pluginData.links || [];
       }
+
+      // Extract first level course files with .mbz extension
+      const courseFolders = Object.keys(content.files)
+        .filter(fileName => fileName.startsWith(`${rootFolder}courses/`) && content.files[fileName].dir && fileName.endsWith('.mbz/'))
+        .map(fileName => fileName.replace(`${rootFolder}courses/`, ''));
+      courseList.value = courseFolders;
+
+      const simulationFiles = Object.keys(content.files)
+        .filter(fileName => fileName.startsWith(`${rootFolder}simulations/`) && fileName.endsWith('.csv'))
+        .map(fileName => fileName.replace(`${rootFolder}simulations/`, ''));
+      simulationList.value = simulationFiles;
+
+      const questionFiles = Object.keys(content.files)
+        .filter(fileName => fileName.startsWith(`${rootFolder}questions/`) && fileName.endsWith('.xml'))
+        .map(fileName => fileName.replace(`${rootFolder}questions/`, ''));
+        questionList.value = questionFiles;
+
     } catch (error) {
       console.error('Error reading ZIP file:', error);
     }

@@ -27,6 +27,7 @@ namespace tool_wbinstaller;
 
 use moodle_exception;
 use stdClass;
+use ZipArchive;
 
 /**
  * Class tool_wbinstaller
@@ -66,19 +67,82 @@ class wbInstaller {
      */
     public function execute() {
         $notfoundinstaller = [];
-        $filecontent = json_decode($this->recipe);
-        $this->save_install_progress();
-        foreach ($filecontent as $installer => $content) {
-            $installerclass = __NAMESPACE__ . '\\' . $installer . 'Installer';
-            if (class_exists($installerclass)) {
-                $instance = new $installerclass($content, $this->dbid);
-                $instance->execute($content);
-            } else {
-                $notfoundinstaller[] = $installer;
-            }
-            $this->update_install_progress('progress');
+        $extracterrors = $this->extract_save_zip_file();
+        if ($extracterrors) {
+            return $extracterrors;
         }
+        $this->save_install_progress();
+        $extractpath = __DIR__ . '/zip/extracted/' . str_replace('.zip', '', $this->filename);
+        $files = scandir($extractpath);
+        foreach ($files as $file) {
+            if ($file[0] !== '.') {
+                $parts = explode('.', $file);
+                $installerclass = __NAMESPACE__ . '\\' . $parts[0] . 'Installer';
+                if (class_exists($installerclass)) {
+                    $instance = new $installerclass(
+                      $extractpath . '/' . $parts[0],
+                      $this->dbid
+                    );
+                    $instance->execute();
+                } else {
+                    $notfoundinstaller[] = $parts[0];
+                }
+                $this->update_install_progress('progress');
+            }
+        }
+
         return 1;
+    }
+
+    /**
+     * Extract and save the zipped file.
+     * @return array
+     *
+     */
+    public function extract_save_zip_file() {
+        $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
+        $filecontent = base64_decode($base64string);
+
+        // Check if the decoded content is valid.
+        if ($filecontent === false || empty($filecontent)) {
+            return "Failed to decode base64 content or the content is empty.";
+        }
+        // Define the path within the plugin's directory.
+        $pluginpath = __DIR__ . '/zip/';
+        $zipfilepath = $pluginpath . $this->filename;
+
+        // Ensure the plugin directory exists.
+        if (!is_dir($pluginpath)) {
+            mkdir($pluginpath, 0777, true);
+        }
+
+        // Save the decoded data to a file within the plugin directory.
+        if (file_put_contents($zipfilepath, $filecontent) === false) {
+            return "Failed to write the ZIP file to the plugin directory.";
+        }
+        // Verify the file path and permissions.
+        if (!file_exists($zipfilepath)) {
+            return "The file does not exist: $zipfilepath";
+        }
+
+        if (!is_readable($zipfilepath)) {
+            return "The file is not readable: $zipfilepath";
+        }
+
+        // Initialize the ZipArchive class.
+        $zip = new ZipArchive;
+        if ($zip->open($zipfilepath) === true) {
+            $extractpath = $pluginpath . 'extracted/';
+
+            if (!is_dir($extractpath)) {
+                mkdir($extractpath, 0777, true);
+            }
+            $zip->extractTo($extractpath);
+            $zip->close();
+        } else {
+            return "Failed to open the ZIP file.";
+        }
+        return false;
     }
 
     /**
