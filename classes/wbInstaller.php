@@ -39,9 +39,13 @@ use ZipArchive;
  */
 class wbInstaller {
 
+    /** @var int ID of the install status db entry. */
     public $dbid;
+    /** @var string Content of the recipe. */
     public $recipe;
+    /** @var string Filename of the recipe. */
     public $filename;
+    /** @var int Install progress. */
     public $progress;
     /**
      * Entities constructor.

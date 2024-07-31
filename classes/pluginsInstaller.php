@@ -41,6 +41,8 @@ use tool_installaddon_installer;
 class pluginsInstaller extends wbInstaller {
     /**
      * Entities constructor.
+     * @param string $recipe
+     * @param int $dbid
      */
     public function __construct($recipe, $dbid) {
         $this->dbid = $dbid;
@@ -64,12 +66,8 @@ class pluginsInstaller extends wbInstaller {
 
         // Enable maintenance mode before starting the upgrade process.
         manager::write_close();
-        //set_config('maintenance_enabled', 1);
 
-        //$result = $this->download_install_plugins();
         $result = $this->download_install_plugins_testing();
-        // Disable maintenance mode after the upgrade process is complete
-        //set_config('maintenance_enabled', 0);
 
         return $result;
     }
@@ -118,7 +116,7 @@ class pluginsInstaller extends wbInstaller {
         if (!empty($installable)) {
             // Perform the upgrade installation process.
             upgrade_install_plugins($installable, true, get_string('installfromzip', 'tool_wbinstaller'),
-                new moodle_url('/admin/tool/wbinstaller/index.php', array('installzipconfirm' => 1))
+                new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1, ])
             );
             // Clear all caches to ensure Moodle recognizes the new plugins.
             purge_all_caches();

@@ -17,7 +17,7 @@
 /**
  * adele plugin external functions and service definitions.
  *
- * @package     tool_installer
+ * @package     tool_wbinstaller
  * @author      Jacob Viertel
  * @copyright  2023 Wunderbyte GmbH
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

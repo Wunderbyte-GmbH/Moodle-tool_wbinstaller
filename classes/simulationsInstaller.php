@@ -36,6 +36,8 @@ namespace tool_wbinstaller;
 class simulationsInstaller extends wbInstaller {
     /**
      * Entities constructor.
+     * @param string $recipe
+     * @param int $dbid
      */
     public function __construct($recipe, $dbid) {
         $this->dbid = $dbid;

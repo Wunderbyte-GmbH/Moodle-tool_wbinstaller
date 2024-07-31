@@ -36,6 +36,8 @@ namespace tool_wbinstaller;
 class coursesInstaller extends wbInstaller {
     /**
      * Entities constructor.
+     * @param string $recipe
+     * @param int $dbid
      */
     public function __construct($recipe, $dbid) {
         $this->dbid = $dbid;
@@ -45,7 +47,7 @@ class coursesInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $file
-     * @return array
+     * @return int
      */
     public function execute() {
         foreach ($this->recipe as $githublink) {
