@@ -59,7 +59,7 @@ export function createAppStore() {
                     const request = {
                         methodname: 'core_get_component_strings',
                         args: {
-                            'component': 'tool_installer',
+                            'component': 'tool_wbinstaller',
                             lang,
                         },
                     };

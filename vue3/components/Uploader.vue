@@ -24,12 +24,13 @@
 
  <template>
   <div class="container mt-4">
+    <notifications width="100%"/>
     <div class="form-group">
       <label for="zipFileUpload">Choose Recipe File</label>
       <input type="file" class="form-control-file" id="zipFileUpload" @change="handleFileUpload" accept=".zip" />
     </div>
     <transition name="fade" mode="out-in">
-      <div v-if="linkList.length || courseList.length" class="mt-4">
+      <div v-if="uploadedFileName" class="mt-4">
         <div v-if="linkList.length">
           <h3>Links in the ZIP:</h3>
           <ul class="list-group">
@@ -76,6 +77,7 @@
 import { ref, onUnmounted } from 'vue';
 import JSZip from 'jszip';
 import { useStore } from 'vuex';
+import { notify } from "@kyvg/vue3-notification"
 
 // Reactive state for the list of links and courses
 const store = useStore();
@@ -83,8 +85,9 @@ const linkList = ref([]);
 const courseList = ref([]);
 const simulationList = ref([]);
 const questionList = ref([]);
+const errors = ref([]);
 let uploadedFile = null;
-let uploadedFileName = '';
+let uploadedFileName = ref('');
 
 const isInstalling = ref(false);
 const totalProgress = ref(0);
@@ -96,28 +99,40 @@ const installRecipe = async () => {
     isInstalling.value = true;
     totalProgress.value = 0;
     taskProgress.value = 0;
-
-    // Start polling for progress
     startProgressPolling();
-
     try {
       const base64File = await convertFileToBase64(uploadedFile);
-      await store.dispatch('installRecipe',
+      errors.value = await store.dispatch('installRecipe',
         {
           uploadedFile: base64File,
-          filename: uploadedFileName
+          filename: uploadedFileName.value
         }
       );
-      alert('Recipe installed successfully!');
+      if (errors.value.errors.every(error => error === '')) {
+        notify({
+          title: store.state.strings.success,
+          text: store.state.strings.success_description,
+          type: 'success'
+        });
+      } else {
+        notify({
+          title: store.state.strings.warning,
+          text: store.state.strings.warning_description,
+          type: 'warn'
+        });
+      }
     } catch (error) {
-      console.error('Error installing recipe:', error);
-      //alert('Failed to install the recipe.');
+      notify({
+        title: store.state.strings.error,
+        text: store.state.strings.error_description,
+        type: 'error'
+      });
     }  finally {
+      uploadedFile.value = null
+      uploadedFileName.value = ''
       stopProgressPolling()
       isInstalling.value = false
     }
-  } else {
-    alert('No file uploaded.');
   }
 };
 
@@ -131,7 +146,7 @@ const convertFileToBase64 = (file) => {
 };
 
 const startProgressPolling = () => {
-  //progressInterval = setInterval(getProgress, 1000);
+  //progressInterval = setInterval(getProgress, 100);
 };
 
 const stopProgressPolling = () => {
@@ -143,14 +158,11 @@ const stopProgressPolling = () => {
 
 const getProgress = async () => {
   try {
-    console.log('insindiensinsrfn')
     const response = await store.dispatch('getInstallProgress', {
-      filename: uploadedFileName
+      filename: uploadedFileName.value
     });
     totalProgress.value = response.progress * 10
     taskProgress.value = response.subprogress * 10
-    console.log('ENDJFIBJABDIHBDIDBIHJBIUB')
-
   } catch (error) {
     console.error('Error fetching progress:', error);
   }
@@ -160,7 +172,7 @@ const getProgress = async () => {
 const handleFileUpload = async (event) => {
   uploadedFile = event.target.files[0];
   if (uploadedFile && uploadedFile.name.endsWith('.zip')) {
-    uploadedFileName = uploadedFile.name;
+    uploadedFileName.value = uploadedFile.name;
     try {
       const zip = new JSZip();
       const content = await zip.loadAsync(uploadedFile);
@@ -193,10 +205,9 @@ const handleFileUpload = async (event) => {
       console.error('Error reading ZIP file:', error);
     }
   } else {
-    alert('Please upload a valid ZIP file.');
+    uploadedFileName.value = '';
   }
 };
-
 onUnmounted(() => {
   stopProgressPolling();
 });

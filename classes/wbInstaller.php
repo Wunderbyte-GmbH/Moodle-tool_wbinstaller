@@ -47,6 +47,9 @@ class wbInstaller {
     public $filename;
     /** @var int Install progress. */
     public $progress;
+    /** @var array Install errors. */
+    public $errors;
+
 
     /**
      * Entities constructor.
@@ -57,6 +60,7 @@ class wbInstaller {
         $this->filename = $filename;
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->errors = [];
     }
 
     /**
@@ -76,7 +80,8 @@ class wbInstaller {
         $notfoundinstaller = [];
         $extracterrors = $this->extract_save_zip_file();
         if ($extracterrors) {
-            return $extracterrors;
+            $this->errors['wbinstaller'] = $extracterrors;
+            return $this->errors;
         }
         $this->save_install_progress();
         $extractpath = __DIR__ . '/zip/extracted/' . str_replace('.zip', '', $this->filename);
@@ -91,14 +96,38 @@ class wbInstaller {
                       $this->dbid
                     );
                     $instance->execute();
+                    $this->errors[$parts[0]] = $instance->get_errors() ? implode(',', $instance->get_errors()) : '';
                 } else {
                     $notfoundinstaller[] = $parts[0];
                 }
                 $this->update_install_progress('progress');
             }
         }
+        $this->clean_after_installment();
+        $this->update_install_progress('progress', 1);
+        return $this->errors;
+    }
 
-        return 1;
+    /**
+     * Extract and save the zipped file.
+     * @return int
+     *
+     */
+    public function clean_after_installment() {
+        $pluginpath = __DIR__ . '/zip/';
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($pluginpath, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($items as $item) {
+            $path = $item->getRealPath();
+            if ($item->isDir()) {
+                rmdir($path);
+            } else {
+                unlink($path);
+            }
+        }
+        return rmdir($pluginpath);
     }
 
     /**
@@ -176,14 +205,18 @@ class wbInstaller {
      * Get all tests.
      *
      * @param string $progresstype
+     * @param bool|null $finished Optional parameter.
      * @return int
      */
-    public function update_install_progress($progresstype) {
+    public function update_install_progress($progresstype, $status = 0) {
         global $DB;
-        $this->add_step();
+        if (!$status) {
+            $this->add_step();
+        }
         if ($record = $DB->get_record('tool_wbinstaller_install', ['id' => $this->dbid])) {
             $record->$progresstype = $this->progress;
             $record->timemodified = time();
+            $record->status = $status;
             $DB->update_record('tool_wbinstaller_install', $record);
         } else {
             throw new moodle_exception('recordnotfound', 'tool_wbinstaller', '', $this->dbid);
@@ -207,6 +240,14 @@ class wbInstaller {
         } else {
             throw new moodle_exception('recordnotfound', 'tool_wbinstaller', '', $filename);
         }
+    }
+
+    /**
+     * Returns all errors.
+     * @return array
+     */
+    public function get_errors() {
+        return $this->errors;
     }
 
 }

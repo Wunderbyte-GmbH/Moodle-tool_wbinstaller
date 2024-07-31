@@ -13,6 +13,7 @@
     "watch": "cross-env webpack --mode development --watch"
   },
   "dependencies": {
+    "@kyvg/vue3-notification": "^3.2.1",
     "jszip": "^3.10.1",
     "vue-router": "^4.4.0",
     "vuex": "^4.1.0",

@@ -27,7 +27,6 @@ namespace tool_wbinstaller;
 use moodle_url;
 use context_system;
 use core\session\manager;
-use core_plugin_manager;
 use tool_installaddon_installer;
 
 /**
@@ -38,6 +37,19 @@ use tool_installaddon_installer;
  * @copyright  2023 Wunderbyte GmbH
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+require(__DIR__.'/../../../../config.php');
+require(__DIR__.'/../../../../lib/setup.php');
+
+
+require_once($CFG->libdir.'/adminlib.php');
+require_once($CFG->libdir . '/filelib.php');
+require_once($CFG->libdir . '/upgradelib.php');
+
+\require_login();
+\require_capability('moodle/site:config', context_system::instance());
+// Set up the admin external page.
+\admin_externalpage_setup('tool_wbinstaller');
 class pluginsInstaller extends wbInstaller {
     /**
      * Entities constructor.
@@ -48,35 +60,126 @@ class pluginsInstaller extends wbInstaller {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->errors = [];
     }
     /**
      * Exceute the installer.
      * @return array
      */
     public function execute() {
-        global $PAGE, $CFG;
-        // Set the context and require login.
-        $context = context_system::instance();
-        $PAGE->set_context($context);
-        require_login();
+        global $PAGE;
 
-        // Setup the page URL (this is necessary for handling redirection and context).
-        $PAGE->set_url(new moodle_url('/admin/tool/wbinstaller/index.php'));
+        // Set the page context.
+        $PAGE->set_context(context_system::instance());
 
-        // Enable maintenance mode before starting the upgrade process.
-        manager::write_close();
-
-        $result = $this->download_install_plugins_testing();
-
-        return $result;
+        $jsonstring = file_get_contents($this->recipe . '.json');
+        $jsonarray = json_decode($jsonstring, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->errors[] = 'Error decoding JSON: ' . json_last_error_msg();
+        }
+        $installable = $this->download_install_plugins_testing($jsonarray);
+        $this->manual_install_plugins($installable);
+        return $installable;
     }
 
     /**
      * Exceute the installer.
-     * @return array
+     * @param array $installable
      */
-    public function download_install_plugins_testing() {
-        return 1;
+    public function upgrade_install_plugins_recipe($installable) {
+        if (!empty($installable)) {
+            try {
+                ob_start();
+                upgrade_install_plugins($installable, 1, get_string('installfromzip', 'tool_wbinstaller'),
+                    new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1])
+                );
+                ob_end_clean();
+            } catch (Exception $e) {
+                // Catch and log any errors during the installation process
+                $this->errors[] = 'Plugin installation error: ' . $e->getMessage();
+            }
+        }
+    }
+
+    /**
+     * Manual plugin installation.
+     * @param array $installable
+     */
+    public function manual_install_plugins($installable) {
+        global $CFG;
+        if (!empty($installable)) {
+            foreach ($installable as $plugin) {
+                $zipfile = $plugin->zipfilepath;
+                $component = $plugin->component;
+
+                // Determine the target directory for the plugin.
+                list($type, $name) = explode('_', $component, 2);
+                if ($type == 'tool') {
+                    $type = "admin/tool";
+                }
+                $targetdir = $CFG->dirroot . "/$type";
+
+                // Create the target directory if it doesn't exist.
+                if (!is_dir($targetdir)) {
+                    mkdir($targetdir, 0777, true);
+                }
+
+                // Extract the ZIP file to the target directory.
+                $zip = new \ZipArchive();
+                if ($zip->open($zipfile) === true) {
+                    $zip->extractTo($targetdir);
+                    $zip->close();
+                } else {
+                    $this->errors[] = "Failed to extract $zipfile";
+                    continue;
+                }
+
+                // Clean up the ZIP file.
+                unlink($zipfile);
+            }
+
+            // Set up the upgrade environment.
+
+            manager::write_close();
+            rebuild_course_cache(0, true);
+            // Capture output.
+            ob_start();
+            try {
+                upgrade_noncore(true);
+                ob_end_clean();
+            } catch (\moodle_exception $e) {
+                ob_end_clean();
+            }
+        }
+    }
+
+    /**
+     * Exceute the installer.
+     * @param array $jsonarray
+     * @return mixed
+     */
+    public function download_install_plugins_testing($jsonarray) {
+        require_sesskey();
+        $installer = tool_installaddon_installer::instance();
+        $installable = [];
+        if (isset($jsonarray['links'])) {
+            if (!is_dir($this->recipe)) {
+                mkdir($this->recipe, 0777, true);
+            }
+            foreach ($jsonarray['links'] as $url) {
+                $zipfile = $this->recipe . '/' . basename($url);
+                if (download_file_content($url, null, null, true, 300, 20, true, $zipfile)) {
+                    $component = $installer->detect_plugin_component($zipfile);
+                    $installable[] = (object)[
+                        'component' => $component, // Will be detected during the installation process.
+                        'zipfilepath' => $zipfile,
+                    ];
+                } else {
+                    $this->errors[] = get_string('filedownloadfailed', 'tool_wbinstaller', $url);
+                }
+            }
+        }
+        return $installable;
     }
 
     /**

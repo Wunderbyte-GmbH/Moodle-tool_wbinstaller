@@ -25,7 +25,7 @@
 import { createApp } from 'vue';
 import { createAppStore } from './store';
 import router from './router/router'
-
+import Notifications from '@kyvg/vue3-notification'
 
 // Enables the Composition API
 window.__VUE_OPTIONS_API__ = true;
@@ -42,6 +42,7 @@ function init() {
     toolWbinstallerAppElements.forEach((toolWbinstallerAppElement) => {
         if (!toolWbinstallerAppElement.__vue_app__) {
             const app = createApp({});
+            app.use(Notifications);
             const store = createAppStore();
             store.dispatch('loadComponentStrings');
             app.use(store);

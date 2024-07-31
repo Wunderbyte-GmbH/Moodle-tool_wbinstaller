@@ -46,13 +46,9 @@ class coursesInstaller extends wbInstaller {
     }
     /**
      * Exceute the installer.
-     * @return int
+     * @return string
      */
     public function execute() {
-        foreach ($this->recipe as $githublink) {
-            sleep(1);
-            $this->update_install_progress('subprogress');
-        }
-        return 1;
+        return '1';
     }
 }

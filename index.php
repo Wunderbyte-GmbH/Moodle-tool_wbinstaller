@@ -92,10 +92,10 @@ echo $OUTPUT->render_from_template('tool_wbinstaller/initview', [
   'userid' => $USER->id,
   'contextid' => $context->id,
 ]);
-echo 'hello';
+//echo 'hello';
 
-// Show the Install button.
-$installurl = new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1, 'sesskey' => sesskey()]);
-echo $OUTPUT->single_button($installurl, get_string('installplugins', 'tool_wbinstaller'), 'get');
+// // Show the Install button.
+// $installurl = new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1, 'sesskey' => sesskey()]);
+// echo $OUTPUT->single_button($installurl, get_string('installplugins', 'tool_wbinstaller'), 'get');
 
 echo $OUTPUT->footer();

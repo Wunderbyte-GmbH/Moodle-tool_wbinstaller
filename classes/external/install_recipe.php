@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace tool_wbinstaller\external;
 
 use context;
+use core_external\external_multiple_structure;
 use external_api;
 use external_function_parameters;
 use external_value;
@@ -83,7 +84,8 @@ class install_recipe extends external_api {
         $context = context::instance_by_id($contextid);
         require_capability('tool/wbinstaller:caninstall', $context);
         $wbinstaller = new wbInstaller($file, $filename);
-        return ['result' => $wbinstaller->execute()];
+        $errors = $wbinstaller->execute();
+        return ['errors' => $errors];
     }
 
     /**
@@ -93,8 +95,9 @@ class install_recipe extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'result' => new external_value(PARAM_INT, 'Result Status'),
-            ]
-        );
+            'errors' => new external_multiple_structure(
+                new external_value(PARAM_TEXT, 'Error message')
+            ),
+        ]);
     }
 }
