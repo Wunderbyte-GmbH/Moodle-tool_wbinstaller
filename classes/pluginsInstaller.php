@@ -51,7 +51,6 @@ class pluginsInstaller extends wbInstaller {
     }
     /**
      * Exceute the installer.
-     * @param string $file
      * @return array
      */
     public function execute() {
@@ -116,7 +115,7 @@ class pluginsInstaller extends wbInstaller {
         if (!empty($installable)) {
             // Perform the upgrade installation process.
             upgrade_install_plugins($installable, true, get_string('installfromzip', 'tool_wbinstaller'),
-                new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1, ])
+                new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1])
             );
             // Clear all caches to ensure Moodle recognizes the new plugins.
             purge_all_caches();

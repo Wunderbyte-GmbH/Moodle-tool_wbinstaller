@@ -47,8 +47,11 @@ class wbInstaller {
     public $filename;
     /** @var int Install progress. */
     public $progress;
+
     /**
      * Entities constructor.
+     * @param string $recipe
+     * @param int $dbid
      */
     public function __construct($recipe, $filename) {
         $this->filename = $filename;
@@ -152,7 +155,7 @@ class wbInstaller {
     /**
      * Get all tests.
      *
-     * @return array
+     * @return int
      */
     public function save_install_progress() {
         global $DB, $USER;
@@ -166,12 +169,13 @@ class wbInstaller {
         $record->timecreated = time();
         $record->timemodified = time();
         $this->dbid = $DB->insert_record('tool_wbinstaller_install', $record);
+        return 1;
     }
 
     /**
      * Get all tests.
      *
-     * @return array
+     * @return int
      */
     public function update_install_progress($progresstype) {
         global $DB;
@@ -183,6 +187,7 @@ class wbInstaller {
         } else {
             throw new moodle_exception('recordnotfound', 'tool_wbinstaller', '', $this->dbid);
         }
+        return 1;
     }
 
     /**
@@ -194,7 +199,6 @@ class wbInstaller {
         global $DB;
         $sql = "SELECT progress, subprogress FROM {tool_wbinstaller_install} ";
         $where = "WHERE filename = ? ORDER BY timecreated DESC LIMIT 1";
-
         $record = $DB->get_record_sql($sql . $where, [$filename]);
         if ($record) {
             return $record;

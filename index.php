@@ -79,7 +79,7 @@ if ($installzipconfirm) {
 
     if (!empty($installable)) {
         upgrade_install_plugins($installable, $installzipconfirm, get_string('installfromzip', 'tool_wbinstaller'),
-            new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1, ])
+            new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1])
         );
     } else {
         echo $OUTPUT->notification(get_string('nozipfilesfound', 'tool_wbinstaller'), 'notifyproblem');
@@ -95,7 +95,7 @@ echo $OUTPUT->render_from_template('tool_wbinstaller/initview', [
 echo 'hello';
 
 // Show the Install button.
-$installurl = new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1, 'sesskey' => sesskey(), ]);
+$installurl = new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1, 'sesskey' => sesskey()]);
 echo $OUTPUT->single_button($installurl, get_string('installplugins', 'tool_wbinstaller'), 'get');
 
 echo $OUTPUT->footer();

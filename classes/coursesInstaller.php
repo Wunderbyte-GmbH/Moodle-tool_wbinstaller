@@ -46,7 +46,6 @@ class coursesInstaller extends wbInstaller {
     }
     /**
      * Exceute the installer.
-     * @param string $file
      * @return int
      */
     public function execute() {

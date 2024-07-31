@@ -46,7 +46,6 @@ class simulationsInstaller extends wbInstaller {
     }
     /**
      * Exceute the installer.
-     * @param string $file
      * @return array
      */
     public function execute() {
