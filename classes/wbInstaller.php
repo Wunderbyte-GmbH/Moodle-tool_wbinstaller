@@ -51,7 +51,7 @@ class wbInstaller {
     /**
      * Entities constructor.
      * @param string $recipe
-     * @param int $dbid
+     * @param string $filename
      */
     public function __construct($recipe, $filename) {
         $this->filename = $filename;
@@ -175,6 +175,7 @@ class wbInstaller {
     /**
      * Get all tests.
      *
+     * @param string $progresstype
      * @return int
      */
     public function update_install_progress($progresstype) {
@@ -193,6 +194,7 @@ class wbInstaller {
     /**
      * Get current process.
      *
+     * @param string $filename
      * @return array
      */
     public static function get_install_progress($filename) {
