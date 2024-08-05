@@ -205,7 +205,7 @@ class wbInstaller {
      * Get all tests.
      *
      * @param string $progresstype
-     * @param bool|null $finished Optional parameter.
+     * @param bool|null $status
      * @return int
      */
     public function update_install_progress($progresstype, $status = 0) {
