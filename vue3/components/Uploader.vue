@@ -27,7 +27,7 @@
     <notifications width="100%"/>
     <div class="form-group">
       <label for="zipFileUpload">Choose Recipe File</label>
-      <input type="file" class="form-control-file" id="zipFileUpload" @change="handleFileUpload" accept=".zip" />
+      <input type="file" class="form-control-file" id="zipFileUpload" @change="handleFileUpload" accept=".zip" ref="fileInput"/>
     </div>
     <transition name="fade" mode="out-in">
       <div v-if="uploadedFileName" class="mt-4">
@@ -88,6 +88,7 @@ const questionList = ref([]);
 const errors = ref([]);
 let uploadedFile = null;
 let uploadedFileName = ref('');
+const fileInput = ref(null);
 
 const isInstalling = ref(false);
 const totalProgress = ref(0);
@@ -108,6 +109,8 @@ const installRecipe = async () => {
           filename: uploadedFileName.value
         }
       );
+      console.log('errors.value')
+      console.log(errors.value)
       if (errors.value.errors.every(error => error === '')) {
         notify({
           title: store.state.strings.success,
@@ -130,6 +133,9 @@ const installRecipe = async () => {
     }  finally {
       uploadedFile.value = null
       uploadedFileName.value = ''
+      if (fileInput.value) {
+        fileInput.value.value = '';
+      }
       stopProgressPolling()
       isInstalling.value = false
     }

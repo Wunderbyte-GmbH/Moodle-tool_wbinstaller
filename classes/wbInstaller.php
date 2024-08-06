@@ -78,6 +78,7 @@ class wbInstaller {
      */
     public function execute() {
         $notfoundinstaller = [];
+        raise_memory_limit(MEMORY_EXTRA);
         $extracterrors = $this->extract_save_zip_file();
         if ($extracterrors) {
             $this->errors['wbinstaller'] = $extracterrors;
@@ -105,6 +106,7 @@ class wbInstaller {
         }
         $this->clean_after_installment();
         $this->update_install_progress('progress', 1);
+        reduce_memory_limit(MEMORY_STANDARD);
         return $this->errors;
     }
 
@@ -132,12 +134,19 @@ class wbInstaller {
 
     /**
      * Extract and save the zipped file.
-     * @return array
+     * @return string
      *
      */
     public function extract_save_zip_file() {
         $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
-        $filecontent = base64_decode($base64string);
+        // Log the base64 string length for debugging
+        $testing = 'Base64 string length: ' . strlen($base64string);
+
+        // Validate the base64 string
+        if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
+            return ["The base64 string is not valid."];
+        }
+        $filecontent = base64_decode($base64string, true);
 
         // Check if the decoded content is valid.
         if ($filecontent === false || empty($filecontent)) {
@@ -156,6 +165,7 @@ class wbInstaller {
         if (file_put_contents($zipfilepath, $filecontent) === false) {
             return "Failed to write the ZIP file to the plugin directory.";
         }
+        unset($filecontent);
         // Verify the file path and permissions.
         if (!file_exists($zipfilepath)) {
             return "The file does not exist: $zipfilepath";
@@ -164,7 +174,6 @@ class wbInstaller {
         if (!is_readable($zipfilepath)) {
             return "The file is not readable: $zipfilepath";
         }
-
         // Initialize the ZipArchive class.
         $zip = new ZipArchive;
         if ($zip->open($zipfilepath) === true) {
