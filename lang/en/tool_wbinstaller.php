@@ -32,6 +32,7 @@ $string['filedownloadfailed'] = 'filedownloadfailed';
 
 // Capabilities.
 $string['wbinstaller:caninstall'] = 'Is allowed to install recipes.';
+$string['wbinstaller:canexport'] = 'Is allowed to export recipes.';
 $string['wbinstallerroledescription'] = 'Users with this role are able to export and install recipes.';
 $string['componentdetectfailed'] = 'Users with this role are able to export and install recipes.';
 $string['installfailed'] = 'Users with this role are able to export and install recipes.';
@@ -41,3 +42,4 @@ $string['warning'] = 'Finished with errors';
 $string['warning_description'] = 'Some errors were encountered during the installation. More information inside the installation feedback.';
 $string['error'] = 'Installation aborted';
 $string['error_description'] = 'The installation was not successfull.';
+$string['exporttitle'] = 'Choose courses that you want to export.';

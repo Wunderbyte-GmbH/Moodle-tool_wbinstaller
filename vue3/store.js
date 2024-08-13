@@ -79,6 +79,7 @@ export function createAppStore() {
                 contextid: context.state.contextid,
                 file: payload.uploadedFile,
                 filename: payload.filename,
+                optionalplugins: payload.selectedOptionalPlugins,
               });
             },
             async getInstallProgress(context, payload) {
@@ -88,6 +89,21 @@ export function createAppStore() {
                 contextid: context.state.contextid,
                 filename: payload.filename,
               });
+            },
+            async getExportableCourses(context) {
+              return await ajax('tool_wbinstaller_get_exportable_courses',
+              {
+                userid: context.state.user,
+                contextid: context.state.contextid,
+              });
+            },
+            async downloadRecipe(context, payload) {
+              return await ajax('tool_wbinstaller_download_recipe',
+                {
+                  userid: context.state.user,
+                  contextid: context.state.contextid,
+                  courseids: JSON.stringify(payload.courseids),
+                });
             },
         }
     });

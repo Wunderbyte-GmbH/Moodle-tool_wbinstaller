@@ -25,6 +25,9 @@
 
 namespace tool_wbinstaller;
 
+use Exception;
+use local_catquiz\importer\testitemimporter;
+
 /**
  * Class tool_wbinstaller
  *
@@ -49,10 +52,39 @@ class simulationsInstaller extends wbInstaller {
      * @return array
      */
     public function execute() {
-        foreach ($this->recipe as $githublink) {
-            sleep(1);
-            $this->update_install_progress('subprogress');
+        return 1;
+        foreach (glob("$this->recipe/*") as $itemparamsfile) {
+            try {
+                $this->import_itemparams($itemparamsfile);
+            } catch (Exception $e) {
+                $this->errors[$itemparamsfile] = $e;
+            }
         }
         return 1;
+    }
+
+     /**
+      * Import the item params from the given CSV file
+      *
+      * @param string $filename The name of the itemparams file.
+      *
+      * @return void
+      */
+    private function import_itemparams($filename) {
+        global $DB;
+        $questions = $DB->get_records('question');
+        if (! $questions) {
+            exit('No questions were imported');
+        }
+        $importer = new testitemimporter();
+        $content = file_get_contents($filename);
+        $importer->execute_testitems_csv_import(
+                (object) [
+                    'delimiter_name' => 'semicolon',
+                    'encoding' => null,
+                    'dateparseformat' => null,
+                ],
+                $content
+            );
     }
 }

@@ -53,6 +53,7 @@ function xmldb_tool_wbinstaller_install() {
     $ctx = \context_system::instance();
     $caps = [
         'tool/wbinstaller:caninstall',
+        'tool/wbinstaller:canexport',
     ];
     foreach ($caps as $cap) {
         $chk = $DB->get_record('role_capabilities', [

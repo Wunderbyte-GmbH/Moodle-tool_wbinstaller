@@ -25,6 +25,11 @@
 
 namespace tool_wbinstaller;
 
+use core_question\local\bank\question_edit_contexts;
+use local_catquiz\strategy_test;
+use context_course;
+use Exception;
+
 /**
  * Class tool_wbinstaller
  *
@@ -43,16 +48,57 @@ class questionsInstaller extends wbInstaller {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->errors = [];
     }
     /**
      * Exceute the installer.
      * @return array
      */
     public function execute() {
-        foreach ($this->recipe as $githublink) {
-            sleep(1);
-            $this->update_install_progress('subprogress');
+        return 1;
+        foreach (glob("$this->recipe/*") as $questionfile) {
+            try {
+                $qformat = $this->create_qformat($questionfile, 984);
+                $qformat->importprocess();
+            } catch (Exception $e) {
+                $this->errors[$questionfile] = $e;
+            }
         }
         return 1;
+    }
+
+    /**
+     * Create a new qformat object so that we can import questions.
+     *
+     * NOTE: copied from qformat_xml_import_export_test.php
+     *
+     * Create object qformat_xml for test.
+     * @param string $filename with name for testing file.
+     * @param \stdClass $course
+     * @return \qformat_xml XML question format object.
+     */
+    private function create_qformat($filename, $courseid) {
+        global $CFG;
+        require_once($CFG->libdir . '/questionlib.php');
+        require_once($CFG->dirroot . '/question/format/xml/format.php');
+        require_once($CFG->dirroot . '/question/format.php');
+        require_once($CFG->dirroot . '/local/catquiz/tests/lib.php');
+
+        $qformat = new \qformat_xml();
+        $qformat->setContexts((new question_edit_contexts(context_course::instance($courseid)))->all());
+        $qformat->setCourse($course);
+        $qformat->setFilename(__DIR__ . '/../fixtures/' . $filename);
+        $qformat->setRealfilename($filename);
+        $qformat->setMatchgrades('error');
+        $qformat->setCatfromfile(1);
+        $qformat->setContextfromfile(1);
+        $qformat->setStoponerror(1);
+        $qformat->setCattofile(1);
+        $qformat->setContexttofile(1);
+        $qformat->set_display_progress(false);
+        $qformat->setFilename($filename);
+
+
+        return $qformat;
     }
 }

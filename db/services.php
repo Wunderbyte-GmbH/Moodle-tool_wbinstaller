@@ -40,4 +40,18 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
     ],
+    'tool_wbinstaller_get_exportable_courses' => [
+        'classname' => 'tool_wbinstaller\external\get_exportable_courses',
+        'classpath' => '',
+        'description' => 'Get exportable courses.',
+        'type' => 'write',
+        'ajax' => true,
+    ],
+    'tool_wbinstaller_download_recipe' => [
+        'classname' => 'tool_wbinstaller\external\download_recipe',
+        'classpath' => '',
+        'description' => 'Get exportable courses.',
+        'type' => 'write',
+        'ajax' => true,
+    ],
 ];

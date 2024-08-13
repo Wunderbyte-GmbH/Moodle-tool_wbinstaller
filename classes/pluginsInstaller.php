@@ -41,8 +41,7 @@ use tool_installaddon_installer;
 
 require(__DIR__.'/../../../../config.php');
 require(__DIR__.'/../../../../lib/setup.php');
-
-
+global $CFG;
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->libdir . '/filelib.php');
 require_once($CFG->libdir . '/upgradelib.php');
@@ -66,19 +65,20 @@ class pluginsInstaller extends wbInstaller {
      * @param string $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid) {
+    public function __construct($recipe, $dbid, $optionalplugins) {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->errors = [];
+        $this->optionalplugins = $optionalplugins;
     }
+
     /**
      * Exceute the installer.
      * @return array
      */
     public function execute() {
         global $PAGE;
-
         // Set the page context.
         $PAGE->set_context(context_system::instance());
 
@@ -87,7 +87,9 @@ class pluginsInstaller extends wbInstaller {
         if (json_last_error() !== JSON_ERROR_NONE) {
             $this->errors[] = 'Error decoding JSON: ' . json_last_error_msg();
         }
-        $installable = $this->download_install_plugins_testing($jsonarray);
+        $additionalplugins = array_intersect($jsonarray['optional'], $this->optionalplugins);
+        $jsonarray['needed'] = array_merge($jsonarray['needed'], $additionalplugins);
+        $installable = $this->download_install_plugins_testing($jsonarray['needed']);
         $this->manual_install_plugins($installable);
         return $installable;
     }
@@ -171,11 +173,11 @@ class pluginsInstaller extends wbInstaller {
         require_sesskey();
         $installer = tool_installaddon_installer::instance();
         $installable = [];
-        if (isset($jsonarray['links'])) {
+        if (isset($jsonarray)) {
             if (!is_dir($this->recipe)) {
                 mkdir($this->recipe, 0777, true);
             }
-            foreach ($jsonarray['links'] as $url) {
+            foreach ($jsonarray as $url) {
                 $zipfile = $this->recipe . '/' . basename($url);
                 if (download_file_content($url, null, null, true, 300, 20, true, $zipfile)) {
                     $component = $installer->detect_plugin_component($zipfile);

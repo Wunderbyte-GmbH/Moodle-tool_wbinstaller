@@ -49,18 +49,20 @@ class wbInstaller {
     public $progress;
     /** @var array Install errors. */
     public $errors;
-
+    /** @var array Install errors. */
+    public $optionalplugins;
 
     /**
      * Entities constructor.
      * @param string $recipe
      * @param string $filename
      */
-    public function __construct($recipe, $filename) {
+    public function __construct($recipe, $filename, $optionalplugins) {
         $this->filename = $filename;
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->errors = [];
+        $this->optionalplugins = json_decode($optionalplugins);
     }
 
     /**
@@ -92,10 +94,18 @@ class wbInstaller {
                 $parts = explode('.', $file);
                 $installerclass = __NAMESPACE__ . '\\' . $parts[0] . 'Installer';
                 if (class_exists($installerclass)) {
-                    $instance = new $installerclass(
-                      $extractpath . '/' . $parts[0],
-                      $this->dbid
-                    );
+                    if ($parts[0] == 'plugins') {
+                        $instance = new $installerclass(
+                          $extractpath . '/' . $parts[0],
+                          $this->dbid,
+                          $this->optionalplugins
+                        );
+                    } else {
+                        $instance = new $installerclass(
+                          $extractpath . '/' . $parts[0],
+                          $this->dbid
+                        );
+                    }
                     $instance->execute();
                     $this->errors[$parts[0]] = $instance->get_errors() ? implode(',', $instance->get_errors()) : '';
                 } else {

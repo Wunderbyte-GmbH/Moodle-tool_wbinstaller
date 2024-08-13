@@ -31,6 +31,7 @@ use stdClass;
 
 require(__DIR__.'/../../../../config.php');
 require(__DIR__.'/../../../../lib/setup.php');
+global $CFG;
 require_once($CFG->libdir.'/filelib.php');
 require_once($CFG->libdir.'/moodlelib.php');
 require_once($CFG->dirroot.'/course/lib.php');
@@ -69,6 +70,7 @@ class coursesInstaller extends wbInstaller {
      * @return string
      */
     public function execute() {
+        return 1;
         foreach (glob("$this->recipe/*.mbz") as $coursefile) {
             $this->install_course($coursefile);
         }

@@ -32,6 +32,7 @@ $string['filedownloadfailed'] = 'filedownloadfailed';
 
 // Capabilities.
 $string['wbinstaller:caninstall'] = 'Darf Rezepte installieren.';
+$string['wbinstaller:canexport'] = 'Darf Rezepte exportieren.';
 $string['wbinstallerroledescription'] = 'Benutzer mit dieser Rolle können Rezepte exportieren und installieren.';
 $string['componentdetectfailed'] = 'Benutzer mit dieser Rolle können Rezepte exportieren und installieren.';
 $string['installfailed'] = 'Benutzer mit dieser Rolle können Rezepte exportieren und installieren.';
@@ -41,3 +42,5 @@ $string['warning'] = 'Mit Fehlern abgeschlossen';
 $string['warning_description'] = 'Während der Installation sind einige Fehler aufgetreten. Weitere Informationen finden Sie im Installationsfeedback.';
 $string['error'] = 'Installation abgebrochen';
 $string['error_description'] = 'Die Installation war nicht erfolgreich.';
+$string['exporttitle'] = 'Wähle aus welche Kurse exportiert werden sollen.';
+

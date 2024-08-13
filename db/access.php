@@ -34,4 +34,12 @@ $capabilities = [
                 'teacher' => CAP_ALLOW,
             ],
         ],
+        'tool/wbinstaller:canexport' => [
+            'captype' => 'write',
+            'contextlevel' => CONTEXT_SYSTEM,
+            'archetypes' => [
+                'manager' => CAP_ALLOW,
+                'teacher' => CAP_ALLOW,
+            ],
+        ],
     ];

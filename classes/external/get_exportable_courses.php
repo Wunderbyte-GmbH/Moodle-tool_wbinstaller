@@ -28,11 +28,12 @@ declare(strict_types=1);
 namespace tool_wbinstaller\external;
 
 use context;
-use core_external\external_multiple_structure;
 use external_api;
 use external_function_parameters;
 use external_value;
 use external_single_structure;
+use external_multiple_structure;
+use tool_wbinstaller\exportableCourses;
 use tool_wbinstaller\wbInstaller;
 
 defined('MOODLE_INTERNAL') || die();
@@ -42,12 +43,12 @@ require_once($CFG->libdir . '/externallib.php');
 /**
  * External Service for local catquiz.
  *
- * @package     tool_wbinstaller
+ * @package     tool_installer
  * @author      Jacob Viertel
  * @copyright  2023 Wunderbyte GmbH
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class install_recipe extends external_api {
+class get_exportable_courses extends external_api {
 
     /**
      * Describes the parameters for get_next_question webservice.
@@ -58,9 +59,6 @@ class install_recipe extends external_api {
         return new external_function_parameters([
             'userid' => new external_value(PARAM_INT, 'userid', VALUE_REQUIRED),
             'contextid'  => new external_value(PARAM_INT, 'contextid', VALUE_REQUIRED),
-            'file'  => new external_value(PARAM_RAW, 'file', VALUE_REQUIRED),
-            'filename'  => new external_value(PARAM_TEXT, 'file name', VALUE_REQUIRED),
-            'optionalplugins'  => new external_value(PARAM_TEXT, 'optional plugins', VALUE_REQUIRED),
             ]
         );
     }
@@ -70,36 +68,36 @@ class install_recipe extends external_api {
      *
      * @param int $userid
      * @param int $contextid
-     * @param mixed $file
-     * @param string $filename
      * @return bool
      */
     public static function execute(
         $userid,
-        $contextid,
-        $file,
-        $filename,
-        $optionalplugins
+        $contextid
     ): array {
+        $params = self::validate_parameters(self::execute_parameters(), [
+            'userid' => $userid,
+            'contextid' => $contextid
+        ]);
+
         require_login();
 
         $context = context::instance_by_id($contextid);
-        require_capability('tool/wbinstaller:caninstall', $context);
-        $wbinstaller = new wbInstaller($file, $filename, $optionalplugins);
-        $errors = $wbinstaller->execute();
-        return ['errors' => $errors];
+        require_capability('tool/wbinstaller:canexport', $context);
+        $courses = exportableCourses::get_courses();
+        return $courses;
     }
 
     /**
      * Returns description of method result value.
      *
-     * @return external_single_structure
+     * @return external_multiple_structure
      */
-    public static function execute_returns(): external_single_structure {
-        return new external_single_structure([
-            'errors' => new external_multiple_structure(
-                new external_value(PARAM_TEXT, 'Error message')
-            ),
-        ]);
+    public static function execute_returns(): external_multiple_structure {
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Course ID'),
+                'fullname' => new external_value(PARAM_TEXT, 'Course full name')
+            ])
+        );
     }
 }
