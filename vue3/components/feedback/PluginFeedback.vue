@@ -26,21 +26,23 @@
   <ul>
     <!-- Display Warnings in Dark Orange -->
     <li v-for="warning in message.warning" :key="warning" class="warning-text">
-      Warning: {{ warning }}
+      {{ store.state.strings.vuewarining }}{{ warning }}
     </li>
     <!-- Display Errors in Red and Bold -->
     <li v-for="error in message.error" :key="error" class="error-text">
-      Error: {{ error }}
+      {{ store.state.strings.vueerror }}{{ error }}
     </li>
     <li v-for="success in message.success" :key="success" class="success-text">
-      Success: {{ success }}
+      {{ store.state.strings.vuesuccess }}{{ success }}
     </li>
   </ul>
 </template>
 
 <script setup>
 import { defineProps } from 'vue';
+import { useStore } from 'vuex'
 
+const store = useStore()
 // Define the props the component will receive
 const props = defineProps({
   message: {

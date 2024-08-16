@@ -44,7 +44,7 @@
             :disabled="isExporting"
             class="btn btn-primary mt-3"
           >
-            Export Selected
+          {{ store.state.strings.vueexportselect }}
           </button>
         </div>
       </div>

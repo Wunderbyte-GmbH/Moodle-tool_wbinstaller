@@ -74,18 +74,23 @@ class simulationsInstaller extends wbInstaller {
       */
     public function check() {
         foreach (glob("$this->recipe/*.csv") as $itemparamsfile) {
-            $this->feedback['needed'][basename($itemparamsfile)]['success'][] = 'Found the simulation file';
+            $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
+              get_string('simulationfilefound', 'tool_wbinstaller');
             $filenamewithoutextension = pathinfo($itemparamsfile, PATHINFO_FILENAME);
 
             if (
                 isset($this->installmatcher->$filenamewithoutextension) &&
                 class_exists($this->installmatcher->$filenamewithoutextension->name)
               ) {
-                $this->feedback['needed'][basename($itemparamsfile)]['success'][] = 'Found simulation installer ' .
-                  $this->installmatcher->$filenamewithoutextension->name;
+                $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
+                  get_string(
+                    'simulationinstallerfilefound',
+                    'tool_wbinstaller',
+                    $this->installmatcher->$filenamewithoutextension->name
+                  );
             } else {
                 $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
-                  'No installer was found. The file cannot be installed!';
+                  get_string('simulationnoinstallerfilefound', 'tool_wbinstaller');
             }
         }
     }
@@ -120,10 +125,10 @@ class simulationsInstaller extends wbInstaller {
                     $content
                 );
                 $this->feedback['needed'][basename($filename)]['success'][] =
-                  'The given installer ' . $installeroptions->name . ' was found and used';
+                  get_string('simulationinstallersuccess', 'tool_wbinstaller', $installeroptions->name);
         } else {
             $this->feedback['needed'][basename($filename)]['error'][] =
-              'No installer was found. The file was not installed!';
+              get_string('simulationnoinstallerfilefound', 'tool_wbinstaller');
         }
     }
 }

@@ -31,14 +31,14 @@
         :class="{ active: activeTab === 'install' }"
         @click="activeTab = 'install'"
       >
-        Install
+        {{ store.state.strings.vueinstall }}
       </a>
       <a
         class="nav-item nav-link"
         :class="{ active: activeTab === 'export' }"
         @click="activeTab = 'export'"
       >
-        Export
+        {{ store.state.strings.vueexport }}
       </a>
     </div>
     <div v-if="activeTab === 'install'">

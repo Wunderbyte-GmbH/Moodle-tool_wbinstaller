@@ -65,7 +65,8 @@ class customfieldInstaller extends wbInstaller {
         $jsonstring = file_get_contents($this->recipe . '.json');
         $jsonarray = json_decode($jsonstring, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['customfields']['error'][] = 'Error decoding JSON: ' . json_last_error_msg();
+            $this->feedback['customfields']['error'][] =
+              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
             $this->set_status(2);
         }
         $customfieldfields = $DB->get_records('customfield_field', null, null, 'shortname');
@@ -73,13 +74,15 @@ class customfieldInstaller extends wbInstaller {
             $categoryid = $this->upload_category($customfields);
             foreach ($customfields['fields'] as $customfield) {
                 if (!$categoryid) {
-                    $this->feedback['needed'][$customfields['name']]['error'][] = "Category could not be uploaded!";
+                    $this->feedback['needed'][$customfields['name']]['error'][] =
+                      get_string('customfieldfailupload', 'tool_wbinstaller');
                 } else if (isset($customfieldfields[$customfield['shortname']])) {
-                    $this->feedback['needed'][$customfields['name']]['error'][] = "Customfield shortname already exists!";
+                    $this->feedback['needed'][$customfields['name']]['error'][] =
+                    get_string('customfieldduplicate', 'tool_wbinstaller');
                 } else {
                     $this->upload_fieldset($customfield, $categoryid);
                     $this->feedback['needed'][$customfields['name']]['success'][] =
-                      "Customfield " . $customfield['name'] . ' was installed successfully.';
+                      get_string('customfieldsuccesss', 'tool_wbinstaller', $customfield['name']);
                 }
             }
         }
@@ -134,17 +137,19 @@ class customfieldInstaller extends wbInstaller {
         $jsonstring = file_get_contents($this->recipe . '.json');
         $jsonarray = json_decode($jsonstring, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['customfields']['error'][] = 'Error decoding JSON: ' . json_last_error_msg();
+            $this->feedback['customfields']['error'][] =
+              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
             $this->set_status(2);
         }
         $customfieldfields = $DB->get_records('customfield_field', null, null, 'shortname');
         foreach ($jsonarray as $customfields) {
             foreach ($customfields['fields'] as $customfield) {
                 if (isset($customfieldfields[$customfield['shortname']])) {
-                    $this->feedback['needed'][$customfields['name']]['error'][] = "Customfield shortname already exists!";
+                    $this->feedback['needed'][$customfields['name']]['error'][] =
+                      get_string('customfieldduplicate', 'tool_wbinstaller');
                 } else {
                     $this->feedback['needed'][$customfields['name']]['success'][] =
-                      "Found the new customfield: " . $customfield['name'];
+                      get_string('customfieldnewfield', 'tool_wbinstaller', $customfield['name']);
                 }
             }
         }

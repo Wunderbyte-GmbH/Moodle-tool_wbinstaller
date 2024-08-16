@@ -25,13 +25,17 @@
  <template>
   <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
     <div class="form-group">
-      <label for="zipFileUpload">Choose Recipe File</label>
+      <label for="zipFileUpload">
+        {{ store.state.strings.vuechooserecipe }}
+      </label>
       <input type="file" class="form-control-file" id="zipFileUpload" @change="handleFileUpload" accept=".zip" ref="fileInput"/>
     </div>
     <transition name="fade">
       <div v-if="isInstalling" class="waiting-screen mt-4">
         <div class="spinner"></div>
-        <p>Please wait while the installation is in progress...</p>
+        <p>
+          {{ store.state.strings.vuewaitingtext }}
+        </p>
       </div>
     </transition>
     <transition name="fade">
@@ -71,22 +75,29 @@
           </div>
         </div>
         <div v-if="feedback.customfield" class="mt-4">
-          <h3>Customfield in the ZIP:</h3>
+          <h3>
+            {{ store.state.strings.vuecustomfieldzip }}
+          </h3>
           <ul class="list-group">
             <li class="list-group-item" v-for="(message, key) in feedback.customfield.needed" :key="key">
-              Category: {{ key }}
+              {{ store.state.strings.vuecategories }}
+              {{ key }}
               <PluginFeedback :message/>
             </li>
           </ul>
         </div>
         <div v-if="courseList.length" class="mt-4">
-          <h3>Courses in the ZIP:</h3>
+          <h3>
+            {{ store.state.strings.vuecourseszip }}
+          </h3>
           <ul class="list-group">
             <li class="list-group-item" v-for="course in courseList" :key="course">{{ course }}</li>
           </ul>
         </div>
         <div v-if="feedback.simulations" class="mt-4">
-          <h3>Simulations in the ZIP:</h3>
+          <h3>
+            {{ store.state.strings.vuesimulationzip }}
+          </h3>
           <ul class="list-group">
             <li class="list-group-item" v-for="(message, key) in feedback.simulations.needed" :key="key">
               {{ key }}
@@ -95,7 +106,9 @@
           </ul>
         </div>
         <div v-if="feedback.questions" class="mt-4">
-          <h3>Questions in the ZIP:</h3>
+          <h3>
+            {{ store.state.strings.vuequestionszip }}
+          </h3>
           <ul class="list-group">
             <li class="list-group-item" v-for="(message, key) in feedback.questions.needed" :key="key">
               {{ key }}
@@ -108,7 +121,7 @@
           @click="installRecipe"
           :disabled="isInstalling"
         >
-          Install Recipe
+          {{ store.state.strings.vueinstallbtn }}
         </button>
       </div>
     </transition>

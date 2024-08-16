@@ -25,7 +25,7 @@
  <template>
   <div>
     <h2>
-      Install Report
+      {{ store.state.strings.vueinstallbtn }}
     </h2>
     <div v-for="(messages, type) in feedback" :key="type" style="margin-left: 20px;">
       <h3>{{type}}</h3>
@@ -42,7 +42,9 @@
 <script setup>
 import { defineProps } from 'vue';
 import PluginFeedback from './PluginFeedback.vue';
+import { useStore } from 'vuex'
 
+const store = useStore()
 // Define the props the component will receive
 const props = defineProps({
   feedback: {

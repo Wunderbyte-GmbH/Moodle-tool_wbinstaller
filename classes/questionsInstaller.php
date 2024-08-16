@@ -26,7 +26,6 @@
 namespace tool_wbinstaller;
 
 use core_question\local\bank\question_edit_contexts;
-use local_catquiz\strategy_test;
 use context_course;
 use Exception;
 
@@ -54,7 +53,6 @@ class questionsInstaller extends wbInstaller {
      * @return array
      */
     public function execute() {
-        return 1;
         foreach (glob("$this->recipe/*") as $questionfile) {
             try {
                 $qformat = $this->create_qformat($questionfile, 984);
@@ -73,7 +71,8 @@ class questionsInstaller extends wbInstaller {
      */
     public function check() {
         foreach (glob("$this->recipe/*") as $questionfile) {
-            $this->feedback['needed'][basename($questionfile)]['success'][] = 'Found the question file';
+            $this->feedback['needed'][basename($questionfile)]['success'][] =
+              get_string('questionfilefound', 'tool_wbinstaller');
         }
     }
 

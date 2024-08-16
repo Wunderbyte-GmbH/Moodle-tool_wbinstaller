@@ -84,7 +84,8 @@ class pluginsInstaller extends wbInstaller {
         $jsonstring = file_get_contents($this->recipe . '.json');
         $jsonarray = json_decode($jsonstring, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['plugins']['error'][] = 'Error decoding JSON: ' . json_last_error_msg();
+            $this->feedback['plugins']['error'][] =
+              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
             $this->set_status(2);
         }
         require_sesskey();
@@ -137,7 +138,8 @@ class pluginsInstaller extends wbInstaller {
         $jsonstring = file_get_contents($this->recipe . '.json');
         $jsonarray = json_decode($jsonstring, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['plugins']['error'][] = 'Error decoding JSON: ' . json_last_error_msg();
+            $this->feedback['plugins']['error'][] =
+              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
             $this->set_status(2);
         }
         foreach ($jsonarray as $type => $plugins) {
@@ -158,19 +160,25 @@ class pluginsInstaller extends wbInstaller {
             if (isset($plugin['component'])) {
                 $installedversion = $this->is_component_installed($plugin['component']);
                 if ($installedversion) {
+                    $a = new stdClass();
+                    $a->name = $plugin['component'];
+                    $a->version = $installedversion;
                     $this->feedback[$type][$gitzipurl]['warning'][] =
-                      "Component '{$plugin['component']}' is already installed with version $installedversion.";
+                      get_string('pluginduplicate', 'tool_wbinstaller', $a);
                     $this->set_status(1);
 
                 } else {
-                    $this->feedback[$type][$gitzipurl]['success'][] = "Component '{$plugin['component']}' is not installed.";
+                    $this->feedback[$type][$gitzipurl]['success'][] =
+                      get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
                 }
             } else {
-                $this->feedback[$type][$gitzipurl]['error'][] = "Failed to retrieve component information.";
+                $this->feedback[$type][$gitzipurl]['error'][] =
+                  get_string('pluginfailedinformation', 'tool_wbinstaller');
                 $this->set_status(2);
             }
         } else {
-            $this->feedback[$type][$gitzipurl]['error'][] = "Failed to fetch the version.php content from the repository.";
+            $this->feedback[$type][$gitzipurl]['error'][] =
+              get_string('pluginfailedinformation', 'tool_wbinstaller');
             $this->set_status(2);
         }
         return 1;

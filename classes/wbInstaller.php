@@ -175,7 +175,8 @@ class wbInstaller {
         $filecontent = base64_decode($base64string, true);
 
         if ($filecontent === false || empty($filecontent)) {
-            $this->feedback['error'][] = "Failed to decode base64 content or the content is empty.";
+            $this->feedback['error'][] =
+              get_string('installervalidbase', 'tool_wbinstaller');
             $this->set_status(2);
             return false;
         }
@@ -185,18 +186,21 @@ class wbInstaller {
             mkdir($pluginpath, 0777, true);
         }
         if (file_put_contents($zipfilepath, $filecontent) === false) {
-            $this->feedback['error'][] = "Failed to write the ZIP file to the plugin directory.";
+            $this->feedback['error'][] =
+              get_string('installerwritezip', 'tool_wbinstaller');
             $this->set_status(2);
             return false;
         }
         unset($filecontent);
         if (!file_exists($zipfilepath)) {
-            $this->feedback['error'][] = "The file does not exist: $zipfilepath";
+            $this->feedback['error'][] =
+              get_string('installerfilenotfound', 'tool_wbinstaller', $zipfilepath);
             $this->set_status(2);
             return false;
         }
         if (!is_readable($zipfilepath)) {
-            $this->feedback['error'][] = "The file is not readable: $zipfilepath";
+            $this->feedback['error'][] =
+              get_string('installerfilenotreadable', 'tool_wbinstaller', $zipfilepath);
             $this->set_status(2);
             return false;
         }
@@ -210,7 +214,7 @@ class wbInstaller {
             $zip->extractTo($extractpath);
             $zip->close();
         } else {
-            return "Failed to open the ZIP file.";
+            return get_string('installerfailopen', 'tool_wbinstaller');
         }
         return false;
     }

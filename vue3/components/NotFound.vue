@@ -24,11 +24,12 @@
 
 <template>
   <div class="NotFound">
-    NICHT GEFUNDEN
+    {{ store.state.strings.vuenotfound }}
   </div>
 </template>
 
 <script setup>
+import { useStore } from 'vuex'
 
-
+const store = useStore()
 </script>

@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Wunderbyte Installer';
 $string['installfromzip'] = 'Install from zip file';
 $string['installplugins'] = 'Install plugins';
-$string['filedownloadfailed'] = 'filedownloadfailed';
+$string['filedownloadfailed'] = 'Faild to download the zip with the url: {$a}';
 
 // Capabilities.
 $string['wbinstaller:caninstall'] = 'Is allowed to install recipes.';
@@ -47,3 +47,47 @@ $string['exporttitle'] = 'Choose courses that you want to export.';
 // Settings.
 $string['apitoken'] = 'Github Api-Token';
 $string['apitokendesc'] = 'Insert your Github-Token to receive more detailed information about your plugins.';
+
+// Installer classes.
+$string['jsonfaildecoding'] = 'Error decoding JSON: {$a}.';
+$string['coursesnoshortname'] = 'Could not get the short name of course: {$a}';
+$string['coursesduplicateshortname'] = 'Skipped: Course with short name {$a} already exists.';
+$string['coursessuccess'] = 'Installed successfully the course: {$a}.';
+$string['coursesfailextract'] = 'Failed to copy extracted files to the Moodle backup directory.';
+$string['coursesfailprecheck'] = 'Precheck failed for course restore: {$a}.';
+$string['customfieldfailupload'] = 'Category could not be uploaded!';
+$string['customfieldduplicate'] = 'Customfield shortname already exists!';
+$string['customfieldsuccesss'] = 'Customfield {$a} was installed successfully.';
+$string['customfieldnewfield'] = 'Found the new customfield: {$a}.';
+$string['pluginduplicate'] = 'Component {$a->name} is already installed with version {$a->version}.';
+$string['pluginnotinstalled'] = 'Component {$a} is not installed.';
+$string['pluginfailedinformation'] = 'Failed to retrieve component information.';
+$string['questionfilefound'] = 'Found the question file.';
+$string['simulationfilefound'] = 'Found the simulation file.';
+$string['simulationinstallerfilefound'] = 'Found simulation installer {$a}.';
+$string['simulationnoinstallerfilefound'] = 'No installer was found. The file cannot be installed!';
+$string['simulationinstallersuccess'] = 'The given installer {$a} was found and used';
+$string['installervalidbase'] = 'The base64 string is not valid.';
+$string['installerdecodebase'] = 'Failed to decode base64 content or the content is empty.';
+$string['installerwritezip'] = 'Failed to write the ZIP file to the plugin directory.';
+$string['installerfilenotfound'] = 'The file was not found: {$a}';
+$string['installerfilenotreadable'] = 'The file is not readable: {$a}';
+$string['installerfailopen'] = 'Failed to open the ZIP file.';
+
+// Vue strings
+$string['vueexportselect'] = 'Export Selected';
+$string['vueexport'] = 'Export';
+$string['vueinstall'] = 'Install';
+$string['vuenotfound'] = 'Not found';
+$string['vueinstallbtn'] = 'Install Recipe';
+$string['vuequestionszip'] = 'Questions in the ZIP:';
+$string['vuesimulationzip'] = 'Simulations in the ZIP:';
+$string['vuecourseszip'] = 'Courses in the ZIP:';
+$string['vuecategories'] = 'Category: ';
+$string['vuecustomfieldzip'] = 'Customfield in the ZIP:';
+$string['vuewaitingtext'] = 'Please wait while the installation is in progress...';
+$string['vuechooserecipe'] = 'Choose Recipe File';
+$string['vuewarining'] = 'Warning: ';
+$string['vueerror'] = 'Error: ';
+$string['vuesuccess'] = 'Success: ';
+

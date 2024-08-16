@@ -130,12 +130,14 @@ class wbCheck {
         $extractpath = null;
         $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
         if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
-            $this->feedback['error'][] = ["The base64 string is not valid."];
+            $this->feedback['error'][] =
+              get_string('installervalidbase', 'tool_wbinstaller');
             return false;
         }
         $filecontent = base64_decode($base64string, true);
         if ($filecontent === false || empty($filecontent)) {
-            $this->feedback['error'][] = "Failed to decode base64 content or the content is empty.";
+            $this->feedback['error'][] =
+              get_string('installerdecodebase', 'tool_wbinstaller');
             return false;
         }
         $pluginpath = __DIR__ . '/zip/';
@@ -144,16 +146,19 @@ class wbCheck {
             mkdir($pluginpath, 0777, true);
         }
         if (file_put_contents($zipfilepath, $filecontent) === false) {
-            $this->feedback['error'][] = "Failed to write the ZIP file to the plugin directory.";
+            $this->feedback['error'][] =
+              get_string('installerwritezip', 'tool_wbinstaller');
             return false;
         }
         unset($filecontent);
         if (!file_exists($zipfilepath)) {
-            $this->feedback['error'][] = "The file does not exist: $zipfilepath";
+            $this->feedback['error'][] =
+              get_string('installerwritezip', 'tool_wbinstaller', $zipfilepath);
             return false;
         }
         if (!is_readable($zipfilepath)) {
-            $this->feedback['error'][] = "The file is not readable: $zipfilepath";
+            $this->feedback['error'][] =
+              get_string('installerfilenotreadable', 'tool_wbinstaller', $zipfilepath);
             return false;
         }
         $zip = new ZipArchive;
@@ -165,7 +170,8 @@ class wbCheck {
             $zip->extractTo($extractpath);
             $zip->close();
         } else {
-            $this->feedback['error'][] = "Failed to open the ZIP file.";
+            $this->feedback['error'][] =
+              get_string('installerfailopen', 'tool_wbinstaller');
         }
         return $extractpath;
     }
