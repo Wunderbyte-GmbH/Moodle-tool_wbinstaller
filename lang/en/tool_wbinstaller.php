@@ -43,3 +43,7 @@ $string['warning_description'] = 'Some errors were encountered during the instal
 $string['error'] = 'Installation aborted';
 $string['error_description'] = 'The installation was not successfull.';
 $string['exporttitle'] = 'Choose courses that you want to export.';
+
+// Settings.
+$string['apitoken'] = 'Github Api-Token';
+$string['apitokendesc'] = 'Insert your Github-Token to receive more detailed information about your plugins.';

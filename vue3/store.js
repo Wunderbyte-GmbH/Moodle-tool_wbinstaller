@@ -82,6 +82,15 @@ export function createAppStore() {
                 optionalplugins: payload.selectedOptionalPlugins,
               });
             },
+            async checkRecipe(context, payload) {
+              return await ajax('tool_wbinstaller_check_recipe',
+              {
+                userid: context.state.user,
+                contextid: context.state.contextid,
+                file: payload.uploadedFile,
+                filename: payload.filename,
+              });
+            },
             async getInstallProgress(context, payload) {
               return await ajax('tool_wbinstaller_get_install_progress',
               {

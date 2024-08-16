@@ -44,3 +44,7 @@ $string['error'] = 'Installation abgebrochen';
 $string['error_description'] = 'Die Installation war nicht erfolgreich.';
 $string['exporttitle'] = 'Wähle aus welche Kurse exportiert werden sollen.';
 
+// Settings.
+$string['apitoken'] = 'Github Api-Token';
+$string['apitokendesc'] = 'Gebe deinen Github-Token ein um mehr Information über die Plugins zu bekommen.';
+

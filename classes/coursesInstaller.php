@@ -57,11 +57,10 @@ class coursesInstaller extends wbInstaller {
      * @param string $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid) {
+    public function __construct($recipe, $dbid=null) {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
-        $this->errors = [];
         $this->matchingcourseids = [];
     }
 
@@ -87,14 +86,15 @@ class coursesInstaller extends wbInstaller {
         $courseshortname = $this->get_course_short_name($xml);
         $courseoriginalid = $this->get_course_og_id($xml);
         if (!$courseshortname || !$courseoriginalid) {
-            $this->errors['install'][] = 'Could not get the short name of course: ' . $coursefile;
+            $this->feedback[$coursefile]['error'][] = 'Could not get the short name of course: ' . $coursefile;
             return;
         }
         if ($this->course_exists($courseshortname)) {
-            $this->errors['skipped'][] = "Skipped: Course with short name '$courseshortname' already exists.";
+            $this->feedback[$coursefile]['warning'][] = "Skipped: Course with short name '$courseshortname' already exists.";
             return;
         }
         $this->restore_course($coursefile, $courseoriginalid);
+        $this->feedback[$coursefile]['success'][] = "Installed successfully the course: " . $coursefile;
     }
 
     /**
@@ -149,7 +149,7 @@ class coursesInstaller extends wbInstaller {
         }
 
         if (!$this->copy_directory($coursefile, $destination)) {
-            $this->errors['move'][] = 'Failed to copy extracted files to the Moodle backup directory.';
+            $this->feedback[$coursefile]['error'][] = 'Failed to copy extracted files to the Moodle backup directory.';
             return;
         }
         $rc = new restore_controller(
@@ -162,7 +162,7 @@ class coursesInstaller extends wbInstaller {
         );
 
         if (!$rc->execute_precheck()) {
-            $this->errors['precheck'] = "Precheck failed for course restore: '$coursefile'";
+            $this->feedback[$coursefile]['error'][] = "Precheck failed for course restore: '$coursefile'";
             return;
         }
         $rc->execute_plan();

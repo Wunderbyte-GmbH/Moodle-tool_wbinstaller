@@ -44,11 +44,10 @@ class questionsInstaller extends wbInstaller {
      * @param string $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid) {
+    public function __construct($recipe, $dbid=null) {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
-        $this->errors = [];
     }
     /**
      * Exceute the installer.
@@ -60,11 +59,22 @@ class questionsInstaller extends wbInstaller {
             try {
                 $qformat = $this->create_qformat($questionfile, 984);
                 $qformat->importprocess();
+                $this->feedback['needed'][basename($questionfile)]['success'][] = $questionfile;
             } catch (Exception $e) {
-                $this->errors[$questionfile] = $e;
+                $this->feedback['needed'][basename($questionfile)]['error'][] = $e;
             }
         }
         return 1;
+    }
+
+    /**
+     * Exceute the installer.
+     * @return array
+     */
+    public function check() {
+        foreach (glob("$this->recipe/*") as $questionfile) {
+            $this->feedback['needed'][basename($questionfile)]['success'][] = 'Found the question file';
+        }
     }
 
     /**
@@ -97,8 +107,6 @@ class questionsInstaller extends wbInstaller {
         $qformat->setContexttofile(1);
         $qformat->set_display_progress(false);
         $qformat->setFilename($filename);
-
-
         return $qformat;
     }
 }

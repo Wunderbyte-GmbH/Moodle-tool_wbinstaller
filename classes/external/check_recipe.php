@@ -33,10 +33,11 @@ use external_api;
 use external_function_parameters;
 use external_value;
 use external_single_structure;
+use tool_wbinstaller\wbCheck;
 use tool_wbinstaller\wbInstaller;
 
 defined('MOODLE_INTERNAL') || die();
-
+global $CFG;
 require_once($CFG->libdir . '/externallib.php');
 
 /**
@@ -47,7 +48,7 @@ require_once($CFG->libdir . '/externallib.php');
  * @copyright  2023 Wunderbyte GmbH
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class install_recipe extends external_api {
+class check_recipe extends external_api {
 
     /**
      * Describes the parameters for get_next_question webservice.
@@ -60,7 +61,6 @@ class install_recipe extends external_api {
             'contextid'  => new external_value(PARAM_INT, 'contextid', VALUE_REQUIRED),
             'file'  => new external_value(PARAM_RAW, 'file', VALUE_REQUIRED),
             'filename'  => new external_value(PARAM_TEXT, 'file name', VALUE_REQUIRED),
-            'optionalplugins'  => new external_value(PARAM_TEXT, 'optional plugins', VALUE_REQUIRED),
             ]
         );
     }
@@ -79,18 +79,13 @@ class install_recipe extends external_api {
         $contextid,
         $file,
         $filename,
-        $optionalplugins
     ): array {
         require_login();
-
         $context = context::instance_by_id($contextid);
         require_capability('tool/wbinstaller:caninstall', $context);
-        $wbinstaller = new wbInstaller($file, $filename, $optionalplugins);
-        $response = $wbinstaller->execute();
-        return [
-            'feedback' => json_encode($response['feedback']),
-            'status' => $response['status']
-        ];
+        $wbcheck = new wbCheck($file, $filename);
+        $response = $wbcheck->execute();
+        return ['feedback' => json_encode($response)];
     }
 
     /**
@@ -100,8 +95,7 @@ class install_recipe extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'feedback' => new external_value(PARAM_RAW, 'Feedback message'),
-            'status' => new external_value(PARAM_INT, 'Feedback status')
+            'feedback' => new external_value(PARAM_RAW, 'Feedback message')
         ]);
     }
 }

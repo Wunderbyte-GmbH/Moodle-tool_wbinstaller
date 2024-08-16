@@ -65,11 +65,10 @@ class pluginsInstaller extends wbInstaller {
      * @param string $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid, $optionalplugins) {
+    public function __construct($recipe, $dbid=null, $optionalplugins=null) {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
-        $this->errors = [];
         $this->optionalplugins = $optionalplugins;
     }
 
@@ -85,13 +84,149 @@ class pluginsInstaller extends wbInstaller {
         $jsonstring = file_get_contents($this->recipe . '.json');
         $jsonarray = json_decode($jsonstring, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->errors[] = 'Error decoding JSON: ' . json_last_error_msg();
+            $this->feedback['plugins']['error'][] = 'Error decoding JSON: ' . json_last_error_msg();
+            $this->set_status(2);
         }
-        $additionalplugins = array_intersect($jsonarray['optional'], $this->optionalplugins);
-        $jsonarray['needed'] = array_merge($jsonarray['needed'], $additionalplugins);
-        $installable = $this->download_install_plugins_testing($jsonarray['needed']);
+        require_sesskey();
+        $installer = tool_installaddon_installer::instance();
+        $installable = [];
+        if (isset($jsonarray)) {
+            if (!is_dir($this->recipe)) {
+                mkdir($this->recipe, 0777, true);
+            }
+            foreach ($jsonarray as $type => $plugins) {
+                foreach ($plugins as $gitzipurl) {
+                    if (
+                      $type != 'optional' ||
+                      in_array($gitzipurl, $this->optionalplugins)
+                    ) {
+                        $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer);
+                    }
+                }
+            }
+        }
         $this->manual_install_plugins($installable);
-        return $installable;
+        return 1;
+    }
+
+    /**
+     * Exceute the installer.
+     * @param array $jsonarray
+     * @return mixed
+     */
+    public function download_install_plugins_testing($gitzipurl, $type, $installer) {
+        $zipfile = $this->recipe . '/' . basename($gitzipurl);
+        if (download_file_content($gitzipurl, null, null, true, 300, 20, true, $zipfile)) {
+            $component = $installer->detect_plugin_component($zipfile);
+            return (object)[
+                'component' => $component, // Will be detected during the installation process.
+                'zipfilepath' => $zipfile,
+                'url' => $gitzipurl,
+                'type' => $type,
+            ];
+        } else {
+            $this->feedback[$type][$gitzipurl]['error'][] = get_string('filedownloadfailed', 'tool_wbinstaller', $gitzipurl);
+            $this->set_status(2);
+        }
+    }
+    /**
+     * Exceute the installer.
+     * @return array
+     */
+    public function check() {
+        $jsonstring = file_get_contents($this->recipe . '.json');
+        $jsonarray = json_decode($jsonstring, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->feedback['plugins']['error'][] = 'Error decoding JSON: ' . json_last_error_msg();
+            $this->set_status(2);
+        }
+        foreach ($jsonarray as $type => $plugins) {
+            foreach ($plugins as $gitzipurl) {
+                $this->check_plugin_compability($gitzipurl, $type);
+            }
+        }
+    }
+
+    /**
+     * Exceute the installer.
+     * @param array $installable
+     */
+    public function check_plugin_compability($gitzipurl, $type) {
+        $plugincontent = $this->get_github_file_content($gitzipurl);
+        if ($plugincontent) {
+            $plugin = $this->parse_version_file($plugincontent);
+            if (isset($plugin['component'])) {
+                $installedversion = $this->is_component_installed($plugin['component']);
+                if ($installedversion) {
+                    $this->feedback[$type][$gitzipurl]['warning'][] =
+                      "Component '{$plugin['component']}' is already installed with version $installedversion.";
+                    $this->set_status(1);
+
+                } else {
+                    $this->feedback[$type][$gitzipurl]['success'][] = "Component '{$plugin['component']}' is not installed.";
+                }
+            } else {
+                $this->feedback[$type][$gitzipurl]['error'][] = "Failed to retrieve component information.";
+                $this->set_status(2);
+            }
+        } else {
+            $this->feedback[$type][$gitzipurl]['error'][] = "Failed to fetch the version.php content from the repository.";
+            $this->set_status(2);
+        }
+        return 1;
+    }
+
+    public function get_github_file_content($url) {
+        $urlparts = explode('/', parse_url($url, PHP_URL_PATH));
+        $owner = $urlparts[1];
+        $repo = $urlparts[2];
+        $branchtag = null;
+        if ($urlparts[5] == 'tags') {
+            $branchtag = "?ref=refs/tags/" . str_replace('.zip', '', $urlparts[6]);
+        } else {
+            $branchtag = "?ref=" . str_replace('.zip', '', $urlparts[6]);
+        }
+        $apiurl = "https://api.github.com/repos/" . $owner . "/" . $repo . "/contents/version.php" . $branchtag;
+        $token = null;
+        $apitoken = get_config('tool_wbinstaller', 'apitoken');
+        if ($apitoken) {
+            $token = 'token ' . $apitoken;
+        }
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $apiurl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'User-Agent: PHP-cURL-Request',
+            'Authorization: ' . $token
+        ]);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $data = json_decode($response, true);
+        if (isset($data['content'])) {
+            return base64_decode($data['content']);
+        }
+        return null;
+    }
+
+    public function parse_version_file($content) {
+        $plugin = [];
+        if (preg_match('/\$plugin->component\s*=\s*[\'"]([^\'"]+)[\'"]\s*;/', $content, $matches)) {
+            $plugin['component'] = $matches[1];
+        }
+        if (preg_match('/\$plugin->version\s*=\s*([0-9]+)\s*;/', $content, $matches)) {
+            $plugin['version'] = $matches[1];
+        }
+        return $plugin;
+    }
+
+    public function is_component_installed($componentname) {
+        global $DB;
+        $installedplugin = $DB->get_record('config_plugins', ['plugin' => $componentname, 'name' => 'version']);
+        if ($installedplugin) {
+            return $installedplugin->value;
+        }
+        return false;
     }
 
     /**
@@ -107,7 +242,7 @@ class pluginsInstaller extends wbInstaller {
                 );
                 ob_end_clean();
             } catch (Exception $e) {
-                $this->errors[] = 'Plugin installation error: ' . $e->getMessage();
+                $this->feedback['plugins']['error'][] = 'Plugin installation error: ' . $e->getMessage();
             }
         }
     }
@@ -122,35 +257,26 @@ class pluginsInstaller extends wbInstaller {
             foreach ($installable as $plugin) {
                 $zipfile = $plugin->zipfilepath;
                 $component = $plugin->component;
-
-                // Determine the target directory for the plugin.
                 list($type, $name) = explode('_', $component, 2);
                 if ($type == 'tool') {
                     $type = "admin/tool";
                 }
                 $targetdir = $CFG->dirroot . "/$type";
-
-                // Create the target directory if it doesn't exist.
                 if (!is_dir($targetdir)) {
                     mkdir($targetdir, 0777, true);
                 }
-
-                // Extract the ZIP file to the target directory.
                 $zip = new \ZipArchive();
                 if ($zip->open($zipfile) === true) {
                     $zip->extractTo($targetdir);
                     $zip->close();
                 } else {
-                    $this->errors[] = "Failed to extract $zipfile";
+                    $this->feedback[$plugin->type][$plugin->url]['error'][] = "Failed to extract $plugin->component";
+                    $this->set_status(2);
                     continue;
                 }
-
-                // Clean up the ZIP file.
+                $this->feedback[$plugin->type][$plugin->url]['success'][] = "Successfully installed $plugin->component";
                 unlink($zipfile);
             }
-
-            // Set up the upgrade environment.
-
             manager::write_close();
             rebuild_course_cache(0, true);
             // Capture output.
@@ -162,34 +288,5 @@ class pluginsInstaller extends wbInstaller {
                 ob_end_clean();
             }
         }
-    }
-
-    /**
-     * Exceute the installer.
-     * @param array $jsonarray
-     * @return mixed
-     */
-    public function download_install_plugins_testing($jsonarray) {
-        require_sesskey();
-        $installer = tool_installaddon_installer::instance();
-        $installable = [];
-        if (isset($jsonarray)) {
-            if (!is_dir($this->recipe)) {
-                mkdir($this->recipe, 0777, true);
-            }
-            foreach ($jsonarray as $url) {
-                $zipfile = $this->recipe . '/' . basename($url);
-                if (download_file_content($url, null, null, true, 300, 20, true, $zipfile)) {
-                    $component = $installer->detect_plugin_component($zipfile);
-                    $installable[] = (object)[
-                        'component' => $component, // Will be detected during the installation process.
-                        'zipfilepath' => $zipfile,
-                    ];
-                } else {
-                    $this->errors[] = get_string('filedownloadfailed', 'tool_wbinstaller', $url);
-                }
-            }
-        }
-        return $installable;
     }
 }

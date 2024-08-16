@@ -23,44 +23,61 @@
  */ -->
 
  <template>
-  <div class="container mt-4">
+  <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
     <div class="form-group">
       <label for="zipFileUpload">Choose Recipe File</label>
       <input type="file" class="form-control-file" id="zipFileUpload" @change="handleFileUpload" accept=".zip" ref="fileInput"/>
     </div>
-    <transition name="fade" mode="out-in">
-      <div v-if="uploadedFileName" class="mt-4">
-        <div v-if="linkList.length || optionalLinkList.length">
+    <transition name="fade">
+      <div v-if="isInstalling" class="waiting-screen mt-4">
+        <div class="spinner"></div>
+        <p>Please wait while the installation is in progress...</p>
+      </div>
+    </transition>
+    <transition name="fade">
+      <div v-if="uploadedFileName && Object.values(feedback).length > 0" class="mt-4">
+        <div v-if="feedback.plugins">
           <h3>Plugins of the recipe</h3>
-          <div v-if="linkList.length">
+          <div v-if="feedback.plugins.needed">
             <ul class="list-group">
               <li class="list-group-item">
                 <b>
                   Mandatory plugins in the ZIP:
                 </b>
                 <ul>
-                  <li v-for="link in linkList" :key="link" style="margin-left: 20px; list-style-type: disc;">
-                    {{ link }}
+                  <li v-for="(message, key) in feedback.plugins.needed" :key="key" style="margin-left: 20px; list-style-type: disc;">
+                    {{ key }}
+                    <PluginFeedback :message/>
                   </li>
                 </ul>
               </li>
             </ul>
           </div>
-          <div v-if="optionalLinkList.length">
+          <div v-if="feedback.plugins.optional">
             <ul class="list-group">
               <li class="list-group-item">
                 <b>
                   Optional plugins in the ZIP:
                 </b>
                 <ul>
-                  <li v-for="link in optionalLinkList" :key="link" style="margin-left: 20px; list-style-type: none;">
-                    <input type="checkbox" v-model="checkedOptionalPlugins" :value="link" />
-                    {{ link }}
+                  <li v-for="(message, key) in feedback.plugins.optional" :key="key" style="margin-left: 20px; list-style-type: none;">
+                    <input type="checkbox" v-model="checkedOptionalPlugins" :value="key" />
+                    {{ key }}
+                    <PluginFeedback :message/>
                   </li>
                 </ul>
               </li>
             </ul>
           </div>
+        </div>
+        <div v-if="feedback.customfield" class="mt-4">
+          <h3>Customfield in the ZIP:</h3>
+          <ul class="list-group">
+            <li class="list-group-item" v-for="(message, key) in feedback.customfield.needed" :key="key">
+              Category: {{ key }}
+              <PluginFeedback :message/>
+            </li>
+          </ul>
         </div>
         <div v-if="courseList.length" class="mt-4">
           <h3>Courses in the ZIP:</h3>
@@ -68,16 +85,22 @@
             <li class="list-group-item" v-for="course in courseList" :key="course">{{ course }}</li>
           </ul>
         </div>
-        <div v-if="simulationList.length" class="mt-4">
+        <div v-if="feedback.simulations" class="mt-4">
           <h3>Simulations in the ZIP:</h3>
           <ul class="list-group">
-            <li class="list-group-item" v-for="simulation in simulationList" :key="simulation">{{ simulation }}</li>
+            <li class="list-group-item" v-for="(message, key) in feedback.simulations.needed" :key="key">
+              {{ key }}
+              <PluginFeedback :message/>
+            </li>
           </ul>
         </div>
-        <div v-if="questionList.length" class="mt-4">
+        <div v-if="feedback.questions" class="mt-4">
           <h3>Questions in the ZIP:</h3>
           <ul class="list-group">
-            <li class="list-group-item" v-for="question in questionList" :key="question">{{ question }}</li>
+            <li class="list-group-item" v-for="(message, key) in feedback.questions.needed" :key="key">
+              {{ key }}
+              <PluginFeedback :message/>
+            </li>
           </ul>
         </div>
         <button
@@ -89,29 +112,34 @@
         </button>
       </div>
     </transition>
-    <div v-if="isInstalling" class="mt-4">
-      <h3>Total Progress:</h3>
-      <progress :value="totalProgress" max="100"></progress>
-      <h3>Current Task Progress:</h3>
-      <progress :value="taskProgress" max="100"></progress>
-    </div>
+    <transition name="fade">
+      <div v-if="!uploadedFileName && Object.values(feedback).length > 0" class="mt-4">
+        <FeedbackReport :feedback/>
+      </div>
+    </transition>
+    <!-- <div v-if="isInstalling" class="mt-4">
+      <div v-if="isInstalling" class="mt-4">
+        <h3>Total Progress:</h3>
+        <progress :value="totalProgress" max="100"></progress>
+        <h3>Current Task Progress:</h3>
+        <progress :value="taskProgress" max="100"></progress>
+      </div>
+    </div> -->
+
   </div>
 </template>
 
 <script setup>
 import { ref, onUnmounted } from 'vue';
-import JSZip from 'jszip';
 import { useStore } from 'vuex';
 import { notify } from "@kyvg/vue3-notification"
+import PluginFeedback from '../feedback/PluginFeedback.vue';
+import FeedbackReport from '../feedback/FeedbackReport.vue';
 
 // Reactive state for the list of links and courses
 const store = useStore();
-const linkList = ref([]);
-const optionalLinkList = ref([]);
 const courseList = ref([]);
-const simulationList = ref([]);
-const questionList = ref([]);
-const errors = ref([]);
+const feedback = ref([]);
 const checkedOptionalPlugins = ref([]);
 let uploadedFile = null;
 let uploadedFileName = ref('');
@@ -124,6 +152,7 @@ let progressInterval = null;
 
 const installRecipe = async () => {
   if (uploadedFile) {
+    feedback.value = []
     isInstalling.value = true;
     totalProgress.value = 0;
     taskProgress.value = 0;
@@ -131,24 +160,31 @@ const installRecipe = async () => {
     try {
       const base64File = await convertFileToBase64(uploadedFile);
       const selectedPlugins = JSON.stringify(checkedOptionalPlugins.value);
-      errors.value = await store.dispatch('installRecipe',
+      const response = await store.dispatch('installRecipe',
         {
           uploadedFile: base64File,
           filename: uploadedFileName.value,
           selectedOptionalPlugins: selectedPlugins
         }
       );
-      if (errors.value.errors.every(error => error === '')) {
+      feedback.value = JSON.parse(response.feedback)
+      if (response.status == 0) {
         notify({
           title: store.state.strings.success,
           text: store.state.strings.success_description,
           type: 'success'
         });
-      } else {
+      } else if (response.status == 1) {
         notify({
           title: store.state.strings.warning,
           text: store.state.strings.warning_description,
           type: 'warn'
+        });
+      } else if (response.status == 2) {
+        notify({
+          title: store.state.strings.error,
+          text: store.state.strings.error_description,
+          type: 'error'
         });
       }
     } catch (error) {
@@ -178,6 +214,32 @@ const convertFileToBase64 = (file) => {
   });
 };
 
+// Function to handle file upload
+const handleFileUpload = async (event) => {
+  feedback.value = []
+  isInstalling.value = true;
+  uploadedFile = event.target.files[0];
+  if (uploadedFile && uploadedFile.name.endsWith('.zip')) {
+    uploadedFileName.value = uploadedFile.name;
+    try {
+      const base64File = await convertFileToBase64(uploadedFile);
+      const response = await store.dispatch('checkRecipe',
+        {
+          uploadedFile: base64File,
+          filename: uploadedFileName.value,
+        }
+      );
+
+      feedback.value = JSON.parse(response.feedback)
+    } catch (error) {
+      console.error('Error reading ZIP file:', error);
+    }
+  } else {
+    uploadedFileName.value = '';
+  }
+  isInstalling.value = false;
+};
+
 const startProgressPolling = () => {
   //progressInterval = setInterval(getProgress, 100);
 };
@@ -201,48 +263,6 @@ const getProgress = async () => {
   }
 };
 
-// Function to handle file upload
-const handleFileUpload = async (event) => {
-  uploadedFile = event.target.files[0];
-  if (uploadedFile && uploadedFile.name.endsWith('.zip')) {
-    uploadedFileName.value = uploadedFile.name;
-    try {
-      const zip = new JSZip();
-      const content = await zip.loadAsync(uploadedFile);
-      const rootFolder = Object.keys(content.files).filter(file => content.files[file].dir)[0];
-
-      const pluginJsonFile = content.file(`${rootFolder}plugins.json`);
-      if (pluginJsonFile) {
-        const pluginJsonData = await pluginJsonFile.async("text");
-        const pluginData = JSON.parse(pluginJsonData);
-        linkList.value = pluginData.needed || [];
-        optionalLinkList.value = pluginData.optional || [];
-
-      }
-
-      // Extract first level course files with .mbz extension
-      const courseFolders = Object.keys(content.files)
-        .filter(fileName => fileName.startsWith(`${rootFolder}courses/`) && content.files[fileName].dir && fileName.endsWith('.mbz/'))
-        .map(fileName => fileName.replace(`${rootFolder}courses/`, ''));
-      courseList.value = courseFolders;
-
-      const simulationFiles = Object.keys(content.files)
-        .filter(fileName => fileName.startsWith(`${rootFolder}simulations/`) && fileName.endsWith('.csv'))
-        .map(fileName => fileName.replace(`${rootFolder}simulations/`, ''));
-      simulationList.value = simulationFiles;
-
-      const questionFiles = Object.keys(content.files)
-        .filter(fileName => fileName.startsWith(`${rootFolder}questions/`) && fileName.endsWith('.xml'))
-        .map(fileName => fileName.replace(`${rootFolder}questions/`, ''));
-        questionList.value = questionFiles;
-
-    } catch (error) {
-      console.error('Error reading ZIP file:', error);
-    }
-  } else {
-    uploadedFileName.value = '';
-  }
-};
 onUnmounted(() => {
   stopProgressPolling();
 });
@@ -250,6 +270,33 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.waiting-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.waiting-screen p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: #333;
+}
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.5s;
 }
@@ -259,5 +306,8 @@ onUnmounted(() => {
 
 .list-group{
   margin: 1rem;
+}
+.loading-cursor {
+  cursor: progress;
 }
 </style>

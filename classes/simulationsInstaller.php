@@ -27,6 +27,7 @@ namespace tool_wbinstaller;
 
 use Exception;
 use local_catquiz\importer\testitemimporter;
+use mod_booking\importer\bookingoptionsimporter;
 
 /**
  * Class tool_wbinstaller
@@ -37,30 +38,56 @@ use local_catquiz\importer\testitemimporter;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class simulationsInstaller extends wbInstaller {
+
+    /** @var object Matching the course ids from the old => new. */
+    public $installmatcher;
+
     /**
      * Entities constructor.
      * @param string $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid) {
+    public function __construct($recipe, $dbid=null) {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->installmatcher = json_decode(file_get_contents($this->recipe . '/wbinstaller_match.json'));
     }
     /**
      * Exceute the installer.
      * @return array
      */
     public function execute() {
-        return 1;
-        foreach (glob("$this->recipe/*") as $itemparamsfile) {
+        foreach (glob("$this->recipe/*.csv") as $itemparamsfile) {
             try {
                 $this->import_itemparams($itemparamsfile);
             } catch (Exception $e) {
-                $this->errors[$itemparamsfile] = $e;
+                $this->feedback['needed'][basename($itemparamsfile)]['error'][] = $e;
             }
         }
         return 1;
+    }
+
+     /**
+      * Exceute the installer.
+      * @return array
+      */
+    public function check() {
+        foreach (glob("$this->recipe/*.csv") as $itemparamsfile) {
+            $this->feedback['needed'][basename($itemparamsfile)]['success'][] = 'Found the simulation file';
+            $filenamewithoutextension = pathinfo($itemparamsfile, PATHINFO_FILENAME);
+
+            if (
+                isset($this->installmatcher->$filenamewithoutextension) &&
+                class_exists($this->installmatcher->$filenamewithoutextension->name)
+              ) {
+                $this->feedback['needed'][basename($itemparamsfile)]['success'][] = 'Found simulation installer ' .
+                  $this->installmatcher->$filenamewithoutextension->name;
+            } else {
+                $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
+                  'No installer was found. The file cannot be installed!';
+            }
+        }
     }
 
      /**
@@ -72,19 +99,31 @@ class simulationsInstaller extends wbInstaller {
       */
     private function import_itemparams($filename) {
         global $DB;
+        $filenamewithoutextension = pathinfo($filename, PATHINFO_FILENAME);
         $questions = $DB->get_records('question');
         if (! $questions) {
-            exit('No questions were imported');
+            $this->feedback['needed'][$filename]['error'][] = 'No questions found';
+        } else if (
+            isset($this->installmatcher->$filenamewithoutextension) &&
+            class_exists($this->installmatcher->$filenamewithoutextension->name)
+        ) {
+            $installeroptions = $this->installmatcher->$filenamewithoutextension;
+            $importerclass = $installeroptions->name;
+                $importer = new $importerclass();
+                $content = file_get_contents($filename);
+                $importer->execute_testitems_csv_import(
+                    (object) [
+                        'delimiter_name' => $installeroptions->delimiter_name ?? 'semicolon',
+                        'encoding' => $installeroptions->encoding ?? null,
+                        'dateparseformat' => $installeroptions->dateparseformat ?? null,
+                    ],
+                    $content
+                );
+                $this->feedback['needed'][basename($filename)]['success'][] =
+                  'The given installer ' . $installeroptions->name . ' was found and used';
+        } else {
+            $this->feedback['needed'][basename($filename)]['error'][] =
+              'No installer was found. The file was not installed!';
         }
-        $importer = new testitemimporter();
-        $content = file_get_contents($filename);
-        $importer->execute_testitems_csv_import(
-                (object) [
-                    'delimiter_name' => 'semicolon',
-                    'encoding' => null,
-                    'dateparseformat' => null,
-                ],
-                $content
-            );
     }
 }

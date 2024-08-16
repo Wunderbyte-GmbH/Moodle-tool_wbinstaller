@@ -54,4 +54,11 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
     ],
+    'tool_wbinstaller_check_recipe' => [
+        'classname' => 'tool_wbinstaller\external\check_recipe',
+        'classpath' => '',
+        'description' => 'Install uploaded recipe.',
+        'type' => 'write',
+        'ajax' => true,
+    ],
 ];

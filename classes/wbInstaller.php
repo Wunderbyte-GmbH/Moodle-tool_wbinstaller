@@ -48,21 +48,34 @@ class wbInstaller {
     /** @var int Install progress. */
     public $progress;
     /** @var array Install errors. */
-    public $errors;
+    public $feedback;
     /** @var array Install errors. */
     public $optionalplugins;
+    /** @var int Install status. */
+    public $status;
+    /** @var array Install status. */
+    public $installorder;
+
 
     /**
      * Entities constructor.
      * @param string $recipe
      * @param string $filename
      */
-    public function __construct($recipe, $filename, $optionalplugins) {
+    public function __construct($recipe, $filename=null, $optionalplugins=null) {
         $this->filename = $filename;
         $this->recipe = $recipe;
         $this->progress = 0;
-        $this->errors = [];
+        $this->feedback = [];
         $this->optionalplugins = json_decode($optionalplugins);
+        $this->status = 0;
+        $this->installorder = [
+          'plugins.json',
+          'customfield.json',
+          'courses',
+          'questions',
+          'simulations',
+        ];
     }
 
     /**
@@ -83,14 +96,15 @@ class wbInstaller {
         raise_memory_limit(MEMORY_EXTRA);
         $extracterrors = $this->extract_save_zip_file();
         if ($extracterrors) {
-            $this->errors['wbinstaller'] = $extracterrors;
-            return $this->errors;
+            $this->feedback['wbinstaller']['error'][] = $extracterrors;
+            $this->set_status(2);
+            return $this->feedback;
         }
         $this->save_install_progress();
         $extractpath = __DIR__ . '/zip/extracted/' . str_replace('.zip', '', $this->filename);
         $files = scandir($extractpath);
-        foreach ($files as $file) {
-            if ($file[0] !== '.') {
+        foreach ($this->installorder as $file) {
+            if (in_array($file, $files)) {
                 $parts = explode('.', $file);
                 $installerclass = __NAMESPACE__ . '\\' . $parts[0] . 'Installer';
                 if (class_exists($installerclass)) {
@@ -107,7 +121,8 @@ class wbInstaller {
                         );
                     }
                     $instance->execute();
-                    $this->errors[$parts[0]] = $instance->get_errors() ? implode(',', $instance->get_errors()) : '';
+                    $this->feedback[$parts[0]] = $instance->get_feedback();
+                    $this->set_status($instance->get_status());
                 } else {
                     $notfoundinstaller[] = $parts[0];
                 }
@@ -117,7 +132,10 @@ class wbInstaller {
         $this->clean_after_installment();
         $this->update_install_progress('progress', 1);
         reduce_memory_limit(MEMORY_STANDARD);
-        return $this->errors;
+        return [
+            'feedback' => $this->feedback,
+            'status' => $this->status,
+        ];
     }
 
     /**
@@ -149,42 +167,39 @@ class wbInstaller {
      */
     public function extract_save_zip_file() {
         $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
-        // Log the base64 string length for debugging
-        $testing = 'Base64 string length: ' . strlen($base64string);
-
-        // Validate the base64 string
         if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
-            return ["The base64 string is not valid."];
+            $this->feedback['error'][] = ["The base64 string is not valid."];
+            $this->set_status(2);
+            return false;
         }
         $filecontent = base64_decode($base64string, true);
 
-        // Check if the decoded content is valid.
         if ($filecontent === false || empty($filecontent)) {
-            return "Failed to decode base64 content or the content is empty.";
+            $this->feedback['error'][] = "Failed to decode base64 content or the content is empty.";
+            $this->set_status(2);
+            return false;
         }
-        // Define the path within the plugin's directory.
         $pluginpath = __DIR__ . '/zip/';
         $zipfilepath = $pluginpath . $this->filename;
-
-        // Ensure the plugin directory exists.
         if (!is_dir($pluginpath)) {
             mkdir($pluginpath, 0777, true);
         }
-
-        // Save the decoded data to a file within the plugin directory.
         if (file_put_contents($zipfilepath, $filecontent) === false) {
-            return "Failed to write the ZIP file to the plugin directory.";
+            $this->feedback['error'][] = "Failed to write the ZIP file to the plugin directory.";
+            $this->set_status(2);
+            return false;
         }
         unset($filecontent);
-        // Verify the file path and permissions.
         if (!file_exists($zipfilepath)) {
-            return "The file does not exist: $zipfilepath";
+            $this->feedback['error'][] = "The file does not exist: $zipfilepath";
+            $this->set_status(2);
+            return false;
         }
-
         if (!is_readable($zipfilepath)) {
-            return "The file is not readable: $zipfilepath";
+            $this->feedback['error'][] = "The file is not readable: $zipfilepath";
+            $this->set_status(2);
+            return false;
         }
-        // Initialize the ZipArchive class.
         $zip = new ZipArchive;
         if ($zip->open($zipfilepath) === true) {
             $extractpath = $pluginpath . 'extracted/';
@@ -201,7 +216,7 @@ class wbInstaller {
     }
 
     /**
-     * Get all tests.
+     * Save progress DB.
      *
      * @return int
      */
@@ -221,7 +236,7 @@ class wbInstaller {
     }
 
     /**
-     * Get all tests.
+     * Update install progress.
      *
      * @param string $progresstype
      * @param bool|null $status
@@ -265,8 +280,25 @@ class wbInstaller {
      * Returns all errors.
      * @return array
      */
-    public function get_errors() {
-        return $this->errors;
+    public function get_feedback() {
+        return $this->feedback;
+    }
+
+    /**
+     * Returns all errors.
+     * @return array
+     */
+    public function set_status($status) {
+        if ($this->status < $status) {
+            $this->status = $status;
+        }
+    }
+    /**
+     * Returns all errors.
+     * @return array
+     */
+    public function get_status() {
+        $this->status;
     }
 
 }
