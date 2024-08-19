@@ -26,8 +26,6 @@
 namespace tool_wbinstaller;
 
 use Exception;
-use local_catquiz\importer\testitemimporter;
-use mod_booking\importer\bookingoptionsimporter;
 
 /**
  * Class tool_wbinstaller
@@ -77,7 +75,6 @@ class simulationsInstaller extends wbInstaller {
             $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
               get_string('simulationfilefound', 'tool_wbinstaller');
             $filenamewithoutextension = pathinfo($itemparamsfile, PATHINFO_FILENAME);
-
             if (
                 isset($this->installmatcher->$filenamewithoutextension) &&
                 class_exists($this->installmatcher->$filenamewithoutextension->name)

@@ -181,6 +181,8 @@ const installRecipe = async () => {
         }
       );
       feedback.value = JSON.parse(response.feedback)
+      console.log('feedback.value')
+      console.log(feedback.value)
       if (response.status == 0) {
         notify({
           title: store.state.strings.success,

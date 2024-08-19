@@ -25,13 +25,6 @@
 
 namespace tool_wbinstaller;
 
-use core_question\local\bank\question_edit_contexts;
-use local_catquiz\strategy_test;
-use context_course;
-use core_customfield\handler_test;
-use Exception;
-use stdClass;
-
 /**
  * Class tool_wbinstaller
  *
@@ -96,7 +89,10 @@ class customfieldInstaller extends wbInstaller {
      */
     public function upload_category($customfields) {
         $namespace = "\\core_customfield\\handler";
-        if (isset($customfields['namespace'])) {
+        if (
+            isset($customfields['namespace']) &&
+            class_exists($customfields['namespace'])
+        ) {
             $namespace = $customfields['namespace'];
         }
         $this->handler = $namespace::get_handler(
