@@ -78,7 +78,7 @@ class pluginsInstaller extends wbInstaller {
      * @return array
      */
     public function execute() {
-        global $PAGE;
+        global $PAGE, $DB;
         // Set the page context.
         $PAGE->set_context(context_system::instance());
 
@@ -108,6 +108,8 @@ class pluginsInstaller extends wbInstaller {
             }
         }
         $this->manual_install_plugins($installable);
+        $this->upgraderunning = $DB->get_field('config', 'value', ['name' => 'upgraderunning']);
+        $DB->set_field('config', 'value', '0', ['name' => 'upgraderunning']);
         return 1;
     }
 

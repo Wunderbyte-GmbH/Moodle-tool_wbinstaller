@@ -55,6 +55,8 @@ class wbInstaller {
     public $status;
     /** @var array Install status. */
     public $installorder;
+    /** @var int Upgrade time. */
+    public $upgraderunning;
 
 
     /**
@@ -70,12 +72,13 @@ class wbInstaller {
         $this->optionalplugins = json_decode($optionalplugins);
         $this->status = 0;
         $this->installorder = [
-          'courses',
           'plugins.json',
           'customfield.json',
+          'courses',
           'questions',
           'simulations',
         ];
+        $this->upgraderunning = 0;
     }
 
     /**
@@ -92,6 +95,7 @@ class wbInstaller {
      * @return array
      */
     public function execute() {
+        global $DB;
         $notfoundinstaller = [];
         raise_memory_limit(MEMORY_EXTRA);
         $extracterrors = $this->extract_save_zip_file();
@@ -121,16 +125,22 @@ class wbInstaller {
                         );
                     }
                     $instance->execute();
+                    if ($instance->upgraderunning != 0) {
+                        $this->upgraderunning = $instance->upgraderunning;
+                    }
                     $this->feedback[$parts[0]] = $instance->get_feedback();
                     $this->set_status($instance->get_status());
                 } else {
                     $notfoundinstaller[] = $parts[0];
                 }
-                //$this->update_install_progress('progress');
+                $this->update_install_progress('progress');
             }
         }
         $this->clean_after_installment();
-        //$this->update_install_progress('progress', 1);
+        if ($this->upgraderunning != 0) {
+            $DB->set_field('config', 'value', (string)$this->upgraderunning, ['name' => 'upgraderunning']);
+        }
+        $this->update_install_progress('progress', 1);
         reduce_memory_limit(MEMORY_STANDARD);
         return [
             'feedback' => $this->feedback,
