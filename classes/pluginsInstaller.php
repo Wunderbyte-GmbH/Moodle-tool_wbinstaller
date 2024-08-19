@@ -102,7 +102,10 @@ class pluginsInstaller extends wbInstaller {
                       $type != 'optional' ||
                       in_array($gitzipurl, $this->optionalplugins)
                     ) {
-                        $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer);
+                        $install = $this->check_plugin_compability($gitzipurl, $type, true);
+                        if ($install != 2) {
+                            $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer);
+                        }
                     }
                 }
             }
@@ -156,33 +159,61 @@ class pluginsInstaller extends wbInstaller {
      * Exceute the installer.
      * @param array $installable
      */
-    public function check_plugin_compability($gitzipurl, $type) {
+    public function check_plugin_compability($gitzipurl, $type, $execute = false) {
         $plugincontent = $this->get_github_file_content($gitzipurl);
         if ($plugincontent) {
             $plugin = $this->parse_version_file($plugincontent);
             if (isset($plugin['component'])) {
                 $installedversion = $this->is_component_installed($plugin['component']);
-                if ($installedversion) {
-                    $a = new stdClass();
-                    $a->name = $plugin['component'];
-                    $a->version = $installedversion;
-                    $this->feedback[$type][$gitzipurl]['warning'][] =
-                      get_string('pluginduplicate', 'tool_wbinstaller', $a);
-                    $this->set_status(1);
-
-                } else {
-                    $this->feedback[$type][$gitzipurl]['success'][] =
-                      get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
+                $a = new stdClass();
+                $a->name = $plugin['component'] ?? '';
+                $a->installedversion = (int)$installedversion ?? '';
+                $a->componentversion = (int)$plugin['version'] ?? '';
+                if ($a->installedversion == 0) {
+                    if ($execute) {
+                        $this->feedback[$type][$gitzipurl]['success'][] =
+                            get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
+                        return 0;
+                    } else {
+                        $this->feedback[$type][$gitzipurl]['success'][] =
+                          get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
+                    }
+                } else if ($a->installedversion > $a->componentversion) {
+                    if ($execute) {
+                        $this->feedback[$type][$gitzipurl]['warning'][] =
+                          get_string('pluginduplicate', 'tool_wbinstaller', $a);
+                        return 1;
+                    } else {
+                        $this->feedback[$type][$gitzipurl]['warning'][] =
+                          get_string('pluginduplicate', 'tool_wbinstaller', $a);
+                        $this->set_status(1);
+                    }
+                } else if ($a->installedversion <= $a->componentversion) {
+                    if ($execute) {
+                        $this->feedback[$type][$gitzipurl]['error'][] =
+                          get_string('pluginolder', 'tool_wbinstaller', $a);
+                        return 2;
+                    } else {
+                        $this->feedback[$type][$gitzipurl]['error'][] =
+                          get_string('pluginolder', 'tool_wbinstaller', $a);
+                        $this->set_status(2);
+                    }
                 }
             } else {
                 $this->feedback[$type][$gitzipurl]['error'][] =
                   get_string('pluginfailedinformation', 'tool_wbinstaller');
                 $this->set_status(2);
+                if ($execute) {
+                    return 2;
+                }
             }
         } else {
             $this->feedback[$type][$gitzipurl]['error'][] =
               get_string('pluginfailedinformation', 'tool_wbinstaller');
             $this->set_status(2);
+            if ($execute) {
+                return 2;
+            }
         }
         return 1;
     }
