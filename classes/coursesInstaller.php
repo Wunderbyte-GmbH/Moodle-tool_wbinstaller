@@ -75,6 +75,13 @@ class coursesInstaller extends wbInstaller {
         return '1';
     }
 
+    public function check() {
+        foreach (glob("$this->recipe/*.mbz") as $coursefile) {
+            $this->feedback['needed'][$coursefile]['success'][] =
+              "Found the file :" . $coursefile;
+        }
+    }
+
     /**
      * Instal a single course.
      * @param string $coursefile

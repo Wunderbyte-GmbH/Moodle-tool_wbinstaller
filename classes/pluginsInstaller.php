@@ -28,6 +28,7 @@ use moodle_url;
 use context_system;
 use core\session\manager;
 use Exception;
+use stdClass;
 use tool_installaddon_installer;
 
 /**
