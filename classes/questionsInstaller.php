@@ -55,7 +55,7 @@ class questionsInstaller extends wbInstaller {
     public function execute() {
         foreach (glob("$this->recipe/*") as $questionfile) {
             try {
-                $qformat = $this->create_qformat($questionfile, 984);
+                $qformat = $this->create_qformat($questionfile, 1);
                 $qformat->importprocess();
                 $this->feedback['needed'][basename($questionfile)]['success'][] = $questionfile;
             } catch (Exception $e) {
