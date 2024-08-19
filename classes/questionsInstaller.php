@@ -91,7 +91,6 @@ class questionsInstaller extends wbInstaller {
         require_once($CFG->libdir . '/questionlib.php');
         require_once($CFG->dirroot . '/question/format/xml/format.php');
         require_once($CFG->dirroot . '/question/format.php');
-        require_once($CFG->dirroot . '/local/catquiz/tests/lib.php');
 
         $qformat = new \qformat_xml();
         $qformat->setContexts((new question_edit_contexts(context_course::instance($courseid)))->all());
