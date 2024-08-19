@@ -95,7 +95,11 @@ class customfieldInstaller extends wbInstaller {
      * @return int
      */
     public function upload_category($customfields) {
-        $this->handler = \core_customfield\handler::get_handler(
+        $namespace = "\\core_customfield\\handler";
+        if (isset($customfields['namespace'])) {
+            $namespace = $customfields['namespace'];
+        }
+        $this->handler = $namespace::get_handler(
             $customfields['component'],
             $customfields['area']
         );
