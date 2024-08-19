@@ -70,9 +70,9 @@ class wbInstaller {
         $this->optionalplugins = json_decode($optionalplugins);
         $this->status = 0;
         $this->installorder = [
+          'courses',
           'plugins.json',
           'customfield.json',
-          'courses',
           'questions',
           'simulations',
         ];
@@ -126,11 +126,11 @@ class wbInstaller {
                 } else {
                     $notfoundinstaller[] = $parts[0];
                 }
-                $this->update_install_progress('progress');
+                //$this->update_install_progress('progress');
             }
         }
         $this->clean_after_installment();
-        $this->update_install_progress('progress', 1);
+        //$this->update_install_progress('progress', 1);
         reduce_memory_limit(MEMORY_STANDARD);
         return [
             'feedback' => $this->feedback,

@@ -121,7 +121,7 @@ class coursesInstaller extends wbInstaller {
      * @return string
      */
     private function get_course_og_id($xml) {
-        return (string)$xml->information->original_course_iud;
+        return (string)$xml->information->original_course_id;
     }
 
     /**
