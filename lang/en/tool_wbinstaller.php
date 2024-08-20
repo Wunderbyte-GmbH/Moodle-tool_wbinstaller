@@ -76,7 +76,7 @@ $string['installerfilenotfound'] = 'The file was not found: {$a}';
 $string['installerfilenotreadable'] = 'The file is not readable: {$a}';
 $string['installerfailopen'] = 'Failed to open the ZIP file.';
 
-// Vue strings
+// Vue strings.
 $string['vueexportselect'] = 'Export Selected';
 $string['vueexport'] = 'Export';
 $string['vueinstall'] = 'Install';
@@ -92,4 +92,3 @@ $string['vuechooserecipe'] = 'Choose Recipe File';
 $string['vuewarining'] = 'Warning: ';
 $string['vueerror'] = 'Error: ';
 $string['vuesuccess'] = 'Success: ';
-

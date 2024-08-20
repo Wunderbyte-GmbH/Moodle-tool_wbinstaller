@@ -72,6 +72,7 @@ class install_recipe extends external_api {
      * @param int $contextid
      * @param mixed $file
      * @param string $filename
+     * @param array $optionalplugins
      * @return bool
      */
     public static function execute(
@@ -89,7 +90,7 @@ class install_recipe extends external_api {
         $response = $wbinstaller->execute();
         return [
             'feedback' => json_encode($response['feedback']),
-            'status' => $response['status']
+            'status' => $response['status'],
         ];
     }
 
@@ -101,7 +102,7 @@ class install_recipe extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'feedback' => new external_value(PARAM_RAW, 'Feedback message'),
-            'status' => new external_value(PARAM_INT, 'Feedback status')
+            'status' => new external_value(PARAM_INT, 'Feedback status'),
         ]);
     }
 }

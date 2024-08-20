@@ -76,7 +76,7 @@ class get_exportable_courses extends external_api {
     ): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'userid' => $userid,
-            'contextid' => $contextid
+            'contextid' => $contextid,
         ]);
 
         require_login();
@@ -96,7 +96,7 @@ class get_exportable_courses extends external_api {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Course ID'),
-                'fullname' => new external_value(PARAM_TEXT, 'Course full name')
+                'fullname' => new external_value(PARAM_TEXT, 'Course full name'),
             ])
         );
     }

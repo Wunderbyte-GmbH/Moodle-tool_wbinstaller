@@ -132,13 +132,12 @@ class customfieldInstaller extends wbInstaller {
             'shortname' => $fieldset['shortname'],
             'name' => $fieldset['name'],
             'type' => $fieldset['type'],
-            'configdata' => $configdata
+            'configdata' => $configdata,
         ]);
     }
 
     /**
      * Exceute the installer check.
-     * @return array
      */
     public function check() {
         global $DB;

@@ -97,6 +97,7 @@ class wbCheck {
 
     /**
      * Extract and save the zipped file.
+     * @param string $extracted
      * @return string
      *
      */

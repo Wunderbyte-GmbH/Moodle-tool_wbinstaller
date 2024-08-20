@@ -83,7 +83,7 @@ class questionsInstaller extends wbInstaller {
      *
      * Create object qformat_xml for test.
      * @param string $filename with name for testing file.
-     * @param \stdClass $course
+     * @param int $courseid
      * @return \qformat_xml XML question format object.
      */
     private function create_qformat($filename, $courseid) {

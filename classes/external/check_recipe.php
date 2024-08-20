@@ -95,7 +95,7 @@ class check_recipe extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'feedback' => new external_value(PARAM_RAW, 'Feedback message')
+            'feedback' => new external_value(PARAM_RAW, 'Feedback message'),
         ]);
     }
 }

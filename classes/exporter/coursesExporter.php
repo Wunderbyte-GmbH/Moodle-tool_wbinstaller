@@ -57,7 +57,7 @@ class coursesExporter {
 
     /**
      * Get all tests.
-     * @param int $courseids
+     * @param int $courseid
      * @return array
      */
     public static function get_related_courses($courseid) {
@@ -73,7 +73,7 @@ class coursesExporter {
 
     /**
      * Get all tests.
-     * @param array $courseids
+     * @param array $records
      * @return array
      */
     public static function get_extracted_courses($records) {
@@ -89,11 +89,14 @@ class coursesExporter {
         return $extractedcourses;
     }
 
+    /**
+     * Get all tests.
+     * @param array $courseids
+     * @return array
+     */
     public static function download_course_backups($courseids) {
-        global $CFG, $DB;
+        global $CFG;
         $destinationdir = $CFG->dirroot . '/admin/tool/wbinstaller/download/';
-
-        // ensure the destination directory exists
         if (!is_dir($destinationdir)) {
             mkdir($destinationdir, 0777, true);
         }
@@ -101,11 +104,16 @@ class coursesExporter {
         foreach ($courseids as $courseid) {
             $backupfile = $destinationdir . "backup_course_" . $courseid . ".mbz";
             $cmd = "php " . $CFG->dirroot . "/admin/cli/backup.php --courseid=$courseid --destination=$backupfile";
-            // execute the CLI command
             exec($cmd, $output, $retval);
         }
     }
 
+    /**
+     * Get all tests.
+     * @param string $source
+     * @param string $dest
+     * @return bool
+     */
     public static function recursive_copy($source, $dest) {
         if (!is_dir($dest)) {
             mkdir($dest, 0777, true);

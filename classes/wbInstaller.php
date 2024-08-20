@@ -63,6 +63,7 @@ class wbInstaller {
      * Entities constructor.
      * @param string $recipe
      * @param string $filename
+     * @param array $optionalplugins
      */
     public function __construct($recipe, $filename=null, $optionalplugins=null) {
         $this->filename = $filename;
@@ -300,6 +301,7 @@ class wbInstaller {
 
     /**
      * Returns all errors.
+     * @param string $status
      * @return array
      */
     public function set_status($status) {

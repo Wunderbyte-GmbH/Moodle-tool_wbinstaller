@@ -65,6 +65,7 @@ class pluginsInstaller extends wbInstaller {
      * Entities constructor.
      * @param string $recipe
      * @param int $dbid
+     * @param array $optionalplugins
      */
     public function __construct($recipe, $dbid=null, $optionalplugins=null) {
         $this->dbid = $dbid;
@@ -75,7 +76,7 @@ class pluginsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @return array
+     * @return int
      */
     public function execute() {
         global $PAGE, $DB;
@@ -118,8 +119,9 @@ class pluginsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param array $jsonarray
-     * @return mixed
+     * @param string $gitzipurl
+     * @param string $type
+     * @param mixed $installer
      */
     public function download_install_plugins_testing($gitzipurl, $type, $installer) {
         $zipfile = $this->recipe . '/' . basename($gitzipurl);
@@ -138,7 +140,6 @@ class pluginsInstaller extends wbInstaller {
     }
     /**
      * Exceute the installer.
-     * @return array
      */
     public function check() {
         $jsonstring = file_get_contents($this->recipe . '.json');
@@ -157,7 +158,10 @@ class pluginsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param array $installable
+     * @param string $gitzipurl
+     * @param string $type
+     * @param bool $execute
+     * @return int
      */
     public function check_plugin_compability($gitzipurl, $type, $execute = false) {
         $plugincontent = $this->get_github_file_content($gitzipurl);
@@ -218,6 +222,11 @@ class pluginsInstaller extends wbInstaller {
         return 1;
     }
 
+    /**
+     * Exceute the installer.
+     * @param string $url
+     * @return string
+     */
     public function get_github_file_content($url) {
         $urlparts = explode('/', parse_url($url, PHP_URL_PATH));
         $owner = $urlparts[1];
@@ -251,6 +260,11 @@ class pluginsInstaller extends wbInstaller {
         return null;
     }
 
+    /**
+     * Exceute the installer.
+     * @param string $content
+     * @return array
+     */
     public function parse_version_file($content) {
         $plugin = [];
         if (preg_match('/\$plugin->component\s*=\s*[\'"]([^\'"]+)[\'"]\s*;/', $content, $matches)) {
@@ -262,6 +276,10 @@ class pluginsInstaller extends wbInstaller {
         return $plugin;
     }
 
+    /**
+     * Exceute the installer.
+     * @param string $componentname
+     */
     public function is_component_installed($componentname) {
         global $DB;
         $installedplugin = $DB->get_record('config_plugins', ['plugin' => $componentname, 'name' => 'version']);

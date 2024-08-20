@@ -81,7 +81,7 @@ class download_recipe extends external_api {
         $params = self::validate_parameters(self::execute_parameters(), [
             'userid' => $userid,
             'contextid' => $contextid,
-            'courseids' => $courseids
+            'courseids' => $courseids,
         ]);
 
         require_login();
@@ -101,7 +101,7 @@ class download_recipe extends external_api {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Course ID'),
-                'fullname' => new external_value(PARAM_TEXT, 'Course full name')
+                'fullname' => new external_value(PARAM_TEXT, 'Course full name'),
             ])
         );
     }
