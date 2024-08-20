@@ -79,7 +79,7 @@ class check_recipe extends external_api {
         $contextid,
         $file,
         $filename,
-    ): array {
+    ) {
         require_login();
         $context = context::instance_by_id($contextid);
         require_capability('tool/wbinstaller:caninstall', $context);
