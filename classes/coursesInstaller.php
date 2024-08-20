@@ -49,8 +49,8 @@ require_login();
  */
 class coursesInstaller extends wbInstaller {
 
-      /** @var array Matching the course ids from the old => new. */
-      public $matchingcourseids;
+    /** @var array Matching the course ids from the old => new. */
+    public $matchingcourseids;
 
     /**
      * Entities constructor.
@@ -97,17 +97,17 @@ class coursesInstaller extends wbInstaller {
         $courseshortname = $this->get_course_short_name($xml);
         $courseoriginalid = $this->get_course_og_id($xml);
         if (!$courseshortname || !$courseoriginalid) {
-            $this->feedback[$coursefile]['error'][] =
+            $this->feedback['needed'][$coursefile]['error'][] =
               get_string('coursesnoshortname', 'tool_wbinstaller', $coursefile);
             return;
         }
         if ($this->course_exists($courseshortname)) {
-            $this->feedback[$coursefile]['warning'][] =
+            $this->feedback['needed'][$coursefile]['warning'][] =
               get_string('coursesduplicateshortname', 'tool_wbinstaller', $coursefile);
             return;
         }
         $this->restore_course($coursefile, $courseoriginalid);
-        $this->feedback[$coursefile]['success'][] =
+        $this->feedback['needed'][$coursefile]['success'][] =
           get_string('coursessuccess', 'tool_wbinstaller', $coursefile);
     }
 
@@ -163,7 +163,7 @@ class coursesInstaller extends wbInstaller {
         }
 
         if (!$this->copy_directory($coursefile, $destination)) {
-            $this->feedback[$coursefile]['error'][] =
+            $this->feedback['needed'][$coursefile]['error'][] =
               get_string('coursesfailextract', 'tool_wbinstaller');
             return;
         }
@@ -177,7 +177,7 @@ class coursesInstaller extends wbInstaller {
         );
 
         if (!$rc->execute_precheck()) {
-            $this->feedback[$coursefile]['error'][] =
+            $this->feedback['needed'][$coursefile]['error'][] =
               get_string('coursesfailprecheck', 'tool_wbinstaller', $coursefile);
             return;
         }

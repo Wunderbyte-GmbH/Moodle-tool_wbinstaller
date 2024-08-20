@@ -82,7 +82,6 @@ class pluginsInstaller extends wbInstaller {
         global $PAGE, $DB;
         // Set the page context.
         $PAGE->set_context(context_system::instance());
-
         $jsonstring = file_get_contents($this->recipe . '.json');
         $jsonarray = json_decode($jsonstring, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -105,7 +104,7 @@ class pluginsInstaller extends wbInstaller {
                     ) {
                         $install = $this->check_plugin_compability($gitzipurl, $type, true);
                         if ($install != 2) {
-                            $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer);
+                            $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
                         }
                     }
                 }
@@ -123,8 +122,9 @@ class pluginsInstaller extends wbInstaller {
      * @param string $type
      * @param mixed $installer
      */
-    public function download_install_plugins_testing($gitzipurl, $type, $installer) {
-        $zipfile = $this->recipe . '/' . basename($gitzipurl);
+    public function download_install_plugins_testing($gitzipurl, $type, $installer, $install) {
+        //$zipfile = $this->recipe . '/' . basename($gitzipurl);
+        $zipfile = $this->recipe . '/' . $install . '.zip';
         if (download_file_content($gitzipurl, null, null, true, 300, 20, true, $zipfile)) {
             $component = $installer->detect_plugin_component($zipfile);
             return (object)[
@@ -177,7 +177,7 @@ class pluginsInstaller extends wbInstaller {
                     if ($execute) {
                         $this->feedback[$type][$gitzipurl]['success'][] =
                             get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
-                        return 0;
+                        return $plugin['component'];
                     } else {
                         $this->feedback[$type][$gitzipurl]['success'][] =
                           get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
@@ -186,7 +186,7 @@ class pluginsInstaller extends wbInstaller {
                     if ($execute) {
                         $this->feedback[$type][$gitzipurl]['warning'][] =
                           get_string('pluginduplicate', 'tool_wbinstaller', $a);
-                        return 1;
+                        return $plugin['component'];
                     } else {
                         $this->feedback[$type][$gitzipurl]['warning'][] =
                           get_string('pluginduplicate', 'tool_wbinstaller', $a);
@@ -327,19 +327,38 @@ class pluginsInstaller extends wbInstaller {
                 }
                 $zip = new \ZipArchive();
                 if ($zip->open($zipfile) === true) {
-                    $zip->extractTo($targetdir);
+                    $tempdir = $targetdir . '/temp_extract_' . $name;
+                    if (!is_dir($tempdir)) {
+                        mkdir($tempdir, 0777, true);
+                    }
+                    $zip->extractTo($tempdir);
                     $zip->close();
+                    $extracteddirname = null;
+                    $handle = opendir($tempdir);
+                    while (($entry = readdir($handle)) !== false) {
+                        if ($entry != '.' && $entry != '..' && is_dir($tempdir . '/' . $entry)) {
+                            $extracteddirname = $entry;
+                            break;
+                        }
+                    }
+                    closedir($handle);
+                    if ($extracteddirname) {
+                        $finaldir = $targetdir . '/' . $name;
+                        rename($tempdir . '/' . $extracteddirname, $finaldir);
+                        rmdir($tempdir);
+                        $this->feedback[$plugin->type][$plugin->url]['success'][] = "Successfully installed $plugin->component";
+                    } else {
+                        $this->feedback[$plugin->type][$plugin->url]['error'][] = "Failed to find extracted directory for $plugin->component";
+                        $this->set_status(2);
+                    }
+                    unlink($zipfile);
                 } else {
                     $this->feedback[$plugin->type][$plugin->url]['error'][] = "Failed to extract $plugin->component";
                     $this->set_status(2);
-                    continue;
                 }
-                $this->feedback[$plugin->type][$plugin->url]['success'][] = "Successfully installed $plugin->component";
-                unlink($zipfile);
             }
             manager::write_close();
             rebuild_course_cache(0, true);
-            // Capture output.
             ob_start();
             try {
                 upgrade_noncore(true);
