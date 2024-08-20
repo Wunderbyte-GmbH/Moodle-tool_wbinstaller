@@ -248,7 +248,7 @@ class pluginsInstaller extends wbInstaller {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'User-Agent: PHP-cURL-Request',
-            'Authorization: ' . $token
+            'Authorization: ' . $token,
         ]);
         $response = curl_exec($ch);
         curl_close($ch);
