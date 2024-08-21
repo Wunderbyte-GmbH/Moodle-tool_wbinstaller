@@ -121,14 +121,14 @@ class pluginsInstaller extends wbInstaller {
      * @param string $gitzipurl
      * @param string $type
      * @param mixed $installer
+     * @param string $install
      */
     public function download_install_plugins_testing($gitzipurl, $type, $installer, $install) {
-        //$zipfile = $this->recipe . '/' . basename($gitzipurl);
         $zipfile = $this->recipe . '/' . $install . '.zip';
         if (download_file_content($gitzipurl, null, null, true, 300, 20, true, $zipfile)) {
             $component = $installer->detect_plugin_component($zipfile);
             return (object)[
-                'component' => $component, // Will be detected during the installation process.
+                'component' => $component,
                 'zipfilepath' => $zipfile,
                 'url' => $gitzipurl,
                 'type' => $type,
@@ -346,14 +346,17 @@ class pluginsInstaller extends wbInstaller {
                         $finaldir = $targetdir . '/' . $name;
                         rename($tempdir . '/' . $extracteddirname, $finaldir);
                         rmdir($tempdir);
-                        $this->feedback[$plugin->type][$plugin->url]['success'][] = "Successfully installed $plugin->component";
+                        $this->feedback[$plugin->type][$plugin->url]['success'][] =
+                          get_string('installersuccessinstalled', 'tool_wbinstaller', $plugin->component);
                     } else {
-                        $this->feedback[$plugin->type][$plugin->url]['error'][] = "Failed to find extracted directory for $plugin->component";
+                        $this->feedback[$plugin->type][$plugin->url]['error'][] =
+                          get_string('installerfailfinddir', 'tool_wbinstaller', $plugin->component);
                         $this->set_status(2);
                     }
                     unlink($zipfile);
                 } else {
-                    $this->feedback[$plugin->type][$plugin->url]['error'][] = "Failed to extract $plugin->component";
+                    $this->feedback[$plugin->type][$plugin->url]['error'][] =
+                    get_string('installerfailextract', 'tool_wbinstaller', $plugin->component);
                     $this->set_status(2);
                 }
             }

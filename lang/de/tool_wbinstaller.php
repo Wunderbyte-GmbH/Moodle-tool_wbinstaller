@@ -75,7 +75,9 @@ $string['installerwritezip'] = 'Fehler beim Schreiben der ZIP-Datei in das Plugi
 $string['installerfilenotfound'] = 'Die Datei wurde nicht gefunden: {$a}';
 $string['installerfilenotreadable'] = 'Die Datei ist nicht lesbar: {$a}';
 $string['installerfailopen'] = 'Fehler beim Öffnen der ZIP-Datei.';
-
+$string['installerfailfinddir'] = 'Extrahierter Ordner {$a} konnte nicht gefunden werden!';
+$string['installersuccessinstalled'] = '{$a} wurde erfolgreich installiert';
+$string['installerfailextract'] = '{$a} konnte nicht extrahiert werden!';
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';
 $string['vueexport'] = 'Exportieren';
