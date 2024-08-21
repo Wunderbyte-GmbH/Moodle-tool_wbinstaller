@@ -40,8 +40,8 @@ use tool_installaddon_installer;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require(__DIR__.'/../../../../config.php');
-require(__DIR__.'/../../../../lib/setup.php');
+require_once(__DIR__.'/../../../../config.php');
+require_once(__DIR__.'/../../../../lib/setup.php');
 global $CFG;
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->libdir . '/filelib.php');

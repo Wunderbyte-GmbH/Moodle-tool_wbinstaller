@@ -142,7 +142,8 @@ class wbInstaller {
             $DB->set_field('config', 'value', (string)$this->upgraderunning, ['name' => 'upgraderunning']);
         }
         $this->update_install_progress('progress', 1);
-        reduce_memory_limit(MEMORY_STANDARD);
+        // TODO: check memory
+        //reduce_memory_limit(MEMORY_STANDARD);
         return [
             'feedback' => $this->feedback,
             'status' => $this->status,

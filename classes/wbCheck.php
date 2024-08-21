@@ -64,7 +64,8 @@ class wbCheck {
     public function execute() {
         raise_memory_limit(MEMORY_EXTRA);
         $extracted = $this->extract_save_zip_file();
-        reduce_memory_limit(MEMORY_STANDARD);
+        // TODO: Check memory
+        //reduce_memory_limit(MEMORY_STANDARD);
         if (!$extracted) {
             return $this->feedback;
         }
