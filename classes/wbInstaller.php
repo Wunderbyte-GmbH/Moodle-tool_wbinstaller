@@ -97,6 +97,7 @@ class wbInstaller {
      */
     public function execute() {
         global $DB;
+        global $CFG;
         $notfoundinstaller = [];
         raise_memory_limit(MEMORY_EXTRA);
         $extracterrors = $this->extract_save_zip_file();
@@ -106,7 +107,7 @@ class wbInstaller {
             return $this->feedback;
         }
         $this->save_install_progress();
-        $extractpath = __DIR__ . '/zip/extracted/' . str_replace('.zip', '', $this->filename);
+        $extractpath = $CFG->tempdir . '/zip/extracted/' . str_replace('.zip', '', $this->filename);
         $files = scandir($extractpath);
         foreach ($this->installorder as $file) {
             if (in_array($file, $files)) {
@@ -156,7 +157,8 @@ class wbInstaller {
      *
      */
     public function clean_after_installment() {
-        $pluginpath = __DIR__ . '/zip/';
+        global $CFG;
+        $pluginpath = $CFG->tempdir . '/zip/';
         $items = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($pluginpath, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::CHILD_FIRST
@@ -178,6 +180,7 @@ class wbInstaller {
      *
      */
     public function extract_save_zip_file() {
+        global $CFG;
         $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
         if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
             $this->feedback['error'][] = ["The base64 string is not valid."];
@@ -192,7 +195,7 @@ class wbInstaller {
             $this->set_status(2);
             return false;
         }
-        $pluginpath = __DIR__ . '/zip/';
+        $pluginpath = $CFG->tempdir . '/zip/';
         $zipfilepath = $pluginpath . $this->filename;
         if (!is_dir($pluginpath)) {
             mkdir($pluginpath, 0777, true);

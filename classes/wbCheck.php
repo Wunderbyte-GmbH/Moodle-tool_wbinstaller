@@ -80,7 +80,8 @@ class wbCheck {
      *
      */
     public function clean_after_installment() {
-        $pluginpath = __DIR__ . '/zip/';
+        global $CFG;
+        $pluginpath = $CFG->tempdir . '/zip/';
         $items = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($pluginpath, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::CHILD_FIRST
@@ -103,7 +104,8 @@ class wbCheck {
      *
      */
     public function check_recipe($extracted) {
-        $extractpath = __DIR__ . '/zip/precheck/' . str_replace('.zip', '', $this->filename);
+        global $CFG;
+        $extractpath = $CFG->tempdir . '/zip/precheck/' . str_replace('.zip', '', $this->filename);
         $files = scandir($extractpath);
         foreach ($files as $file) {
             if ($file[0] !== '.') {
@@ -129,6 +131,7 @@ class wbCheck {
      *
      */
     public function extract_save_zip_file() {
+        global $CFG;
         $extractpath = null;
         $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
         if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
@@ -142,7 +145,7 @@ class wbCheck {
               get_string('installerdecodebase', 'tool_wbinstaller');
             return false;
         }
-        $pluginpath = __DIR__ . '/zip/';
+        $pluginpath = $CFG->tempdir . '/zip/';
         $zipfilepath = $pluginpath . 'precheck_zip';
         if (!is_dir($pluginpath)) {
             mkdir($pluginpath, 0777, true);
