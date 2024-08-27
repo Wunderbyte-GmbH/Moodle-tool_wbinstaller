@@ -327,10 +327,10 @@ class pluginsInstaller extends wbInstaller {
                     if (!$result) {
                         // Check if the directory was not created due to insufficient permissions
                         if (is_dir($targetdir)) {
-                            $this->feedback[$plugin->type][$plugin->url]['error'][] = "Directory '$targetdir' already exists.\n";
+                            $this->feedback[$plugin->type][$plugin->url]['error'][] = get_string('jsonfailalreadyexist', 'tool_wbinstaller', $targetdir);
                         } else {
                             $this->feedback[$plugin->type][$plugin->url]['error'][] =
-                            get_string('jsonfailinsufiicientpermission', 'tool_wbinstaller', $targetdir);
+                            get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
                         }
                         continue; // Skip this iteration and move on to the next plugin
                     }
@@ -343,10 +343,10 @@ class pluginsInstaller extends wbInstaller {
                         if (!$result) {
                             // Similar check for temporary directory creation
                             if (is_dir($tempdir)) {
-                                $this->feedback[$plugin->type][$plugin->url]['error'][] = "Directory '$tempdir' already exists.\n";
+                                $this->feedback[$plugin->type][$plugin->url]['error'][] = get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
                             } else {
                                 $this->feedback[$plugin->type][$plugin->url]['error'][] =
-                                get_string('jsonfailinsufiicientpermission', 'tool_wbinstaller', $targetdir);
+                                get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
                             }
                             continue; // Skip this iteration and move on to the next plugin
                         }
