@@ -50,6 +50,7 @@ $string['apitokendesc'] = 'Geben Sie Ihren Github-Token ein, um detailliertere I
 
 // Installer-Klassen.
 $string['jsonfaildecoding'] = 'Fehler beim Dekodieren von JSON: {$a}.';
+$string['jsonfailinsufiicientpermission'] = 'Fehler beim Dekodieren von JSON: Unzureichende Schreibberechtigung {$a}.';
 $string['coursesnoshortname'] = 'Der Kurzname des Kurses konnte nicht abgerufen werden: {$a}';
 $string['coursesduplicateshortname'] = 'Übersprungen: Ein Kurs mit dem Kurznamen {$a} existiert bereits.';
 $string['coursessuccess'] = 'Der Kurs wurde erfolgreich installiert: {$a}.';

@@ -323,13 +323,33 @@ class pluginsInstaller extends wbInstaller {
                 }
                 $targetdir = $CFG->dirroot . "/$type";
                 if (!is_dir($targetdir)) {
-                    mkdir($targetdir, 0777, true);
+                    $result = mkdir($targetdir, 0777, true);
+                    if (!$result) {
+                        // Check if the directory was not created due to insufficient permissions
+                        if (is_dir($targetdir)) {
+                            $this->feedback[$plugin->type][$plugin->url]['error'][] = "Directory '$targetdir' already exists.\n";
+                        } else {
+                            $this->feedback[$plugin->type][$plugin->url]['error'][] =
+                            get_string('jsonfailinsufiicientpermission', 'tool_wbinstaller', $targetdir);
+                        }
+                        continue; // Skip this iteration and move on to the next plugin
+                    }
                 }
                 $zip = new \ZipArchive();
                 if ($zip->open($zipfile) === true) {
                     $tempdir = $targetdir . '/temp_extract_' . $name;
                     if (!is_dir($tempdir)) {
-                        mkdir($tempdir, 0777, true);
+                        $result = mkdir($tempdir, 0777, true);
+                        if (!$result) {
+                            // Similar check for temporary directory creation
+                            if (is_dir($tempdir)) {
+                                $this->feedback[$plugin->type][$plugin->url]['error'][] = "Directory '$tempdir' already exists.\n";
+                            } else {
+                                $this->feedback[$plugin->type][$plugin->url]['error'][] =
+                                get_string('jsonfailinsufiicientpermission', 'tool_wbinstaller', $targetdir);
+                            }
+                            continue; // Skip this iteration and move on to the next plugin
+                        }
                     }
                     $zip->extractTo($tempdir);
                     $zip->close();
