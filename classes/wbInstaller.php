@@ -63,7 +63,7 @@ class wbInstaller {
      * Entities constructor.
      * @param string $recipe
      * @param string $filename
-     * @param array $optionalplugins
+     * @param string $optionalplugins
      */
     public function __construct($recipe, $filename=null, $optionalplugins=null) {
         $this->filename = $filename;

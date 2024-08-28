@@ -63,7 +63,6 @@ const courseslist = ref([])
 onMounted(async() => {
   courseslist.value = await store.dispatch('getExportableCourses')
 })
-
 </script>
 
 <style scoped>
