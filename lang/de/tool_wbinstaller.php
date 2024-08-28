@@ -58,7 +58,7 @@ $string['coursessuccess'] = 'Der Kurs wurde erfolgreich installiert: {$a}.';
 $string['coursesfailextract'] = 'Fehler beim Kopieren der extrahierten Dateien in das Moodle-Backup-Verzeichnis.';
 $string['coursesfailprecheck'] = 'Precheck für die Kurswiederherstellung fehlgeschlagen: {$a}.';
 $string['customfieldfailupload'] = 'Kategorie konnte nicht hochgeladen werden!';
-$string['customfieldduplicate'] = 'Customfield-Kurzname existiert bereits!';
+$string['customfieldduplicate'] = 'Customfield-Kurzname {$a} existiert bereits!';
 $string['customcategoryduplicate'] = 'Customkategorie Name existiert bereit!';
 $string['customfieldsuccesss'] = 'Customfield {$a} wurde erfolgreich installiert.';
 $string['customfieldnewfield'] = 'Neues Customfield gefunden: {$a}.';
@@ -80,6 +80,8 @@ $string['installerfailopen'] = 'Fehler beim Öffnen der ZIP-Datei.';
 $string['installerfailfinddir'] = 'Extrahierter Ordner {$a} konnte nicht gefunden werden!';
 $string['installersuccessinstalled'] = '{$a} wurde erfolgreich installiert';
 $string['installerfailextract'] = '{$a} konnte nicht extrahiert werden!';
+$string['customfielderror'] = 'Fieldset konnte nicht hochgeladen werden: {$a}';
+
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';
 $string['vueexport'] = 'Exportieren';

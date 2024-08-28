@@ -65,25 +65,27 @@ class customfieldInstaller extends wbInstaller {
         $customfieldcategories = $DB->get_records('customfield_category', null, null, 'name');
         $customfieldfields = $DB->get_records('customfield_field', null, null, 'shortname');
         foreach ($jsonarray as $customfields) {
-            if (!isset($customfieldcategories[$customfields['name']])) {
-                $categoryid = $this->upload_category($customfields);
-                foreach ($customfields['fields'] as $customfield) {
-                    if (!$categoryid) {
-                        $this->feedback['needed'][$customfields['name']]['error'][] =
-                          get_string('customfieldfailupload', 'tool_wbinstaller');
-                    } else if (isset($customfieldfields[$customfield['shortname']])) {
-                        $this->feedback['needed'][$customfields['name']]['error'][] =
-                        get_string('customfieldduplicate', 'tool_wbinstaller');
-                    } else {
+            $categoryid = $this->upload_category($customfields);
+            foreach ($customfields['fields'] as $customfield) {
+                if (!$categoryid) {
+                    $this->feedback['needed'][$customfields['name']]['error'][] =
+                      get_string('customfieldfailupload', 'tool_wbinstaller');
+                } else if (isset($customfieldfields[$customfield['shortname']])) {
+                    $this->feedback['needed'][$customfields['name']]['error'][] =
+                    get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
+                } else {
+                    try {
                         $this->upload_fieldset($customfield, $categoryid);
                         $this->feedback['needed'][$customfields['name']]['success'][] =
                           get_string('customfieldsuccesss', 'tool_wbinstaller', $customfield['name']);
+                    } catch (\Exception $e) {
+                        $this->feedback['needed'][$customfields['name']]['error'][] =
+                          get_string(
+                            'customfielderror',
+                            'tool_wbinstaller',
+                            $e->getMessage()
+                          );
                     }
-                }
-            } else {
-                foreach ($customfields['fields'] as $customfield) {
-                    $this->feedback['needed'][$customfields['name']]['success'][] =
-                          get_string('customcategoryduplicate', 'tool_wbinstaller');
                 }
             }
         }
@@ -153,7 +155,7 @@ class customfieldInstaller extends wbInstaller {
             foreach ($customfields['fields'] as $customfield) {
                 if (isset($customfieldfields[$customfield['shortname']])) {
                     $this->feedback['needed'][$customfields['name']]['error'][] =
-                      get_string('customfieldduplicate', 'tool_wbinstaller');
+                      get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
                 } else {
                     $this->feedback['needed'][$customfields['name']]['success'][] =
                       get_string('customfieldnewfield', 'tool_wbinstaller', $customfield['name']);

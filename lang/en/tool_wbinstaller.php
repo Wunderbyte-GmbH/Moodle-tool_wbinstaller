@@ -58,7 +58,7 @@ $string['coursessuccess'] = 'Installed successfully the course: {$a}.';
 $string['coursesfailextract'] = 'Failed to copy extracted files to the Moodle backup directory.';
 $string['coursesfailprecheck'] = 'Precheck failed for course restore: {$a}.';
 $string['customfieldfailupload'] = 'Category could not be uploaded!';
-$string['customfieldduplicate'] = 'Customfield shortname already exists!';
+$string['customfieldduplicate'] = 'Customfield {$a} shortname already exists!';
 $string['customcategoryduplicate'] = 'Customcategory name already exists!';
 $string['customfieldsuccesss'] = 'Customfield {$a} was installed successfully.';
 $string['customfieldnewfield'] = 'Found the new customfield: {$a}.';
@@ -80,6 +80,7 @@ $string['installerfailopen'] = 'Failed to open the ZIP file.';
 $string['installerfailfinddir'] = 'Failed to find extracted directory for {$a}';
 $string['installersuccessinstalled'] = 'Successfully installed {$a}';
 $string['installerfailextract'] = 'Failed to extract {$a}';
+$string['customfielderror'] = 'Failed to upload fieldset: {$a}';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';

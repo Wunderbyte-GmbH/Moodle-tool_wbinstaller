@@ -234,7 +234,7 @@ class pluginsInstaller extends wbInstaller {
         $branchtag = null;
         if ($urlparts[5] == 'tags') {
             $branchtag = "?ref=refs/tags/" . str_replace('.zip', '', $urlparts[6]);
-        } else {
+        } else if ($urlparts[6] != null) {
             $branchtag = "?ref=" . str_replace('.zip', '', $urlparts[6]);
         }
         $apiurl = "https://api.github.com/repos/" . $owner . "/" . $repo . "/contents/version.php" . $branchtag;
@@ -325,14 +325,15 @@ class pluginsInstaller extends wbInstaller {
                 if (!is_dir($targetdir)) {
                     $result = mkdir($targetdir, 0777, true);
                     if (!$result) {
-                        // Check if the directory was not created due to insufficient permissions
+                        // Check if the directory was not created due to insufficient permissions.
                         if (is_dir($targetdir)) {
-                            $this->feedback[$plugin->type][$plugin->url]['error'][] = get_string('jsonfailalreadyexist', 'tool_wbinstaller', $targetdir);
+                            $this->feedback[$plugin->type][$plugin->url]['error'][] =
+                              get_string('jsonfailalreadyexist', 'tool_wbinstaller', $targetdir);
                         } else {
                             $this->feedback[$plugin->type][$plugin->url]['error'][] =
-                            get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
+                              get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
                         }
-                        continue; // Skip this iteration and move on to the next plugin
+                        continue; // Skip this iteration and move on to the next plugin.
                     }
                 }
                 $zip = new \ZipArchive();
@@ -341,14 +342,15 @@ class pluginsInstaller extends wbInstaller {
                     if (!is_dir($tempdir)) {
                         $result = mkdir($tempdir, 0777, true);
                         if (!$result) {
-                            // Similar check for temporary directory creation
+                            // Similar check for temporary directory creation.
                             if (is_dir($tempdir)) {
-                                $this->feedback[$plugin->type][$plugin->url]['error'][] = get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
+                                $this->feedback[$plugin->type][$plugin->url]['error'][] =
+                                  get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
                             } else {
                                 $this->feedback[$plugin->type][$plugin->url]['error'][] =
-                                get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
+                                  get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
                             }
-                            continue; // Skip this iteration and move on to the next plugin
+                            continue; // Skip this iteration and move on to the next plugin.
                         }
                     }
                     $zip->extractTo($tempdir);
