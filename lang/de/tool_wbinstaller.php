@@ -65,6 +65,7 @@ $string['customfieldnewfield'] = 'Neues Customfield gefunden: {$a}.';
 $string['pluginduplicate'] = 'Komponente {$a->name} ist bereits mit Version installiert mit der Version{$a->version}. Das Plugin wird upgedated zur Version {$a->componentversion}.';
 $string['pluginolder'] = 'Komponente {$a->name} ist bereits mit der neueren Version {$a->installedversion} installiert. Ihre version {$a->componentversion} wird nicht installiert.';
 $string['pluginnotinstalled'] = 'Komponente {$a} ist nicht installiert.';
+$string['plugininstalled'] = 'Komponente {$a} ist installiert.';
 $string['pluginfailedinformation'] = 'Fehler beim Abrufen der Komponenteninformationen.';
 $string['questionfilefound'] = 'Die Frage-Datei wurde gefunden.';
 $string['simulationfilefound'] = 'Die Simulationsdatei wurde gefunden.';
