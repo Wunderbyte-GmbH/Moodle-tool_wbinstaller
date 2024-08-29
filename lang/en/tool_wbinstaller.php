@@ -50,8 +50,8 @@ $string['apitokendesc'] = 'Insert your Github-Token to receive more detailed inf
 
 // Installer classes.
 $string['jsonfaildecoding'] = 'Error decoding JSON: {$a}.';
-$string['jsonfailinsufficientpermission'] = 'Error decoding JSON: Insufficient permission to write {$a}.';
-$string['jsonfailalreadyexist'] = 'Error decoding JSON: Directory {$a} already exists.';
+$string['jsonfailinsufficientpermission'] = 'Error: Insufficient permission to write {$a}.';
+$string['jsonfailalreadyexist'] = 'Error: Directory {$a} already exists.';
 $string['coursesnoshortname'] = 'Could not get the short name of course: {$a}';
 $string['coursesduplicateshortname'] = 'Skipped: Course with short name {$a} already exists.';
 $string['coursessuccess'] = 'Installed successfully the course: {$a}.';

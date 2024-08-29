@@ -348,7 +348,7 @@ class pluginsInstaller extends wbInstaller {
                                   get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
                             } else {
                                 $this->feedback[$plugin->type][$plugin->url]['error'][] =
-                                  get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
+                                  get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $tempdir);
                             }
                             continue; // Skip this iteration and move on to the next plugin.
                         }
