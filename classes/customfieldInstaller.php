@@ -71,7 +71,7 @@ class customfieldInstaller extends wbInstaller {
                     $this->feedback['needed'][$customfields['name']]['error'][] =
                       get_string('customfieldfailupload', 'tool_wbinstaller');
                 } else if (isset($customfieldfields[$customfield['shortname']])) {
-                    $this->feedback['needed'][$customfields['name']]['error'][] =
+                    $this->feedback['needed'][$customfields['name']]['success'][] =
                     get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
                 } else {
                     try {
@@ -159,7 +159,7 @@ class customfieldInstaller extends wbInstaller {
         foreach ($jsonarray as $customfields) {
             foreach ($customfields['fields'] as $customfield) {
                 if (isset($customfieldfields[$customfield['shortname']])) {
-                    $this->feedback['needed'][$customfields['name']]['error'][] =
+                    $this->feedback['needed'][$customfields['name']]['success'][] =
                       get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
                 } else {
                     $this->feedback['needed'][$customfields['name']]['success'][] =
