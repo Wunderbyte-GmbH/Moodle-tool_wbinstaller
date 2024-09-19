@@ -36,6 +36,8 @@
         <p>
           {{ store.state.strings.vuewaitingtext }}
         </p>
+        <ProgressTracking :uploadedFileName/>
+
       </div>
     </transition>
     <transition name="fade">
@@ -86,12 +88,15 @@
             </li>
           </ul>
         </div>
-        <div v-if="courseList.length" class="mt-4">
+        <div v-if="feedback.courses" class="mt-4">
           <h3>
             {{ store.state.strings.vuecourseszip }}
           </h3>
           <ul class="list-group">
-            <li class="list-group-item" v-for="course in courseList" :key="course">{{ course }}</li>
+            <li class="list-group-item" v-for="(message, key) in feedback.courses.needed" :key="key">
+              {{ key }}
+              <PluginFeedback :message/>
+            </li>
           </ul>
         </div>
         <div v-if="feedback.simulations" class="mt-4">
@@ -130,15 +135,6 @@
         <FeedbackReport :feedback/>
       </div>
     </transition>
-    <!-- <div v-if="isInstalling" class="mt-4">
-      <div v-if="isInstalling" class="mt-4">
-        <h3>Total Progress:</h3>
-        <progress :value="totalProgress" max="100"></progress>
-        <h3>Current Task Progress:</h3>
-        <progress :value="taskProgress" max="100"></progress>
-      </div>
-    </div> -->
-
   </div>
 </template>
 
@@ -148,10 +144,10 @@ import { useStore } from 'vuex';
 import { notify } from "@kyvg/vue3-notification"
 import PluginFeedback from '../feedback/PluginFeedback.vue';
 import FeedbackReport from '../feedback/FeedbackReport.vue';
+import ProgressTracking from '../feedback/ProgressTracking.vue';
 
 // Reactive state for the list of links and courses
 const store = useStore();
-const courseList = ref([]);
 const feedback = ref([]);
 const checkedOptionalPlugins = ref([]);
 let uploadedFile = null;
@@ -181,8 +177,6 @@ const installRecipe = async () => {
         }
       );
       feedback.value = JSON.parse(response.feedback)
-      console.log('feedback.value')
-      console.log(feedback.value)
       if (response.status == 0) {
         notify({
           title: store.state.strings.success,

@@ -82,6 +82,8 @@ $string['installerfailfinddir'] = 'Failed to find extracted directory for {$a}';
 $string['installersuccessinstalled'] = 'Successfully installed {$a}';
 $string['installerfailextract'] = 'Failed to extract {$a}';
 $string['customfielderror'] = 'Failed to upload fieldset: {$a}';
+$string['adaptivequizsuccess'] = 'Succeed to update the mod_adaptivequiz: {$a}';
+$string['adaptivequizerror'] = 'Failed to update the mod_adaptivequiz: {$a}';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';
