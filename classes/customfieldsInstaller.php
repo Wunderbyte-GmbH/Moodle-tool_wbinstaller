@@ -33,14 +33,14 @@ namespace tool_wbinstaller;
  * @copyright  2023 Wunderbyte GmbH
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class customfieldInstaller extends wbInstaller {
+class customfieldsInstaller extends wbInstaller {
 
     /** @var \core_customfield\handler Matching the course ids from the old => new. */
     public $handler;
 
     /**
      * Entities constructor.
-     * @param string $recipe
+     * @param array $recipe
      * @param int $dbid
      */
     public function __construct($recipe, $dbid=null) {
@@ -53,42 +53,34 @@ class customfieldInstaller extends wbInstaller {
      * Exceute the installer.
      * @return int
      */
-    public function execute() {
+    public function execute($extractpath) {
         global $DB;
-        $jsonstring = file_get_contents($this->recipe . '.json');
-        $jsonarray = json_decode($jsonstring, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['customfields']['error'][] =
-              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
-            $this->set_status(2);
-        }
-        $customfieldcategories = $DB->get_records('customfield_category', null, null, 'name');
         $customfieldfields = $DB->get_records('customfield_field', null, null, 'shortname');
-        foreach ($jsonarray as $customfields) {
-            $categoryid = $this->upload_category($customfields);
-            foreach ($customfields['fields'] as $customfield) {
-                if (!$categoryid) {
-                    $this->feedback['needed'][$customfields['name']]['error'][] =
-                      get_string('customfieldfailupload', 'tool_wbinstaller');
-                } else if (isset($customfieldfields[$customfield['shortname']])) {
-                    $this->feedback['needed'][$customfields['name']]['success'][] =
-                    get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
-                } else {
-                    try {
-                        $this->upload_fieldset($customfield, $categoryid);
-                        $this->feedback['needed'][$customfields['name']]['success'][] =
-                          get_string('customfieldsuccesss', 'tool_wbinstaller', $customfield['name']);
-                    } catch (\Exception $e) {
-                        $this->feedback['needed'][$customfields['name']]['error'][] =
-                          get_string(
-                            'customfielderror',
-                            'tool_wbinstaller',
-                            $e->getMessage()
-                          );
-                    }
-                }
-            }
-        }
+        // foreach ($this->recipe as $customfields) {
+        //     $categoryid = $this->upload_category($customfields);
+        //     foreach ($customfields['fields'] as $customfield) {
+        //         if (!$categoryid) {
+        //             $this->feedback['needed'][$customfields['name']]['error'][] =
+        //               get_string('customfieldfailupload', 'tool_wbinstaller');
+        //         } else if (isset($customfieldfields[$customfield['shortname']])) {
+        //             $this->feedback['needed'][$customfields['name']]['success'][] =
+        //             get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
+        //         } else {
+        //             try {
+        //                 $this->upload_fieldset($customfield, $categoryid);
+        //                 $this->feedback['needed'][$customfields['name']]['success'][] =
+        //                   get_string('customfieldsuccesss', 'tool_wbinstaller', $customfield['name']);
+        //             } catch (\Exception $e) {
+        //                 $this->feedback['needed'][$customfields['name']]['error'][] =
+        //                   get_string(
+        //                     'customfielderror',
+        //                     'tool_wbinstaller',
+        //                     $e->getMessage()
+        //                   );
+        //             }
+        //         }
+        //     }
+        // }
         return 1;
     }
 
@@ -146,26 +138,19 @@ class customfieldInstaller extends wbInstaller {
     /**
      * Exceute the installer check.
      */
-    public function check() {
+    public function check($extractpath) {
         global $DB;
-        $jsonstring = file_get_contents($this->recipe . '.json');
-        $jsonarray = json_decode($jsonstring, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['customfields']['error'][] =
-              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
-            $this->set_status(2);
-        }
         $customfieldfields = $DB->get_records('customfield_field', null, null, 'shortname');
-        foreach ($jsonarray as $customfields) {
-            foreach ($customfields['fields'] as $customfield) {
-                if (isset($customfieldfields[$customfield['shortname']])) {
-                    $this->feedback['needed'][$customfields['name']]['success'][] =
-                      get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
-                } else {
-                    $this->feedback['needed'][$customfields['name']]['success'][] =
-                      get_string('customfieldnewfield', 'tool_wbinstaller', $customfield['name']);
-                }
-            }
-        }
+        // foreach ($this->recipe as $customfields) {
+        //     foreach ($customfields['fields'] as $customfield) {
+        //         if (isset($customfieldfields[$customfield['shortname']])) {
+        //             $this->feedback['needed'][$customfields['name']]['success'][] =
+        //               get_string('customfieldduplicate', 'tool_wbinstaller', $customfield['shortname']);
+        //         } else {
+        //             $this->feedback['needed'][$customfields['name']]['success'][] =
+        //               get_string('customfieldnewfield', 'tool_wbinstaller', $customfield['name']);
+        //         }
+        //     }
+        // }
     }
 }

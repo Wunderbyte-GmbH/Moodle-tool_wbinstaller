@@ -57,6 +57,8 @@ class wbInstaller {
     public $installorder;
     /** @var int Upgrade time. */
     public $upgraderunning;
+    /** @var array Matching the course ids from the old => new. */
+    public $matchingcourseids;
 
 
     /**
@@ -75,11 +77,12 @@ class wbInstaller {
         $this->installorder = [
           'plugins.json',
           'customfield.json',
-          'courses',
           'questions',
           'simulations',
+          'courses',
         ];
         $this->upgraderunning = 0;
+        $this->matchingcourseids = [];
     }
 
     /**
@@ -95,55 +98,60 @@ class wbInstaller {
      * Exceute the installer.
      * @return array
      */
-    public function execute() {
-        global $DB;
-        global $CFG;
-        $notfoundinstaller = [];
+    public function execute($extractpath) {
         raise_memory_limit(MEMORY_EXTRA);
-        $extracterrors = $this->extract_save_zip_file();
-        if ($extracterrors) {
-            $this->feedback['wbinstaller']['error'][] = $extracterrors;
-            $this->set_status(2);
+        $extracted = $this->extract_save_zip_file();
+        // TODO: Check memory.
+        if (!$extracted) {
             return $this->feedback;
         }
-        $this->save_install_progress();
-        $extractpath = $CFG->tempdir . '/zip/extracted/' . str_replace('.zip', '', $this->filename);
-        $files = scandir($extractpath);
-        foreach ($this->installorder as $file) {
-            if (in_array($file, $files)) {
-                $parts = explode('.', $file);
-                $installerclass = __NAMESPACE__ . '\\' . $parts[0] . 'Installer';
-                if (class_exists($installerclass)) {
-                    if ($parts[0] == 'plugins') {
-                        $instance = new $installerclass(
-                          $extractpath . '/' . $parts[0],
-                          $this->dbid,
-                          $this->optionalplugins
-                        );
-                    } else {
-                        $instance = new $installerclass(
-                          $extractpath . '/' . $parts[0],
-                          $this->dbid
-                        );
-                    }
-                    $instance->execute();
-                    if ($instance->upgraderunning != 0) {
-                        $this->upgraderunning = $instance->upgraderunning;
-                    }
-                    $this->feedback[$parts[0]] = $instance->get_feedback();
-                    $this->set_status($instance->get_status());
-                } else {
-                    $notfoundinstaller[] = $parts[0];
-                }
-                $this->update_install_progress('progress');
-            }
-        }
+        $response = $this->execute_recipe($extracted);
         $this->clean_after_installment();
-        if ($this->upgraderunning != 0) {
-            $DB->set_field('config', 'value', (string)$this->upgraderunning, ['name' => 'upgraderunning']);
+        return $response;
+    }
+
+    /**
+     * Extract and save the zipped file.
+     * @param string $extracted
+     * @return string
+     *
+     */
+    public function execute_recipe($extracted) {
+        $recipefolder = $extracted . str_replace('.zip', '', $this->filename) . '/';
+        $jsonstring = file_get_contents($recipefolder . 'recipe.json');
+        $jsonarray = json_decode($jsonstring, true);
+        foreach ($jsonarray['steps'] as $step) {
+            $installerclass = __NAMESPACE__ . '\\' . $step . 'Installer';
+            if (
+                class_exists($installerclass) &&
+                isset($jsonarray[$step])
+            ) {
+                if ($step == 'plugins') {
+                    $instance = new $installerclass(
+                      $jsonarray[$step],
+                      $this->dbid,
+                      $this->optionalplugins
+                    );
+                } else {
+                    $instance = new $installerclass(
+                      $jsonarray[$step],
+                      $this->dbid
+                    );
+                }
+                $instance->execute($recipefolder);
+                if ($step == 'courses') {
+                    $this->matchingcourseids = $instance->get_matchingcourseids();
+                }
+                if ($instance->upgraderunning != 0) {
+                    $this->upgraderunning = $instance->upgraderunning;
+                }
+                $this->feedback[$step] = $instance->get_feedback();
+                $this->set_status($instance->get_status());
+            } else {
+                $this->feedback[$step] = get_string('classnotfound', 'tool_wbinstaller', $step);
+            }
+
         }
-        $this->update_install_progress('progress', 1);
-        // TODO: check memory.
         return [
             'feedback' => $this->feedback,
             'status' => $this->status,
@@ -180,16 +188,17 @@ class wbInstaller {
      */
     public function extract_save_zip_file() {
         global $CFG;
+        $extractpath = null;
         $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
         if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
-            $this->feedback['error'][] = ["The base64 string is not valid."];
+            $this->feedback['wbinstaller']['error'][] = ["The base64 string is not valid."];
             $this->set_status(2);
             return false;
         }
         $filecontent = base64_decode($base64string, true);
 
         if ($filecontent === false || empty($filecontent)) {
-            $this->feedback['error'][] =
+            $this->feedback['wbinstaller']['error'][] =
               get_string('installervalidbase', 'tool_wbinstaller');
             $this->set_status(2);
             return false;
@@ -200,20 +209,20 @@ class wbInstaller {
             mkdir($pluginpath, 0777, true);
         }
         if (file_put_contents($zipfilepath, $filecontent) === false) {
-            $this->feedback['error'][] =
+            $this->feedback['wbinstaller']['error'][] =
               get_string('installerwritezip', 'tool_wbinstaller');
             $this->set_status(2);
             return false;
         }
         unset($filecontent);
         if (!file_exists($zipfilepath)) {
-            $this->feedback['error'][] =
+            $this->feedback['wbinstaller']['error'][] =
               get_string('installerfilenotfound', 'tool_wbinstaller', $zipfilepath);
             $this->set_status(2);
             return false;
         }
         if (!is_readable($zipfilepath)) {
-            $this->feedback['error'][] =
+            $this->feedback['wbinstaller']['error'][] =
               get_string('installerfilenotreadable', 'tool_wbinstaller', $zipfilepath);
             $this->set_status(2);
             return false;
@@ -230,7 +239,7 @@ class wbInstaller {
         } else {
             return get_string('installerfailopen', 'tool_wbinstaller');
         }
-        return false;
+        return $extractpath;
     }
 
     /**

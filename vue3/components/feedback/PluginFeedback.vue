@@ -23,23 +23,56 @@
  */ -->
 
  <template>
-  <ul>
-    <!-- Display Warnings in Dark Orange -->
-    <li v-for="warning in message.warning" :key="warning" class="warning-text">
-      {{ store.state.strings.vuewarining }}{{ warning }}
-    </li>
-    <!-- Display Errors in Red and Bold -->
-    <li v-for="error in message.error" :key="error" class="error-text">
-      {{ store.state.strings.vueerror }}{{ error }}
-    </li>
-    <li v-for="success in message.success" :key="success" class="success-text">
-      {{ store.state.strings.vuesuccess }}{{ success }}
-    </li>
-  </ul>
+  <div>
+    <div v-if="message.error">
+      <h6>
+        {{ store.state.strings.vueerror }}
+      </h6>
+      <div v-if="isString(message)">
+          {{ message }}
+      </div>
+      <div v-else>
+        <ul>
+          <li v-for="error in message.error" :key="error" class="error-text">
+            {{ error }}
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div v-if="message.warning">
+      <h6>
+        {{ store.state.strings.vuewarining }}
+      </h6>
+      <div v-if="isString(message)">
+          {{ message }}
+      </div>
+      <div v-else>
+        <ul>
+          <li v-for="warning in message.warning" :key="warning" class="warning-text">
+            {{ warning }}
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div v-if="message.success && !message.error">
+      <h6>
+        {{ store.state.strings.vuesuccess }}
+      </h6>
+      <div v-if="isString(message)">
+          {{ message }}
+      </div>
+      <div v-else>
+        <ul>
+          <li v-for="success in message.success" :key="success" class="success-text">
+            {{ success }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
 import { useStore } from 'vuex'
 
 const store = useStore()
@@ -54,6 +87,10 @@ const props = defineProps({
     })
   }
 });
+
+function isString(value) {
+  return typeof value === 'string';
+}
 </script>
 
 <style scoped>

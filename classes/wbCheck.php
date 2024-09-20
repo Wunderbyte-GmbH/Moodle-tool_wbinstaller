@@ -39,7 +39,7 @@ use ZipArchive;
  */
 class wbCheck {
 
-    /** @var string Content of the recipe. */
+    /** @var array Content of the recipe. */
     public $recipe;
     /** @var string Name of the recipe. */
     public $filename;
@@ -48,7 +48,7 @@ class wbCheck {
 
     /**
      * Entities constructor.
-     * @param string $recipe
+     * @param array $recipe
      * @param string $filename
      */
     public function __construct($recipe, $filename) {
@@ -104,21 +104,20 @@ class wbCheck {
      */
     public function check_recipe($extracted) {
         global $CFG;
-        $extractpath = $CFG->tempdir . '/zip/precheck/' . str_replace('.zip', '', $this->filename);
-        $files = scandir($extractpath);
-        foreach ($files as $file) {
-            if ($file[0] !== '.') {
-                $parts = explode('.', $file);
-                $installerclass = __NAMESPACE__ . '\\' . $parts[0] . 'Installer';
-                if (class_exists($installerclass)) {
-                    $instance = new $installerclass(
-                      $extractpath . '/' . $parts[0]
-                    );
-                    $instance->check();
-                    $this->feedback[$parts[0]] = $instance->get_feedback();
-                } else {
-                    $notfoundinstaller[] = $parts[0];
-                }
+        $extractpath = $CFG->tempdir . '/zip/precheck/' . str_replace('.zip', '', $this->filename) . '/';
+        $jsonstring = file_get_contents($extracted . str_replace('.zip', '', $this->filename) . '/recipe.json');
+        $jsonarray = json_decode($jsonstring, true);
+        foreach ($jsonarray['steps'] as $step) {
+            $installerclass = __NAMESPACE__ . '\\' . $step . 'Installer';
+            if (
+                class_exists($installerclass) &&
+                isset($jsonarray[$step])
+            ) {
+                $instance = new $installerclass($jsonarray[$step]);
+                $instance->check($extractpath);
+                $this->feedback[$step] = $instance->get_feedback();
+            } else {
+                $this->feedback[$step] = get_string('classnotfound', 'tool_wbinstaller', $step);
             }
         }
         return true;

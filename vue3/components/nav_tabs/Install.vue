@@ -52,7 +52,9 @@
                 </b>
                 <ul>
                   <li v-for="(message, key) in feedback.plugins.needed" :key="key" style="margin-left: 20px; list-style-type: disc;">
-                    {{ key }}
+                    <h4 style="text-decoration: underline;">
+                      {{ key }}
+                    </h4>
                     <PluginFeedback :message/>
                   </li>
                 </ul>
@@ -68,7 +70,9 @@
                 <ul>
                   <li v-for="(message, key) in feedback.plugins.optional" :key="key" style="margin-left: 20px; list-style-type: none;">
                     <input type="checkbox" v-model="checkedOptionalPlugins" :value="key" />
-                    {{ key }}
+                    <h4 style="text-decoration: underline;">
+                      {{ key }}
+                    </h4>
                     <PluginFeedback :message/>
                   </li>
                 </ul>
@@ -76,14 +80,16 @@
             </ul>
           </div>
         </div>
-        <div v-if="feedback.customfield" class="mt-4">
+        <div v-if="feedback.customfields" class="mt-4">
           <h3>
             {{ store.state.strings.vuecustomfieldzip }}
           </h3>
           <ul class="list-group">
-            <li class="list-group-item" v-for="(message, key) in feedback.customfield.needed" :key="key">
+            <li class="list-group-item" v-for="(message, key) in feedback.customfields.needed" :key="key">
               {{ store.state.strings.vuecategories }}
-              {{ key }}
+              <h4 style="text-decoration: underline;">
+                {{ key }}
+              </h4>
               <PluginFeedback :message/>
             </li>
           </ul>
@@ -94,7 +100,9 @@
           </h3>
           <ul class="list-group">
             <li class="list-group-item" v-for="(message, key) in feedback.courses.needed" :key="key">
-              {{ key }}
+              <h4 style="text-decoration: underline;">
+                {{ key }}
+              </h4>
               <PluginFeedback :message/>
             </li>
           </ul>
@@ -105,7 +113,9 @@
           </h3>
           <ul class="list-group">
             <li class="list-group-item" v-for="(message, key) in feedback.simulations.needed" :key="key">
-              {{ key }}
+              <h4 style="text-decoration: underline;">
+                {{ key }}
+              </h4>
               <PluginFeedback :message/>
             </li>
           </ul>
@@ -116,7 +126,9 @@
           </h3>
           <ul class="list-group">
             <li class="list-group-item" v-for="(message, key) in feedback.questions.needed" :key="key">
-              {{ key }}
+              <h4 style="text-decoration: underline;">
+                {{ key }}
+              </h4>
               <PluginFeedback :message/>
             </li>
           </ul>
@@ -238,7 +250,6 @@ const handleFileUpload = async (event) => {
           filename: uploadedFileName.value,
         }
       );
-
       feedback.value = JSON.parse(response.feedback)
     } catch (error) {
       console.error('Error reading ZIP file:', error);

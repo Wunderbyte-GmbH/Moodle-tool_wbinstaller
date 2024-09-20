@@ -49,6 +49,8 @@ $string['apitoken'] = 'Github API-Token';
 $string['apitokendesc'] = 'Geben Sie Ihren Github-Token ein, um detailliertere Informationen zu Ihren Plugins zu erhalten.';
 
 // Installer-Klassen.
+$string['plugincomponentdetectfailed'] = 'Komponente is unbekannt.';
+$string['classnotfound'] = 'Klasse für {$a} wurde nicht gefunden.';
 $string['jsonfaildecoding'] = 'Fehler beim Dekodieren von JSON: {$a}.';
 $string['jsonfailinsufficientpermission'] = 'Fehler: Unzureichende Schreibberechtigung {$a}.';
 $string['jsonfailalreadyexist'] = 'Error: Das Verzeichnis {$a} ist bereits vorhanden.';
@@ -68,6 +70,7 @@ $string['pluginnotinstalled'] = 'Komponente {$a} ist nicht installiert.';
 $string['plugininstalled'] = 'Komponente {$a} ist installiert.';
 $string['pluginfailedinformation'] = 'Fehler beim Abrufen der Komponenteninformationen.';
 $string['questionfilefound'] = 'Die Frage-Datei wurde gefunden.';
+$string['questionsuccesinstall'] = 'Die Fragen wurden erfolgreich hochgeladen.';
 $string['simulationfilefound'] = 'Die Simulationsdatei wurde gefunden.';
 $string['simulationinstallerfilefound'] = 'Simulations-Installer {$a} gefunden.';
 $string['simulationnoinstallerfilefound'] = 'Es wurde kein Installer gefunden. Die Datei kann nicht installiert werden!';

@@ -27,6 +27,7 @@ namespace tool_wbinstaller;
 use moodle_url;
 use context_system;
 use core\session\manager;
+use core_component;
 use Exception;
 use stdClass;
 use tool_installaddon_installer;
@@ -61,9 +62,15 @@ require_once($CFG->libdir . '/upgradelib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class pluginsInstaller extends wbInstaller {
+
+    /** @var object Known subplugins. */
+    public $knownsubplugins;
+    // Add the tool_installaddon_installer as a dependency.
+    protected $addoninstaller;
+
     /**
      * Entities constructor.
-     * @param string $recipe
+     * @param array $recipe
      * @param int $dbid
      * @param array $optionalplugins
      */
@@ -72,47 +79,41 @@ class pluginsInstaller extends wbInstaller {
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->optionalplugins = $optionalplugins;
+        $this->addoninstaller = tool_installaddon_installer::instance();
+        $this->knownsubplugins = [
+          'adaptivequizcatmodel_catquiz' => 'mod',
+        ];
+
     }
 
     /**
      * Exceute the installer.
      * @return int
      */
-    public function execute() {
+    public function execute($extractpath) {
         global $PAGE, $DB;
         // Set the page context.
         $PAGE->set_context(context_system::instance());
-        $jsonstring = file_get_contents($this->recipe . '.json');
-        $jsonarray = json_decode($jsonstring, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['plugins']['error'][] =
-              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
-            $this->set_status(2);
-        }
-        require_sesskey();
         $installer = tool_installaddon_installer::instance();
         $installable = [];
-        if (isset($jsonarray)) {
-            if (!is_dir($this->recipe)) {
-                mkdir($this->recipe, 0777, true);
-            }
-            foreach ($jsonarray as $type => $plugins) {
-                foreach ($plugins as $gitzipurl) {
-                    if (
-                      $type != 'optional' ||
-                      in_array($gitzipurl, $this->optionalplugins)
-                    ) {
-                        $install = $this->check_plugin_compability($gitzipurl, $type, true);
-                        if ($install != 2) {
-                            $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
-                        }
-                    }
-                }
-            }
-        }
-        $this->manual_install_plugins($installable);
-        $this->upgraderunning = $DB->get_field('config', 'value', ['name' => 'upgraderunning']);
-        $DB->set_field('config', 'value', '0', ['name' => 'upgraderunning']);
+        // if (isset($this->recipe)) {
+        //     foreach ($this->recipe as $type => $plugins) {
+        //         foreach ($plugins as $gitzipurl) {
+        //             if (
+        //               $type != 'optional' ||
+        //               in_array($gitzipurl, $this->optionalplugins)
+        //             ) {
+        //                 $install = $this->check_plugin_compability($gitzipurl, $type, true);
+        //                 if ($install != 2) {
+        //                     $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        // $this->manual_install_plugins($installable);
+        // $this->upgraderunning = $DB->get_field('config', 'value', ['name' => 'upgraderunning']);
+        // $DB->set_field('config', 'value', '0', ['name' => 'upgraderunning']);
         return 1;
     }
 
@@ -141,19 +142,12 @@ class pluginsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      */
-    public function check() {
-        $jsonstring = file_get_contents($this->recipe . '.json');
-        $jsonarray = json_decode($jsonstring, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->feedback['plugins']['error'][] =
-              get_string('jsonfaildecoding', 'tool_wbinstaller', json_last_error_msg());
-            $this->set_status(2);
-        }
-        foreach ($jsonarray as $type => $plugins) {
-            foreach ($plugins as $gitzipurl) {
-                $this->check_plugin_compability($gitzipurl, $type);
-            }
-        }
+    public function check($extractpath) {
+        // foreach ($this->recipe as $type => $plugins) {
+        //     foreach ($plugins as $gitzipurl) {
+        //         $this->check_plugin_compability($gitzipurl, $type);
+        //     }
+        // }
     }
 
     /**
@@ -174,7 +168,7 @@ class pluginsInstaller extends wbInstaller {
                 $a->installedversion = (int)$installedversion ?? '';
                 $a->componentversion = (int)$plugin['version'] ?? '';
                 if ($a->installedversion == 0) {
-                    if ($execute) {
+                    if ($execute ) {
                         $this->feedback[$type][$gitzipurl]['success'][] =
                             get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
                         return $plugin['component'];
@@ -312,16 +306,25 @@ class pluginsInstaller extends wbInstaller {
      * @param array $installable
      */
     public function manual_install_plugins($installable) {
-        global $CFG;
+        global $CFG, $DB;
         if (!empty($installable)) {
             foreach ($installable as $plugin) {
                 $zipfile = $plugin->zipfilepath;
-                $component = $plugin->component;
-                list($type, $name) = explode('_', $component, 2);
-                if ($type == 'tool') {
-                    $type = "admin/tool";
+                $component = $this->addoninstaller->detect_plugin_component($zipfile);
+                if (!$component) {
+                    $this->feedback[$plugin->type][$plugin->url]['error'][] =
+                        get_string('plugincomponentdetectfailed', 'tool_wbinstaller');
+                    continue;
                 }
-                $targetdir = $CFG->dirroot . "/$type";
+                // Dynamically split the component into plugin type and name.
+                list($plugintype, $pluginname) = core_component::normalize_component($component);
+                $plugintypes = core_component::get_plugin_types();
+
+                // Use core_plugin_manager to get the plugin type and directory structure.
+                $pluginman = \core_plugin_manager::instance();
+                $targetdir = $pluginman->get_plugintype_root($plugintype);
+
+                // Check if it's a core plugin or a subplugin.
                 if (!is_dir($targetdir)) {
                     $result = mkdir($targetdir, 0777, true);
                     if (!$result) {
@@ -333,12 +336,12 @@ class pluginsInstaller extends wbInstaller {
                             $this->feedback[$plugin->type][$plugin->url]['error'][] =
                               get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
                         }
-                        continue; // Skip this iteration and move on to the next plugin.
+                        continue;
                     }
                 }
                 $zip = new \ZipArchive();
                 if ($zip->open($zipfile) === true) {
-                    $tempdir = $targetdir . '/temp_extract_' . $name;
+                    $tempdir = $targetdir . '/temp_extract_' . $pluginname;
                     if (!is_dir($tempdir)) {
                         $result = mkdir($tempdir, 0777, true);
                         if (!$result) {
@@ -365,7 +368,7 @@ class pluginsInstaller extends wbInstaller {
                     }
                     closedir($handle);
                     if ($extracteddirname) {
-                        $finaldir = $targetdir . '/' . $name;
+                        $finaldir = $targetdir . '/' . $pluginname;
                         rename($tempdir . '/' . $extracteddirname, $finaldir);
                         rmdir($tempdir);
                         $this->feedback[$plugin->type][$plugin->url]['success'][] =

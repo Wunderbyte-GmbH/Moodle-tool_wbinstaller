@@ -87,7 +87,7 @@ class install_recipe extends external_api {
         $context = context::instance_by_id($contextid);
         require_capability('tool/wbinstaller:caninstall', $context);
         $wbinstaller = new wbInstaller($file, $filename, $optionalplugins);
-        $response = $wbinstaller->execute();
+        $response = $wbinstaller->execute('test');
         return [
             'feedback' => json_encode($response['feedback']),
             'status' => $response['status'],

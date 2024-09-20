@@ -42,7 +42,7 @@ class simulationsInstaller extends wbInstaller {
 
     /**
      * Entities constructor.
-     * @param string $recipe
+     * @param array $recipe
      * @param int $dbid
      */
     public function __construct($recipe, $dbid=null) {
@@ -55,14 +55,15 @@ class simulationsInstaller extends wbInstaller {
      * Exceute the installer.
      * @return array
      */
-    public function execute() {
-        foreach (glob("$this->recipe/*.csv") as $itemparamsfile) {
-            try {
-                $this->import_itemparams($itemparamsfile);
-            } catch (Exception $e) {
-                $this->feedback['needed'][basename($itemparamsfile)]['error'][] = $e;
-            }
-        }
+    public function execute($extractpath) {
+        $simulationspath = $extractpath . $this->recipe['path'];
+        // foreach (glob("$simulationspath/*.csv") as $itemparamsfile) {
+        //     try {
+        //         $this->import_itemparams($itemparamsfile);
+        //     } catch (Exception $e) {
+        //         $this->feedback['needed'][basename($itemparamsfile)]['error'][] = $e;
+        //     }
+        // }
         return 1;
     }
 
@@ -70,26 +71,26 @@ class simulationsInstaller extends wbInstaller {
       * Exceute the installer.
       * @return array
       */
-    public function check() {
-        foreach (glob("$this->recipe/*.csv") as $itemparamsfile) {
-            $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
-              get_string('simulationfilefound', 'tool_wbinstaller');
-            $filenamewithoutextension = pathinfo($itemparamsfile, PATHINFO_FILENAME);
-            if (
-                isset($this->installmatcher->$filenamewithoutextension) &&
-                class_exists($this->installmatcher->$filenamewithoutextension->name)
-              ) {
-                $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
-                  get_string(
-                    'simulationinstallerfilefound',
-                    'tool_wbinstaller',
-                    $this->installmatcher->$filenamewithoutextension->name
-                  );
-            } else {
-                $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
-                  get_string('simulationnoinstallerfilefound', 'tool_wbinstaller');
-            }
-        }
+    public function check($extractpath) {
+        $simulationspath = $extractpath . $this->recipe['path'];
+        // foreach (glob("$simulationspath/*.csv") as $itemparamsfile) {
+        //     $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
+        //       get_string('simulationfilefound', 'tool_wbinstaller');
+        //     if (
+        //         isset($this->recipe['matcher']) &&
+        //         class_exists($this->recipe['matcher']['name'])
+        //       ) {
+        //         $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
+        //           get_string(
+        //             'simulationinstallerfilefound',
+        //             'tool_wbinstaller',
+        //             $this->recipe['matcher']['name']
+        //           );
+        //     } else {
+        //         $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
+        //           get_string('simulationnoinstallerfilefound', 'tool_wbinstaller');
+        //     }
+        // }
     }
 
      /**
@@ -101,28 +102,27 @@ class simulationsInstaller extends wbInstaller {
       */
     private function import_itemparams($filename) {
         global $DB;
-        $filenamewithoutextension = pathinfo($filename, PATHINFO_FILENAME);
         $questions = $DB->get_records('question');
         if (! $questions) {
             $this->feedback['needed'][$filename]['error'][] = 'No questions found';
         } else if (
-            isset($this->installmatcher->$filenamewithoutextension) &&
-            class_exists($this->installmatcher->$filenamewithoutextension->name)
+          isset($this->recipe['matcher']) &&
+          class_exists($this->recipe['matcher']['name'])
         ) {
-            $installeroptions = $this->installmatcher->$filenamewithoutextension;
-            $importerclass = $installeroptions->name;
+            $installeroptions = $this->recipe['matcher'];
+            $importerclass = $installeroptions['name'];
                 $importer = new $importerclass();
                 $content = file_get_contents($filename);
                 $importer->execute_testitems_csv_import(
                     (object) [
-                        'delimiter_name' => $installeroptions->delimiter_name ?? 'semicolon',
-                        'encoding' => $installeroptions->encoding ?? null,
-                        'dateparseformat' => $installeroptions->dateparseformat ?? null,
+                        'delimiter_name' => $installeroptions['delimiter_name'] ?? 'semicolon',
+                        'encoding' => $installeroptions['encoding'] ?? null,
+                        'dateparseformat' => $installeroptions['dateparseformat'] ?? null,
                     ],
                     $content
                 );
                 $this->feedback['needed'][basename($filename)]['success'][] =
-                  get_string('simulationinstallersuccess', 'tool_wbinstaller', $installeroptions->name);
+                  get_string('simulationinstallersuccess', 'tool_wbinstaller', $installeroptions['name']);
         } else {
             $this->feedback['needed'][basename($filename)]['error'][] =
               get_string('simulationnoinstallerfilefound', 'tool_wbinstaller');
