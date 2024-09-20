@@ -145,6 +145,7 @@ class coursesInstaller extends wbInstaller {
     /**
      * Get the course short name.
      * @param string $json
+     * @param array $matchingarray
      * @return string
      */
     private function translate_courseids($json, $matchingarray) {
