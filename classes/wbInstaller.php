@@ -41,7 +41,7 @@ class wbInstaller {
 
     /** @var int ID of the install status db entry. */
     public $dbid;
-    /** @var string Content of the recipe. */
+    /** @var mixed Content of the recipe. */
     public $recipe;
     /** @var string Filename of the recipe. */
     public $filename;
@@ -137,6 +137,9 @@ class wbInstaller {
                       $jsonarray[$step],
                       $this->dbid
                     );
+                }
+                if ($step == 'localdata') {
+                    $instance->set_matchingcourseids($this->matchingcourseids);
                 }
                 $instance->execute($recipefolder);
                 if ($step == 'courses') {

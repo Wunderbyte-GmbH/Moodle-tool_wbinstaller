@@ -35,7 +35,9 @@
       <div v-else>
         <ul v-for="(messagestype, key) in messages" :key="key" class="list-group">
           <li v-for="(message, key) in messagestype" :key="key" style="margin-left: 20px; list-style-type: disc;">
-            {{ key }}
+            <h4 style="text-decoration: underline;">
+              {{ key }}
+            </h4>
             <PluginFeedback :message/>
           </li>
         </ul>

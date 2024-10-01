@@ -85,8 +85,14 @@ $string['installerfailfinddir'] = 'Extrahierter Ordner {$a} konnte nicht gefunde
 $string['installersuccessinstalled'] = '{$a} wurde erfolgreich installiert';
 $string['installerfailextract'] = '{$a} konnte nicht extrahiert werden!';
 $string['customfielderror'] = 'Fieldset konnte nicht hochgeladen werden: {$a}';
-$string['adaptivequizsuccess'] = 'Das mod_adaptivequiz wurde erfolgreich aktualisiert: {$a}';
-$string['adaptivequizerror'] = 'Das mod_adaptivequiz wurde nicht aktualisiert: {$a}';
+$string['translatorsuccess'] = 'Die Änderung von {$a->changingcolumn} aus der Tabelle {$a->table} war erfolgreich';
+$string['translatorerror'] = 'Die Änderung von {$a->changingcolumn} aus der Tabelle {$a->table} konnte nicht durchgeführt werden';
+$string['newcoursefound'] = 'Der neue Kurs mit dem Namen {$a} wurde gefunden';
+$string['newlocaldatafilefound'] = 'FNeue lokale Daten wurden gefunden: {$a}';
+$string['csvnotreadable'] = 'Csv Datei {$a} ist nicht lesbar';
+$string['localdatauploadsuccess'] = 'Csv Datei {$a} wurde erfolgreich hochgeladen';
+$string['scalemismatchlocaldata'] = 'Es wurde keine passende Cat-Skala gefunden';
+$string['courseidmismatchlocaldata'] = 'Die Kursids können nicht zugeordnet werden';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';
@@ -97,6 +103,7 @@ $string['vueinstallbtn'] = 'Rezept installieren';
 $string['vuequestionszip'] = 'Fragen in der ZIP-Datei:';
 $string['vuesimulationzip'] = 'Simulationen in der ZIP-Datei:';
 $string['vuecourseszip'] = 'Kurse in der ZIP-Datei:';
+$string['vuelocaldata'] = 'Lokale Daten im ZIP:';
 $string['vuecategories'] = 'Kategorie: ';
 $string['vuecustomfieldzip'] = 'Customfield in der ZIP-Datei:';
 $string['vuewaitingtext'] = 'Bitte warten Sie, während die Installation läuft...';

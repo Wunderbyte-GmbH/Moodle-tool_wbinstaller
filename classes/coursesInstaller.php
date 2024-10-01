@@ -51,7 +51,7 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Entities constructor.
-     * @param string $recipe
+     * @param mixed $recipe
      * @param int $dbid
      */
     public function __construct($recipe, $dbid=null) {
@@ -64,8 +64,10 @@ class coursesInstaller extends wbInstaller {
      * Exceute the installer.
      * @return string
      */
-    public function execute() {
-        foreach (glob("$this->recipe/*.mbz") as $coursefile) {
+    public function execute($extractpath) {
+        $coursespath = $extractpath . $this->recipe['path'];
+
+        foreach (glob("$coursespath/*") as $coursefile) {
             $this->install_course($coursefile);
         }
         return '1';
@@ -73,15 +75,34 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param string $extractpath
      * @return string
      */
-    public function check() {
-        foreach (glob("$this->recipe/*.mbz") as $coursefile) {
-            $this->feedback['needed'][basename($coursefile)]['success'][] =
-              "Found the file :" . $coursefile;
+    public function check($extractpath) {
+        $coursespath = $extractpath . $this->recipe['path'];
+        foreach (glob("$coursespath/*") as $coursefile) {
+            $precheck = $this->precheck($coursefile);
+            if ($precheck) {
+                $this->feedback['needed'][$precheck['courseshortname']]['success'][] =
+                    get_string('newcoursefound', 'tool_wbinstaller', $precheck['courseshortname']);
+            }
         }
-        $this->update_adaptivequiz();
         return '1';
+    }
+
+    /**
+     * Instal a single course.
+     * @param string $coursefile
+     * @return int
+     */
+    protected function install_course($coursefile) {
+        $precheck = $this->precheck($coursefile);
+        if ($precheck) {
+            $this->restore_course($coursefile, $precheck);
+            $this->feedback['needed'][$precheck['courseshortname']]['success'][] =
+                get_string('coursessuccess', 'tool_wbinstaller', $precheck['courseshortname']);
+        }
+        return 1;
     }
 
     /**
@@ -89,75 +110,24 @@ class coursesInstaller extends wbInstaller {
      * @param string $coursefile
      * @return mixed
      */
-    private function install_course($coursefile) {
+    protected function precheck($coursefile) {
         $xml = simplexml_load_file($coursefile . '/moodle_backup.xml');
         $courseshortname = $this->get_course_short_name($xml);
         $courseoriginalid = $this->get_course_og_id($xml);
         if (!$courseshortname || !$courseoriginalid) {
             $this->feedback['needed'][$coursefile]['error'][] =
               get_string('coursesnoshortname', 'tool_wbinstaller', $coursefile);
-            return;
-        } else if ($this->course_exists($courseshortname)) {
-            $this->feedback['needed'][basename($coursefile)]['warning'][] =
-              get_string('coursesduplicateshortname', 'tool_wbinstaller', $coursefile);
-            return;
+            return 0;
+        } else if ($course = $this->course_exists($courseshortname)) {
+            $this->matchingcourseids[$courseoriginalid] = $course->id;
+            $this->feedback['needed'][$courseshortname]['warning'][] =
+              get_string('coursesduplicateshortname', 'tool_wbinstaller', $courseshortname);
+            return 0;
         }
-        $this->restore_course($coursefile, $courseoriginalid);
-        $this->feedback['needed'][basename($coursefile)]['success'][] =
-          get_string('coursessuccess', 'tool_wbinstaller', $coursefile);
-        return;
-    }
-
-    /**
-     * Instal a single course.
-     * @return mixed
-     */
-    private function update_adaptivequiz() {
-        global $DB;
-        $matchingarray = $this->matchingcourseids;
-        foreach ($this->matchingcourseids as $newid => $oldid) {
-            $adaptivequizzes = $DB->get_records(
-                'local_catquiz_test',
-                ['courseid' => $oldid],
-                '',
-                'id, name, json'
-            );
-            foreach ($adaptivequizzes as $adaptivequiz) {
-                $adaptivequiz->json = $this->translate_courseids(
-                    $adaptivequiz->json,
-                    $matchingarray
-                );
-                $updatesuccess = $DB->update_record(
-                    'local_catquiz_test',
-                    $adaptivequiz
-                );
-                if (!$updatesuccess) {
-                    $this->feedback['needed'][$adaptivequiz->name]['success'][] =
-                        get_string('adaptivequizsuccess', 'tool_wbinstaller', $adaptivequiz->name);
-                } else {
-                    $this->feedback['needed'][$adaptivequiz->name]['error'][] =
-                        get_string('adaptivequizerror', 'tool_wbinstaller', $adaptivequiz->name);
-                }
-            }
-        }
-    }
-
-    /**
-     * Get the course short name.
-     * @param string $json
-     * @param array $matchingarray
-     * @return string
-     */
-    private function translate_courseids($json, $matchingarray) {
-        $json = json_decode($json, true);
-        foreach ($json as $key => $value) {
-            if (strpos($key, 'catquiz_courses_') === 0 && is_array($value)) {
-                $json[$key] = array_map(function($id) use ($matchingarray) {
-                    return isset($matchingarray[$id]) ? $matchingarray[$id] : $id;
-                }, $value);
-            }
-        }
-        return json_encode($json);
+        return [
+            "courseshortname" => $courseshortname,
+            "courseoriginalid" => $courseoriginalid
+        ];
     }
 
     /**
@@ -183,7 +153,7 @@ class coursesInstaller extends wbInstaller {
      * @param string $shortname
      * @return object
      */
-    private function course_exists($shortname) {
+    protected function course_exists($shortname) {
         global $DB;
         $course = $DB->get_record('course', ['shortname' => $shortname], 'id');
         return $course;
@@ -195,8 +165,18 @@ class coursesInstaller extends wbInstaller {
      * @param string $ogid
      * @return mixed
      */
-    private function restore_course($coursefile, $ogid) {
+    protected function restore_course($coursefile, $precheck) {
         global $USER, $CFG;
+
+        $destination = $CFG->tempdir . '/backup/' . basename($coursefile);
+        if (!is_dir($destination)) {
+            mkdir($destination, 0777, true);
+        }
+        if (!$this->copy_directory($coursefile, $destination)) {
+            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
+              get_string('coursesfailextract', 'tool_wbinstaller');
+            return;
+        }
         $newcourse = new stdClass();
         $newcourse->fullname = 'Temporary Course Fullname';
         $newcourse->shortname = 'temp_' . uniqid();
@@ -204,36 +184,51 @@ class coursesInstaller extends wbInstaller {
         $newcourse->format = 'topics';
         $newcourse->visible = 0;
         $newcourse = create_course($newcourse);
-        $this->matchingcourseids[$newcourse->id] = $ogid;
+        $this->matchingcourseids[$precheck['courseoriginalid']] = $newcourse->id;
 
-        $destination = $CFG->tempdir . '/backup/' . basename($coursefile);
-
-        if (!is_dir($destination)) {
-            mkdir($destination, 0777, true);
-        }
-
-        if (!$this->copy_directory($coursefile, $destination)) {
-            $this->feedback['needed'][basename($coursefile)]['error'][] =
-              get_string('coursesfailextract', 'tool_wbinstaller');
-            return;
-        }
-        $rc = new restore_controller(
-            basename($coursefile),
-            $newcourse->id,
-            backup::INTERACTIVE_NO,
-            backup::MODE_IMPORT,
-            $USER->id,
-            backup::TARGET_NEW_COURSE
-        );
+        $rc = $this->create_restore_controller($coursefile, $newcourse->id, $USER->id);
 
         if (!$rc->execute_precheck()) {
-            $this->feedback['needed'][basename($coursefile)]['error'][] =
-              get_string('coursesfailprecheck', 'tool_wbinstaller', $coursefile);
+            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
+                get_string('coursesfailextract', 'tool_wbinstaller', $precheck['courseshortname']);
+            delete_course($newcourse->id, false);
+            fulldelete($destination);
             return;
         }
         $rc->execute_plan();
         $rc->destroy();
         fulldelete($destination);
+
+        $coursecontent = get_course($newcourse->id);
+        if (
+          empty($coursecontent->sections) &&
+          $coursecontent->fullname == 'Temporary Course Fullname'
+        ) {
+            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
+                get_string('coursesfailextract', 'tool_wbinstaller', $precheck['courseshortname']);
+            delete_course($newcourse->id, false);
+            fulldelete($destination);
+            return;
+        }
+    }
+
+    /**
+     * Recursively copies a directory.
+     *
+     * @param string $coursefile
+     * @param string $newcourseid
+     * @param string $userid
+     * @return restore_controller Restore controller.
+     */
+    protected function create_restore_controller($coursefile, $newcourseid, $userid) {
+        return new restore_controller(
+            basename($coursefile),
+            $newcourseid,
+            backup::INTERACTIVE_NO,
+            backup::MODE_IMPORT,
+            $userid,
+            backup::TARGET_NEW_COURSE
+        );
     }
 
     /**

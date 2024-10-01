@@ -54,16 +54,16 @@ class questionsInstaller extends wbInstaller {
      */
     public function execute($extractpath) {
         $questionspath = $extractpath . $this->recipe['path'];
-        // foreach (glob("$questionspath/*") as $questionfile) {
-        //     try {
-        //         $qformat = $this->create_qformat($questionfile, 1);
-        //         $qformat->importprocess();
-        //         $this->feedback['needed'][basename($questionfile)]['success'][] =
-        //           get_string('questionsuccesinstall', 'tool_wbinstaller');
-        //     } catch (Exception $e) {
-        //         $this->feedback['needed'][basename($questionfile)]['error'][] = $e;
-        //     }
-        // }
+        foreach (glob("$questionspath/*") as $questionfile) {
+            try {
+                $qformat = $this->create_qformat($questionfile, 1);
+                $qformat->importprocess();
+                $this->feedback['needed'][basename($questionfile)]['success'][] =
+                  get_string('questionsuccesinstall', 'tool_wbinstaller');
+            } catch (Exception $e) {
+                $this->feedback['needed'][basename($questionfile)]['error'][] = $e;
+            }
+        }
         return 1;
     }
 
@@ -73,10 +73,10 @@ class questionsInstaller extends wbInstaller {
      */
     public function check($extractpath) {
         $questionspath = $extractpath . $this->recipe['path'];
-        // foreach (glob("$questionspath/*") as $questionfile) {
-        //     $this->feedback['needed'][basename($questionfile)]['success'][] =
-        //       get_string('questionfilefound', 'tool_wbinstaller');
-        // }
+        foreach (glob("$questionspath/*") as $questionfile) {
+            $this->feedback['needed'][basename($questionfile)]['success'][] =
+              get_string('questionfilefound', 'tool_wbinstaller');
+        }
     }
 
     /**

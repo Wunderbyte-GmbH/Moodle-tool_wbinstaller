@@ -96,24 +96,24 @@ class pluginsInstaller extends wbInstaller {
         $PAGE->set_context(context_system::instance());
         $installer = tool_installaddon_installer::instance();
         $installable = [];
-        // if (isset($this->recipe)) {
-        //     foreach ($this->recipe as $type => $plugins) {
-        //         foreach ($plugins as $gitzipurl) {
-        //             if (
-        //               $type != 'optional' ||
-        //               in_array($gitzipurl, $this->optionalplugins)
-        //             ) {
-        //                 $install = $this->check_plugin_compability($gitzipurl, $type, true);
-        //                 if ($install != 2) {
-        //                     $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        // $this->manual_install_plugins($installable);
-        // $this->upgraderunning = $DB->get_field('config', 'value', ['name' => 'upgraderunning']);
-        // $DB->set_field('config', 'value', '0', ['name' => 'upgraderunning']);
+        if (isset($this->recipe)) {
+            foreach ($this->recipe as $type => $plugins) {
+                foreach ($plugins as $gitzipurl) {
+                    if (
+                      $type != 'optional' ||
+                      in_array($gitzipurl, $this->optionalplugins)
+                    ) {
+                        $install = $this->check_plugin_compability($gitzipurl, $type, true);
+                        if ($install != 2) {
+                            $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
+                        }
+                    }
+                }
+            }
+        }
+        $this->manual_install_plugins($installable);
+        $this->upgraderunning = $DB->get_field('config', 'value', ['name' => 'upgraderunning']);
+        $DB->set_field('config', 'value', '0', ['name' => 'upgraderunning']);
         return 1;
     }
 
@@ -143,11 +143,11 @@ class pluginsInstaller extends wbInstaller {
      * Exceute the installer.
      */
     public function check($extractpath) {
-        // foreach ($this->recipe as $type => $plugins) {
-        //     foreach ($plugins as $gitzipurl) {
-        //         $this->check_plugin_compability($gitzipurl, $type);
-        //     }
-        // }
+        foreach ($this->recipe as $type => $plugins) {
+            foreach ($plugins as $gitzipurl) {
+                $this->check_plugin_compability($gitzipurl, $type);
+            }
+        }
     }
 
     /**
