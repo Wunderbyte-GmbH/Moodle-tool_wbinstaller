@@ -55,7 +55,6 @@ class recipeExporter {
     public static function get_recipe($courseids) {
         $file = [];
         $courseids = json_decode($courseids);
-        $courses = coursesExporter::get_courses($courseids);
         return $file;
     }
 }

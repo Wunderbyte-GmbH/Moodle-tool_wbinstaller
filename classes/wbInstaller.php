@@ -53,8 +53,6 @@ class wbInstaller {
     public $optionalplugins;
     /** @var int Install status. */
     public $status;
-    /** @var array Install status. */
-    public $installorder;
     /** @var int Upgrade time. */
     public $upgraderunning;
     /** @var array Matching the course ids from the old => new. */
@@ -74,13 +72,6 @@ class wbInstaller {
         $this->feedback = [];
         $this->optionalplugins = json_decode($optionalplugins);
         $this->status = 0;
-        $this->installorder = [
-          'plugins.json',
-          'customfield.json',
-          'questions',
-          'simulations',
-          'courses',
-        ];
         $this->upgraderunning = 0;
         $this->matchingcourseids = [];
     }
