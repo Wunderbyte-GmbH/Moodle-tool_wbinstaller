@@ -62,11 +62,11 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param string $extractpath
      * @return string
      */
     public function execute($extractpath) {
         $coursespath = $extractpath . $this->recipe['path'];
-
         foreach (glob("$coursespath/*") as $coursefile) {
             $this->install_course($coursefile);
         }
@@ -162,7 +162,7 @@ class coursesInstaller extends wbInstaller {
     /**
      * Restore the course.
      * @param string $coursefile
-     * @param string $ogid
+     * @param string $precheck
      * @return mixed
      */
     protected function restore_course($coursefile, $precheck) {

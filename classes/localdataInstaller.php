@@ -65,6 +65,7 @@ class localdataInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param string $extractpath
      * @return string
      */
     public function execute($extractpath) {
@@ -72,7 +73,6 @@ class localdataInstaller extends wbInstaller {
         foreach (glob("$coursespath/*") as $coursefile) {
             $this->upload_csv_file($coursefile);
         }
-
         return '1';
     }
 
@@ -154,7 +154,7 @@ class localdataInstaller extends wbInstaller {
 
     /**
      * Check if course already exists.
-     * @return array
+     * @param array $matchingcourseids
      */
     public function set_matchingcourseids($matchingcourseids) {
         $this->matchingcourseids = $matchingcourseids;
@@ -162,6 +162,8 @@ class localdataInstaller extends wbInstaller {
 
     /**
      * Check if course already exists.
+     * @param string $json
+     * @param string $sacleid
      * @return array
      */
     public function update_nested_json($json, $sacleid) {
@@ -189,6 +191,7 @@ class localdataInstaller extends wbInstaller {
 
     /**
      * Check if course already exists.
+     * @param array $values
      * @return array
      */
     public function course_matching($values) {
@@ -208,6 +211,8 @@ class localdataInstaller extends wbInstaller {
 
     /**
      * Check if course already exists.
+     * @param object $json
+     * @param string $sacleid
      * @return array
      */
     public function get_scale_matcher($json, $sacleid) {

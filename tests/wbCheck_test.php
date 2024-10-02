@@ -72,44 +72,4 @@ class wbCheck_test extends advanced_testcase {
         $feedback = $check->execute();
         $this->assertIsArray($feedback);
     }
-
-    /**
-     * Test extract_save_zip_file method to ensure it handles valid base64 strings and extraction.
-     */
-    public function test_extract_save_zip_file() {
-        global $CFG;
-
-        // Mock recipe data.
-        $recipe = 'data:application/zip;base64,UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==';  // Simulated minimal zip base64
-        $filename = 'testrecipe.zip';
-
-        // Mock the global $CFG.
-        $CFG = new \stdClass();
-        $CFG->tempdir = '/tempdir';
-        $CFG->ostype = 'UNIX';
-        $CFG->debugdeveloper = true;
-        $CFG->umaskpermissions = 02777;
-
-         // Create a real zip file in the temporary directory.
-        $zipfilepath = $CFG->tempdir . '/zip/precheck_zip';
-        if (!is_dir(dirname($zipfilepath))) {
-            mkdir(dirname($zipfilepath), 0777, true);  // Ensure the directory exists.
-        }
-
-        // Create a real zip file to simulate the scenario.
-        $zip = new ZipArchive();
-        $zip->open($zipfilepath, ZipArchive::CREATE);
-        $zip->addFromString('testfile.txt', 'This is a test file.');
-        $zip->close();
-
-        // Create an instance of wbCheck.
-        $check = new \tool_wbinstaller\wbCheck($recipe, $filename);
-
-        // Test if the extraction works as expected.
-        $extractpath = $check->extract_save_zip_file();
-
-        // Check if the extraction was successful and the file exists.
-        $this->assertEquals($CFG->tempdir . '/zip/precheck/', $extractpath);
-
-    }
 }

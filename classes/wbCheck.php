@@ -25,8 +25,6 @@
 
 namespace tool_wbinstaller;
 
-use moodle_exception;
-use stdClass;
 use ZipArchive;
 
 /**

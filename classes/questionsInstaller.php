@@ -50,6 +50,7 @@ class questionsInstaller extends wbInstaller {
     }
     /**
      * Exceute the installer.
+     * @param string $extractpath
      * @return array
      */
     public function execute($extractpath) {
@@ -69,6 +70,8 @@ class questionsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param string $extractpath
+
      * @return array
      */
     public function check($extractpath) {

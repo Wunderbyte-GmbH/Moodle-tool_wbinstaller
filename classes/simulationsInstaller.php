@@ -53,6 +53,7 @@ class simulationsInstaller extends wbInstaller {
     }
     /**
      * Exceute the installer.
+     * @param string $extractpath
      * @return array
      */
     public function execute($extractpath) {
@@ -69,6 +70,7 @@ class simulationsInstaller extends wbInstaller {
 
      /**
       * Exceute the installer.
+      * @param string $extractpath
       * @return array
       */
     public function check($extractpath) {
@@ -97,7 +99,6 @@ class simulationsInstaller extends wbInstaller {
       * Import the item params from the given CSV file
       *
       * @param string $filename The name of the itemparams file.
-      *
       * @return void
       */
     private function import_itemparams($filename) {

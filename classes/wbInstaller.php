@@ -96,6 +96,7 @@ class wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param string $extractpath
      * @return array
      */
     public function execute($extractpath) {

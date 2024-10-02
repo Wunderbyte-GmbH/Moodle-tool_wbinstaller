@@ -52,6 +52,7 @@ class customfieldsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param string $extractpath
      * @return int
      */
     public function execute($extractpath) {
@@ -138,6 +139,7 @@ class customfieldsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer check.
+     * @param string $extractpath
      */
     public function check($extractpath) {
         global $DB;
