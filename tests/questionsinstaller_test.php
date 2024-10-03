@@ -17,10 +17,7 @@
 namespace tool_wbinstaller;
 
 use advanced_testcase;
-use core\moodle_url_test;
 use moodle_database;
-use context_course;
-use stdClass;
 
 /**
  * PHPUnit test case for the 'tool_wbinstaller' class in local_adele.
@@ -32,7 +29,7 @@ use stdClass;
  *
  * @covers \tool_wbinstaller
  */
-class questionsInstaller_test extends advanced_testcase {
+class questionsinstaller_test extends advanced_testcase {
 
     protected $db;
     protected $installer;

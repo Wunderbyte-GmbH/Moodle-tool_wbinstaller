@@ -30,7 +30,7 @@ use stdClass;
  *
  * @covers \tool_wbinstaller
  */
-class coursesInstaller_test extends advanced_testcase {
+class coursesinstaller_test extends advanced_testcase {
 
     protected function setUp(): void {
         $this->resetAfterTest(true);
@@ -42,9 +42,7 @@ class coursesInstaller_test extends advanced_testcase {
      */
     public function test_execute_installs_courses() {
         global $CFG;
-        $recipe = [
-            'path' => '/testcourses'
-        ];
+        $recipe = ['path' => '/testcourses'];
 
         // Mock course files in the test directory.
         $extractpath = $CFG->tempdir . '/test_wbinstaller';
@@ -95,7 +93,7 @@ class coursesInstaller_test extends advanced_testcase {
         $installer->method('precheck')
             ->willReturn([
                 'courseshortname' => 'test_shortname',
-                'courseoriginalid' => 1234
+                'courseoriginalid' => 1234,
             ]);
 
         // Run check method and verify feedback.
@@ -124,7 +122,7 @@ class coursesInstaller_test extends advanced_testcase {
         $installer->method('precheck')
             ->willReturn([
                 'courseshortname' => 'test_shortname',
-                'courseoriginalid' => 1234
+                'courseoriginalid' => 1234,
             ]);
 
         // Expect restore_course to be called once.
@@ -177,7 +175,7 @@ class coursesInstaller_test extends advanced_testcase {
         $coursefile = '/testpath/coursefile';
         $precheck = [
             'courseshortname' => 'shortname',
-            'courseoriginalid' => 1234
+            'courseoriginalid' => 1234,
         ];
 
         // Create instance of coursesInstaller.

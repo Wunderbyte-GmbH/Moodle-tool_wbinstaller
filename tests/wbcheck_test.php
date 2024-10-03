@@ -17,11 +17,6 @@
 namespace tool_wbinstaller;
 
 use advanced_testcase;
-use core_customfield\handler;
-use core_customfield\field_controller;
-use restore_controller;
-use stdClass;
-use ZipArchive;
 
 /**
  * PHPUnit test case for the 'tool_wbinstaller' class in local_adele.
@@ -33,7 +28,7 @@ use ZipArchive;
  *
  * @covers \tool_wbinstaller
  */
-class wbCheck_test extends advanced_testcase {
+class wbcheck_test extends advanced_testcase {
 
     protected function setUp(): void {
         $this->resetAfterTest(true);

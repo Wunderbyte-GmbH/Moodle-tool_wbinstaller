@@ -108,8 +108,8 @@ class localdataInstaller extends wbInstaller {
             $this->feedback['needed']['local_data']['error'][] =
                 get_string('csvnotreadable', 'tool_wbinstaller', $fileinfo);
         } else {
-            $filecontents = file_get_contents($coursefile); // Read JSON content
-            $jsondata = json_decode($filecontents, true);   // Decode JSON into associative array
+            $filecontents = file_get_contents($coursefile);
+            $jsondata = json_decode($filecontents, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $this->feedback['needed']['local_data']['error'][] =
@@ -121,8 +121,12 @@ class localdataInstaller extends wbInstaller {
                 $record = new stdClass();
                 $newdata = null;
                 if (isset($this->matchingcourseids[$row['courseid']])) {
-                    $newdata = $DB->get_record_sql($this->recipe['translator']['sql'],
-                        array('id' => $this->matchingcourseids[$row['courseid']]));
+                    $newdata = $DB->get_record_sql(
+                      $this->recipe['translator']['sql'],
+                      [
+                        'id' => $this->matchingcourseids[$row['courseid']]
+                      ]
+                    );
                 }
 
                 if (isset($this->recipe['translator']['catscalename'])) {

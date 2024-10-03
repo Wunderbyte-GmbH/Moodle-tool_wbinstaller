@@ -126,7 +126,7 @@ class coursesInstaller extends wbInstaller {
         }
         return [
             "courseshortname" => $courseshortname,
-            "courseoriginalid" => $courseoriginalid
+            "courseoriginalid" => $courseoriginalid,
         ];
     }
 

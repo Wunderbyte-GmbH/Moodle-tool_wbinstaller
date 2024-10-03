@@ -65,7 +65,7 @@ class pluginsInstaller extends wbInstaller {
 
     /** @var object Known subplugins. */
     public $knownsubplugins;
-    // Add the tool_installaddon_installer as a dependency.
+    /** @var tool_installaddon_installer Plugin installer. */
     protected $addoninstaller;
 
     /**

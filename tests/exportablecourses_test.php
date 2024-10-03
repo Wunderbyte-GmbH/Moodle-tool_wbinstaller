@@ -29,7 +29,7 @@ use stdClass;
  *
  * @covers \tool_wbinstaller
  */
-class exportableCourses_test extends advanced_testcase {
+class exportablecourses_test extends advanced_testcase {
 
     protected function setUp(): void {
         $this->resetAfterTest(true);

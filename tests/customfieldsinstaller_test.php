@@ -17,11 +17,6 @@
 namespace tool_wbinstaller;
 
 use advanced_testcase;
-use core_customfield\handler;
-use core_customfield\field_controller;
-use restore_controller;
-use stdClass;
-
 /**
  * PHPUnit test case for the 'tool_wbinstaller' class in local_adele.
  *
@@ -32,7 +27,7 @@ use stdClass;
  *
  * @covers \tool_wbinstaller
  */
-class customfieldsInstaller_test extends advanced_testcase {
+class customfieldsinstaller_test extends advanced_testcase {
 
     protected function setUp(): void {
         $this->resetAfterTest(true);
@@ -56,10 +51,10 @@ class customfieldsInstaller_test extends advanced_testcase {
                         'shortname' => 'test_shortname',
                         'name' => 'Test Field',
                         'type' => 'text',
-                        'data' => ['param1' => 'value1']
-                    ]
-                ]
-            ]
+                        'data' => ['param1' => 'value1'],
+                    ],
+                  ],
+            ],
         ];
 
         // Mock DB responses.
