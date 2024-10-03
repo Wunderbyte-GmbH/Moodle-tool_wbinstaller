@@ -31,10 +31,12 @@ use moodle_database;
  */
 class questionsinstaller_test extends advanced_testcase {
 
+    /** @var moodle_database DB mock */
     protected $db;
+    /** @var questionsInstaller question installer class */
     protected $installer;
+    /** @var array Recipe for installer */
     protected $recipe;
-    protected $course;
 
     protected function setUp(): void {
         $this->resetAfterTest(true);
@@ -47,7 +49,7 @@ class questionsinstaller_test extends advanced_testcase {
         $DB = $this->db;
 
         $this->recipe = [
-            'path' => '/some/question/path'
+            'path' => '/some/question/path',
         ];
 
         $this->installer = new questionsInstaller($this->recipe, 1);

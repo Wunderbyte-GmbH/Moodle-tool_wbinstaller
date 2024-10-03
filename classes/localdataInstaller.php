@@ -124,7 +124,7 @@ class localdataInstaller extends wbInstaller {
                     $newdata = $DB->get_record_sql(
                       $this->recipe['translator']['sql'],
                       [
-                        'id' => $this->matchingcourseids[$row['courseid']]
+                        'id' => $this->matchingcourseids[$row['courseid']],
                       ]
                     );
                 }
