@@ -90,7 +90,11 @@ class simulationsInstaller extends wbInstaller {
                   );
             } else {
                 $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
-                  get_string('simulationnoinstallerfilefound', 'tool_wbinstaller');
+                  get_string(
+                    'simulationnoinstallerfilefound',
+                    'tool_wbinstaller',
+                    $this->recipe['matcher']['name']
+                  );
             }
         }
     }
