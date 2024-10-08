@@ -190,11 +190,11 @@ class pluginsInstaller extends wbInstaller {
                     }
                 } else if ($a->installedversion <= $a->componentversion) {
                     if ($execute) {
-                        $this->feedback[$type][$gitzipurl]['error'][] =
+                        $this->feedback[$type][$gitzipurl]['warning'][] =
                           get_string('pluginolder', 'tool_wbinstaller', $a);
                         return 2;
                     } else {
-                        $this->feedback[$type][$gitzipurl]['error'][] =
+                        $this->feedback[$type][$gitzipurl]['warning'][] =
                           get_string('pluginolder', 'tool_wbinstaller', $a);
                         $this->set_status(2);
                     }
