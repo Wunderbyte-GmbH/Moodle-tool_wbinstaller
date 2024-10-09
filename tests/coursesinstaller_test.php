@@ -182,7 +182,7 @@ class coursesinstaller_test extends advanced_testcase {
         $recipe = ['path' => '/testcourses'];
         $installer = $this->getMockBuilder(coursesInstaller::class)
             ->setConstructorArgs([$recipe])
-            ->onlyMethods(['copy_directory', 'create_restore_controller'])
+            ->onlyMethods(['copy_directory'])
             ->getMock();
 
         // Mock the restore_controller.
@@ -205,10 +205,6 @@ class coursesinstaller_test extends advanced_testcase {
         $installer->expects($this->once())
             ->method('copy_directory')
             ->willReturn(true);
-
-        $installer->expects($this->once())
-            ->method('create_restore_controller')
-            ->willReturn($mockrestorecontroller);
 
         // Now call the restore_course method.
         $reflection = new \ReflectionClass($installer);

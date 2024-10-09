@@ -194,7 +194,7 @@ class coursesInstaller extends wbInstaller {
      * Recursively copies a directory.
      *
      * @param string $coursefile
-     * @param string $newcourseid
+     * @param object $newcourse
      */
     protected function restore_with_controller($coursefile, $newcourse) {
         global $USER, $CFG;
@@ -212,12 +212,12 @@ class coursesInstaller extends wbInstaller {
 
         // Create the restore controller with the backup directory and the target course ID.
         $rc = new restore_controller(
-            basename($restorepath),  // Name of the backup file/folder
-            $newcourse->id,            // Target course ID
-            backup::INTERACTIVE_NO,  // No interactive mode
-            backup::MODE_IMPORT,     // Mode import
-            $USER->id,               // Current user ID
-            backup::TARGET_NEW_COURSE // Targeting a new course
+            basename($restorepath),
+            $newcourse->id,
+            backup::INTERACTIVE_NO,
+            backup::MODE_IMPORT,
+            $USER->id,
+            backup::TARGET_NEW_COURSE
         );
 
         if (!$rc->execute_precheck()) {
