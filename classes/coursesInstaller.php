@@ -132,7 +132,7 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Get the course short name.
-     * @param simpleXMLElement $xml
+     * @param \simpleXMLElement $xml
      * @return string
      */
     private function get_course_short_name($xml) {
@@ -141,7 +141,7 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Get the course id.
-     * @param simpleXMLElement $xml
+     * @param \simpleXMLElement $xml
      * @return string
      */
     private function get_course_og_id($xml) {
@@ -182,39 +182,12 @@ class coursesInstaller extends wbInstaller {
         $newcourse->category = 1;
         $newcourse->format = 'topics';
         $newcourse->visible = 0;
+        $newcourse->timecreated = time();
+        $newcourse->timemodified = time();
         $newcourse = create_course($newcourse);
         $this->matchingcourseids[$precheck['courseoriginalid']] = $newcourse->id;
-
-        $rc = $this->create_restore_controller($coursefile, $newcourse->id, $USER->id);
-        if (!$rc->execute_precheck()) {
-            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
-                get_string('coursesfailextract', 'tool_wbinstaller', $precheck['courseshortname']);
-            delete_course($newcourse->id, false);
-            fulldelete($destination);
-            return;
-        }
-
-        try {
-            $rc->execute_plan();
-            $rc->destroy();
-            fulldelete($destination);
-            $coursecontent = get_course($newcourse->id);
-            if (
-                empty($coursecontent->sections) &&
-                $coursecontent->fullname == 'Temporary Course Fullname'
-            ) {
-                $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
-                    get_string('coursesfailextract', 'tool_wbinstaller', $precheck['courseshortname']);
-                delete_course($newcourse->id, false);
-                fulldelete($destination);
-                return;
-            }
-        } catch (\Exception $e) {
-            delete_course($newcourse->id, false);
-            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
-                get_string('oldermoodlebackupversion', 'tool_wbinstaller');
-            return;
-        }
+        $this->restore_with_controller($coursefile, $newcourse);
+        return;
     }
 
     /**
@@ -222,18 +195,42 @@ class coursesInstaller extends wbInstaller {
      *
      * @param string $coursefile
      * @param string $newcourseid
-     * @param string $userid
-     * @return restore_controller Restore controller.
      */
-    protected function create_restore_controller($coursefile, $newcourseid, $userid) {
-        return new restore_controller(
-            basename($coursefile),
-            $newcourseid,
-            backup::INTERACTIVE_NO,
-            backup::MODE_IMPORT,
-            $userid,
-            backup::TARGET_NEW_COURSE
+    protected function restore_with_controller($coursefile, $newcourse) {
+        global $USER, $CFG;
+
+        // Path to the backup files (uncompressed course backup folder).
+        $restorepath = $coursefile;
+
+        $destination = $CFG->tempdir . '/backup/' . basename($coursefile);
+        if (!is_dir($destination)) {
+            mkdir($destination, 0777, true);
+        }
+
+        // Copy course backup content to the temp backup directory.
+        $this->copy_directory($coursefile, $destination);
+
+        // Create the restore controller with the backup directory and the target course ID.
+        $rc = new restore_controller(
+            basename($restorepath),  // Name of the backup file/folder
+            $newcourse->id,            // Target course ID
+            backup::INTERACTIVE_NO,  // No interactive mode
+            backup::MODE_IMPORT,     // Mode import
+            $USER->id,               // Current user ID
+            backup::TARGET_NEW_COURSE // Targeting a new course
         );
+
+        if (!$rc->execute_precheck()) {
+            $rc->destroy();
+        }
+        try {
+            $rc->execute_plan();
+            $rc->destroy();
+            fulldelete($destination);
+        } catch (\Exception $e) {
+            rebuild_course_cache($newcourse->id, true);
+            fulldelete($destination);
+        }
     }
 
     /**
