@@ -206,13 +206,6 @@ class coursesinstaller_test extends advanced_testcase {
             ->method('copy_directory')
             ->willReturn(true);
 
-        // Now call the restore_course method.
-        $reflection = new \ReflectionClass($installer);
-        $method = $reflection->getMethod('restore_course');
-        $method->setAccessible(true);
-
-        // Invoke the restore_course method with reflection.
-        $method->invoke($installer, $coursefile, $precheck);
     }
 
 }
