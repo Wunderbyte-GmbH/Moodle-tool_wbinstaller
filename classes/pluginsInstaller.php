@@ -178,7 +178,7 @@ class pluginsInstaller extends wbInstaller {
                 $a->installedversion = (int)$installedversion ?? '';
                 $a->componentversion = (int)$plugin['version'] ?? '';
                 if ($a->installedversion == 0) {
-                    if ($execute ) {
+                    if ($execute) {
                         $this->feedback[$type][$plugin['component']]['success'][] =
                             get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
                         return $plugin['component'];
