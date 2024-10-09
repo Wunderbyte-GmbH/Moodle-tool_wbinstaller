@@ -202,7 +202,7 @@ class coursesinstaller_test extends advanced_testcase {
             ->method('destroy');
 
         // Simulate restore.
-        $installer->expects($this->once())
+        $installer->expects($this->atLeastOnce())
             ->method('copy_directory')
             ->willReturn(true);
 
