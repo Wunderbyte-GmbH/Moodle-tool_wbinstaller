@@ -200,12 +200,6 @@ class coursesinstaller_test extends advanced_testcase {
 
         $mockrestorecontroller->expects($this->once())
             ->method('destroy');
-
-        // Simulate restore.
-        $installer->expects($this->atLeastOnce())
-            ->method('copy_directory')
-            ->willReturn(true);
-
     }
 
 }
