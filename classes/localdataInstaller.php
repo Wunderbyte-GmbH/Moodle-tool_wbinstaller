@@ -119,7 +119,7 @@ class localdataInstaller extends wbInstaller {
             foreach ($jsondata as $row) {
                 $this->uploaddata = true;
                 $record = new stdClass();
-                $newdata = null;
+                $newdata = new stdClass();
                 if (isset($this->matchingcourseids[$row['courseid']])) {
                     $newdata = $DB->get_record_sql(
                       $this->recipe['translator']['sql'],
@@ -127,6 +127,11 @@ class localdataInstaller extends wbInstaller {
                         'id' => $this->matchingcourseids[$row['courseid']],
                       ]
                     );
+                    if (!$newdata) {
+                        $this->feedback['needed']['local_data']['error'][] =
+                            get_string('noadaptivequizfound', 'tool_wbinstaller');
+                        break;
+                    }
                 }
 
                 if (isset($this->recipe['translator']['catscalename'])) {
@@ -140,20 +145,57 @@ class localdataInstaller extends wbInstaller {
                         if (isset($newdata->$key)) {
                             $record->$key = $newdata->$key;
                         } else if ($this->recipe['translator']['changingcolumn'][$key]['nested']) {
-                            $record->$key = $this->update_nested_json($rowcol, $newdata->catscaleid);
+                            $record->$key = $this->update_nested_json(
+                              $rowcol,
+                              $newdata->catscaleid,
+                              $this->recipe['translator']['changingcolumn'][$key]['keys']
+                            );
                         }
                     } else if ($key != 'id') {
                         $record->$key = $rowcol;
                     }
                 }
-                if ($this->uploaddata) {
+                $duplicatecheck = $this->duplicatecheck($fileinfo, $record);
+                if ($duplicatecheck) {
+                    $this->feedback['needed']['local_data']['warning'][] =
+                        get_string('localdatauploadduplicate', 'tool_wbinstaller', $fileinfo);
+                    break;
+                } else if ($this->uploaddata) {
                     $DB->insert_record($fileinfo, $record);
+                    $this->feedback['needed']['local_data']['success'][] =
+                        get_string('localdatauploadsuccess', 'tool_wbinstaller', $fileinfo);
+                } else {
+                    $this->feedback['needed']['local_data']['error'][] =
+                        get_string('localdatauploadsuccess', 'tool_wbinstaller', $fileinfo);
                 }
             }
-            $this->feedback['needed']['local_data']['success'][] =
-                get_string('localdatauploadsuccess', 'tool_wbinstaller', $fileinfo);
         }
         return 1;
+    }
+
+    /**
+     * Check if course already exists.
+     * @param string $fileinfo
+     * @param object $record
+     * @return bool
+     */
+    public function duplicatecheck($fileinfo, $record) {
+        global $DB;
+        $duplicatecheck = $this->recipe['translator']['duplicatecheck'] ?? null;
+        if (
+            empty($fileinfo) ||
+            empty($record) ||
+            empty($duplicatecheck)
+        ) {
+            return false;
+        }
+        $conditions = [];
+        foreach ($duplicatecheck as $field) {
+            if (isset($record->$field)) {
+                $conditions[$field] = $record->$field;
+            }
+        }
+        return $DB->record_exists($fileinfo, $conditions);
     }
 
     /**
@@ -168,25 +210,38 @@ class localdataInstaller extends wbInstaller {
      * Check if course already exists.
      * @param string $json
      * @param string $sacleid
-     * @return array
+     * @param array $keys
+     * @return string
      */
-    public function update_nested_json($json, $sacleid) {
+    public function update_nested_json($json, $sacleid, $keys) {
         $json = json_decode($json, true);
         $translationsclaeids = $this->get_scale_matcher($json, $sacleid);
-        foreach ($json as $key => $value) {
-            if ($key == 'catquiz_catscales') {
-                $json[$key] = $sacleid;
-            } else if (preg_match('/catquiz_courses_(\d+)_(\d+)/', $key, $matches)) {
-                $oldid = (int)$matches[1];
-                $suffix = $matches[2];
-                if (isset($translationsclaeids[$oldid])) {
-                    $newid = $translationsclaeids[$oldid];
-                    $newkey = "catquiz_courses_{$newid}_{$suffix}";
-                    $newdata[$newkey] = $this->course_matching($value);
-                } else {
-                    $newdata[$key] = $value;
+        foreach ($keys as $changingkey) {
+            foreach ($json as $key => $value) {
+                if ($key == 'catquiz_catscales') {
+                    $json[$key] = $sacleid;
+                } else if (preg_match('/' . $changingkey . '_(\d+)(?:_(\d+))?/', $key, $matches)) {
+                    $oldid = (int)$matches[1];
+                    $suffix = $matches[2];
+                    if (isset($translationsclaeids[$oldid])) {
+                        $newid = $translationsclaeids[$oldid];
+                        $newkey = $changingkey . "_{$newid}";
+                        if ($suffix) {
+                            $newkey .= "_{$suffix}";
+                        }
+                        if (
+                            isset($this->recipe['translator']['changingcourseids']) &&
+                            str_contains($key, $this->recipe['translator']['changingcourseids'])
+                        ) {
+                            $newdata[$newkey] = $this->course_matching($value);
+                        } else {
+                            $newdata[$newkey] = $value;
+                        }
+                    } else {
+                        $newdata[$key] = $value;
+                    }
+                    unset($json[$key]);
                 }
-                unset($json[$key]);
             }
         }
         $json = array_merge($json, $newdata);
@@ -204,9 +259,11 @@ class localdataInstaller extends wbInstaller {
             if (isset($this->matchingcourseids[$value])) {
                 $courseids[] = $this->matchingcourseids[$value];
             } else {
+                if ($this->uploaddata) {
+                    $this->feedback['needed']['local_data']['error'][] =
+                        get_string('courseidmismatchlocaldata', 'tool_wbinstaller');
+                }
                 $this->uploaddata = false;
-                $this->feedback['needed']['local_data']['error'][] =
-                    get_string('courseidmismatchlocaldata', 'tool_wbinstaller');
             }
         }
 
@@ -217,7 +274,7 @@ class localdataInstaller extends wbInstaller {
      * Check if course already exists.
      * @param object $json
      * @param string $sacleid
-     * @return array
+     * @return mixed
      */
     public function get_scale_matcher($json, $sacleid) {
         $newscales = array_keys(dataapi::get_catscale_and_children($sacleid, true));

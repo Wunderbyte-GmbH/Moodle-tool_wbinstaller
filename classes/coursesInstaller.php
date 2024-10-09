@@ -167,7 +167,6 @@ class coursesInstaller extends wbInstaller {
      */
     protected function restore_course($coursefile, $precheck) {
         global $USER, $CFG;
-
         $destination = $CFG->tempdir . '/backup/' . basename($coursefile);
         if (!is_dir($destination)) {
             mkdir($destination, 0777, true);
@@ -187,7 +186,6 @@ class coursesInstaller extends wbInstaller {
         $this->matchingcourseids[$precheck['courseoriginalid']] = $newcourse->id;
 
         $rc = $this->create_restore_controller($coursefile, $newcourse->id, $USER->id);
-
         if (!$rc->execute_precheck()) {
             $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
                 get_string('coursesfailextract', 'tool_wbinstaller', $precheck['courseshortname']);
@@ -195,19 +193,26 @@ class coursesInstaller extends wbInstaller {
             fulldelete($destination);
             return;
         }
-        $rc->execute_plan();
-        $rc->destroy();
-        fulldelete($destination);
 
-        $coursecontent = get_course($newcourse->id);
-        if (
-          empty($coursecontent->sections) &&
-          $coursecontent->fullname == 'Temporary Course Fullname'
-        ) {
-            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
-                get_string('coursesfailextract', 'tool_wbinstaller', $precheck['courseshortname']);
-            delete_course($newcourse->id, false);
+        try {
+            $rc->execute_plan();
+            $rc->destroy();
             fulldelete($destination);
+            $coursecontent = get_course($newcourse->id);
+            if (
+                empty($coursecontent->sections) &&
+                $coursecontent->fullname == 'Temporary Course Fullname'
+            ) {
+                $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
+                    get_string('coursesfailextract', 'tool_wbinstaller', $precheck['courseshortname']);
+                delete_course($newcourse->id, false);
+                fulldelete($destination);
+                return;
+            }
+        } catch (\Exception $e) {
+            delete_course($newcourse->id, false);
+            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
+                get_string('oldermoodlebackupversion', 'tool_wbinstaller');
             return;
         }
     }

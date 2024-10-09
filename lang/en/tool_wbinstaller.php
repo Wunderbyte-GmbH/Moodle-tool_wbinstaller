@@ -91,9 +91,12 @@ $string['newcoursefound'] = 'Found the new course: {$a}';
 $string['newlocaldatafilefound'] = 'Found new local data: {$a}';
 $string['csvnotreadable'] = 'Csv file {$a} not readable';
 $string['localdatauploadsuccess'] = 'Csv file {$a} successfully uploaded';
+$string['localdatauploadduplicate'] = 'Csv file {$a} was already uploaded and was not uploaded again';
+$string['localdatauploadmissingcourse'] = 'Csv file {$a} could not be uploaded as referecned courses were not found';
 $string['scalemismatchlocaldata'] = 'The cat scales did not match';
 $string['courseidmismatchlocaldata'] = 'The course id did not match';
-
+$string['noadaptivequizfound'] = 'No matching adaptivequiz was found';
+$string['oldermoodlebackupversion'] = 'The course-backup is older than the current moodle version {$a}';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';

@@ -91,8 +91,12 @@ $string['newcoursefound'] = 'Der neue Kurs mit dem Namen {$a} wurde gefunden';
 $string['newlocaldatafilefound'] = 'FNeue lokale Daten wurden gefunden: {$a}';
 $string['csvnotreadable'] = 'Csv Datei {$a} ist nicht lesbar';
 $string['localdatauploadsuccess'] = 'Csv Datei {$a} wurde erfolgreich hochgeladen';
+$string['localdatauploadduplicate'] = 'Csv Datei {$a} war bereits vorhanden und wurde nicht erneut hochgeladen';
+$string['localdatauploadmissingcourse'] = 'Csv Datei {$a} konnte nicht hochgeladen werden, weil referenzierte Kurse nicht gefunden wurden';
 $string['scalemismatchlocaldata'] = 'Es wurde keine passende Cat-Skala gefunden';
 $string['courseidmismatchlocaldata'] = 'Die Kursids können nicht zugeordnet werden';
+$string['noadaptivequizfound'] = 'Kein passendes adaptivequiz gefunden';
+$string['oldermoodlebackupversion'] = 'Das Kurs-Backup ist älter als die aktuelle Moodle Version {$a}';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';

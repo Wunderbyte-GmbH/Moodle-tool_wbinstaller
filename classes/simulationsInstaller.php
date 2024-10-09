@@ -54,15 +54,27 @@ class simulationsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
-     * @return array
+     * @return int
      */
     public function execute($extractpath) {
         $simulationspath = $extractpath . $this->recipe['path'];
         foreach (glob("$simulationspath/*.csv") as $itemparamsfile) {
-            try {
-                $this->import_itemparams($itemparamsfile);
-            } catch (Exception $e) {
-                $this->feedback['needed'][basename($itemparamsfile)]['error'][] = $e;
+            if (
+                isset($this->recipe['matcher']) &&
+                class_exists($this->recipe['matcher']['name'])
+            ) {
+                try {
+                    $this->import_itemparams($itemparamsfile);
+                } catch (Exception $e) {
+                    $this->feedback['needed'][basename($itemparamsfile)]['error'][] = $e;
+                }
+            } else {
+                $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
+                  get_string(
+                    'simulationnoinstallerfilefound',
+                    'tool_wbinstaller',
+                    $this->recipe['matcher']['name']
+                  );
             }
         }
         return 1;
@@ -81,7 +93,7 @@ class simulationsInstaller extends wbInstaller {
             if (
                 isset($this->recipe['matcher']) &&
                 class_exists($this->recipe['matcher']['name'])
-              ) {
+            ) {
                 $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
                   get_string(
                     'simulationinstallerfilefound',
