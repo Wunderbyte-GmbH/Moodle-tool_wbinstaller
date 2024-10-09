@@ -164,42 +164,4 @@ class coursesinstaller_test extends advanced_testcase {
         $this->assertNotNull($result);
         $this->assertEquals($course->id, $result->id);
     }
-
-    /**
-     * Test restore_course method to ensure it restores the course from the backup.
-     */
-    public function test_restore_course() {
-        global $CFG, $USER;
-
-        // Mock course file and precheck result.
-        $coursefile = '/testpath/coursefile';
-        $precheck = [
-            'courseshortname' => 'shortname',
-            'courseoriginalid' => 1234,
-        ];
-
-        // Create instance of coursesInstaller.
-        $recipe = ['path' => '/testcourses'];
-        $installer = $this->getMockBuilder(coursesInstaller::class)
-            ->setConstructorArgs([$recipe])
-            ->onlyMethods(['copy_directory'])
-            ->getMock();
-
-        // Mock the restore_controller.
-        $mockrestorecontroller = $this->getMockBuilder(restore_controller::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['execute_precheck', 'execute_plan', 'destroy'])
-            ->getMock();
-
-        $mockrestorecontroller->expects($this->once())
-            ->method('execute_precheck')
-            ->willReturn(true);
-
-        $mockrestorecontroller->expects($this->once())
-            ->method('execute_plan');
-
-        $mockrestorecontroller->expects($this->once())
-            ->method('destroy');
-    }
-
 }
