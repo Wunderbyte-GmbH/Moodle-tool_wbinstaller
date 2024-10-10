@@ -115,3 +115,8 @@ $string['vuechooserecipe'] = 'Choose Recipe File';
 $string['vuewarining'] = 'Warning: ';
 $string['vueerror'] = 'Error: ';
 $string['vuesuccess'] = 'Success: ';
+$string['vuestepcountersetp'] = 'Step ';
+$string['vuestepcounterof'] = ' of ';
+$string['vuerefreshpage'] = 'Refresh the page in order to initialize the changes. Afterwards upload the recipe again to finish the installation';
+$string['vuerefreshpagebtn'] = 'Refresh page';
+

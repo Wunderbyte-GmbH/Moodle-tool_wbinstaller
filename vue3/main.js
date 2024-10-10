@@ -51,6 +51,7 @@ function init() {
             store.state.user = userAttributeValue;
             const contextIdValue = toolWbinstallerAppElement.getAttribute('contextid');
             store.state.contextid = contextIdValue;
+            store.state.wwwroot = toolWbinstallerAppElement.getAttribute('wwwroot');
             app.mount(toolWbinstallerAppElement);
         }
     });

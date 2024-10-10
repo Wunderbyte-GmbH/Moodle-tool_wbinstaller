@@ -115,3 +115,7 @@ $string['vuechooserecipe'] = 'Rezeptdatei auswählen';
 $string['vuewarining'] = 'Warnung: ';
 $string['vueerror'] = 'Fehler: ';
 $string['vuesuccess'] = 'Erfolg: ';
+$string['vuestepcountersetp'] = 'Schritt ';
+$string['vuestepcounterof'] = ' von ';
+$string['vuerefreshpage'] = 'Lade die Seite neu um die Änderungen zu speichern. Lade anschliessend das Rezept erneut hoch um mit der Installation abzuschliessen.';
+$string['vuerefreshpagebtn'] = 'Seite neu laden';

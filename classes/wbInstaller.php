@@ -157,10 +157,10 @@ class wbInstaller {
     /**
      * Extract and save the zipped file.
      * @param string $jsonstring
-     * @return object
+     * @return array
      *
      */
-    public function set_current_step($jsonstring): object {
+    public function set_current_step($jsonstring): array {
         global $DB, $USER;
         $sql = "SELECT id, currentstep, maxstep
             FROM {tool_wbinstaller_install}
@@ -168,14 +168,14 @@ class wbInstaller {
 
         $record = $DB->get_record_sql($sql, ['content' => $jsonstring]);
         $record->currentstep += 1;
-        $finished = (object) [
+        $finished = [
             'status' => false,
             'currentstep' => $record->currentstep,
             'maxstep' => $record->maxstep,
         ];
         if ($record->currentstep == $record->maxstep) {
             $DB->delete_records('tool_wbinstaller_install', ['id' => $record->id]);
-            $finished->status = true;
+            $finished['status'] = true;
         } else {
             $DB->update_record('tool_wbinstaller_install', $record);
         }

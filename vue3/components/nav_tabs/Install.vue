@@ -1,10 +1,27 @@
  <template>
   <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
+    <div v-if="refreshpage && !finished.status">
+      <p>{{ store.state.strings.vuerefreshpage }}</p>
+      <a  :href="store.state.wwwroot">
+        <button class="btn btn-primary mt-4">
+          {{ store.state.strings.vuerefreshpagebtn }}
+        </button>
+      </a>
+    </div>
+    <StepCounter :finished/>
     <div class="form-group">
       <label for="zipFileUpload">
         {{ store.state.strings.vuechooserecipe }}
       </label>
-      <input type="file" class="form-control-file" id="zipFileUpload" @change="handleFileUpload" accept=".zip" ref="fileInput"/>
+      <input
+        type="file"
+        class="form-control-file"
+        id="zipFileUpload"
+        @change="handleFileUpload"
+        accept=".zip"
+        ref="fileInput"
+        :disabled="refreshpage"
+      />
     </div>
     <transition name="fade">
       <div v-if="isInstalling" class="waiting-screen mt-4">
@@ -13,7 +30,6 @@
           {{ store.state.strings.vuewaitingtext }}
         </p>
         <ProgressTracking :uploadedFileName/>
-
       </div>
     </transition>
     <transition name="fade">
@@ -146,6 +162,7 @@ import { notify } from "@kyvg/vue3-notification"
 import PluginFeedback from '../feedback/PluginFeedback.vue';
 import FeedbackReport from '../feedback/FeedbackReport.vue';
 import ProgressTracking from '../feedback/ProgressTracking.vue';
+import StepCounter from '../feedback/StepCounter.vue'
 
 // Reactive state for the list of links and courses
 const store = useStore();
@@ -155,6 +172,7 @@ const checkedOptionalPlugins = ref([]);
 let uploadedFile = null;
 let uploadedFileName = ref('');
 const fileInput = ref(null);
+let refreshpage = ref(false);
 
 const isInstalling = ref(false);
 const totalProgress = ref(0);
@@ -178,22 +196,25 @@ const installRecipe = async () => {
           selectedOptionalPlugins: selectedPlugins
         }
       );
-      const responseparsed = JSON.parse(response.feedback)
-      feedback.value = responseparsed.feedback
-      finished.value = responseparsed.finished
-      if (response.status == 0) {
+      feedback.value = JSON.parse(response.feedback)
+      finished.value = JSON.parse(response.finished)
+      if (!finished.value.status) {
+        refreshpage.value  = true
+      }
+
+      if (feedback.value.status == 0) {
         notify({
           title: store.state.strings.success,
           text: store.state.strings.success_description,
           type: 'success'
         });
-      } else if (response.status == 1) {
+      } else if (feedback.value.status == 1) {
         notify({
           title: store.state.strings.warning,
           text: store.state.strings.warning_description,
           type: 'warn'
         });
-      } else if (response.status == 2) {
+      } else if (feedback.value.status == 2) {
         notify({
           title: store.state.strings.error,
           text: store.state.strings.error_description,
@@ -245,8 +266,6 @@ const handleFileUpload = async (event) => {
       const responseparsed = JSON.parse(response.feedback)
       feedback.value = responseparsed.feedback
       finished.value = responseparsed.finished
-      console.log('respons')
-      console.log(responseparsed)
     } catch (error) {
       console.error('Error reading ZIP file:', error);
     }

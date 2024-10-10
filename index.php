@@ -26,7 +26,7 @@ require_once(__DIR__.'/../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->libdir.'/moodlelib.php');
 
-global $USER;
+global $USER, $CFG;
 
 admin_externalpage_setup('tool_wbinstaller');
 $pluginman = core_plugin_manager::instance();
@@ -91,6 +91,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('tool_wbinstaller/initview', [
   'userid' => $USER->id,
   'contextid' => $context->id,
+  'wwwroot' => $CFG->wwwroot,
 ]);
 
 echo $OUTPUT->footer();
