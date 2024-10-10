@@ -8,11 +8,9 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="userid"/>
-        <FIELD NAME="filename" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="filename"/>
         <FIELD NAME="content" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="content"/>
-        <FIELD NAME="progress" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="progress"/>
-        <FIELD NAME="subprogress" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="subprogress"/>
-        <FIELD NAME="status" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="status"/>
+        <FIELD NAME="currentstep" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="progress"/>
+        <FIELD NAME="maxstep" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="subprogress"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="timecreated"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="timemodified"/>
       </FIELDS>

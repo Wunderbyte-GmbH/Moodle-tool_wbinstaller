@@ -43,6 +43,9 @@ class wbCheck {
     public $filename;
     /** @var array Install errors. */
     public $feedback;
+    /** @var array Install errors. */
+    public $finished;
+
 
     /**
      * Entities constructor.
@@ -53,6 +56,7 @@ class wbCheck {
         $this->recipe = $recipe;
         $this->filename = $filename;
         $this->feedback = [];
+        $this->finished = [];
     }
 
     /**
@@ -67,7 +71,10 @@ class wbCheck {
         }
         $this->check_recipe($extracted);
         $this->clean_after_installment();
-        return $this->feedback;
+        return [
+            'feedback' => $this->feedback,
+            'finished' => $this->finished,
+        ];
     }
 
     /**
@@ -104,17 +111,20 @@ class wbCheck {
         $extractpath = $CFG->tempdir . '/zip/precheck/' . str_replace('.zip', '', $this->filename) . '/';
         $jsonstring = file_get_contents($extracted . str_replace('.zip', '', $this->filename) . '/recipe.json');
         $jsonarray = json_decode($jsonstring, true);
+        $this->get_current_step($jsonstring, count($jsonarray['steps']));
         foreach ($jsonarray['steps'] as $step) {
-            $installerclass = __NAMESPACE__ . '\\' . $step . 'Installer';
-            if (
-                class_exists($installerclass) &&
-                isset($jsonarray[$step])
-            ) {
-                $instance = new $installerclass($jsonarray[$step]);
-                $instance->check($extractpath);
-                $this->feedback[$step] = $instance->get_feedback();
-            } else {
-                $this->feedback[$step] = get_string('classnotfound', 'tool_wbinstaller', $step);
+            foreach ($step as $steptype) {
+                $installerclass = __NAMESPACE__ . '\\' . $steptype . 'Installer';
+                if (
+                    class_exists($installerclass) &&
+                    isset($jsonarray[$steptype])
+                ) {
+                    $instance = new $installerclass($jsonarray[$steptype]);
+                    $instance->check($extractpath);
+                    $this->feedback[$steptype] = $instance->get_feedback();
+                } else {
+                    $this->feedback[$steptype] = get_string('classnotfound', 'tool_wbinstaller', $steptype);
+                }
             }
         }
         return true;
@@ -174,5 +184,34 @@ class wbCheck {
               get_string('installerfailopen', 'tool_wbinstaller');
         }
         return $extractpath;
+    }
+
+    /**
+     * Extract and save the zipped file.
+     * @param string $jsonstring
+     *
+     */
+    public function get_current_step($jsonstring, $maxstep) {
+        global $DB, $USER;
+        $sql = "SELECT id, currentstep
+            FROM {tool_wbinstaller_install}
+            WHERE " . $DB->sql_compare_text('content') . " = " . $DB->sql_compare_text(':content');
+
+        $record = $DB->get_record_sql($sql, ['content' => $jsonstring]);
+        if (!$record) {
+            $record = new \stdClass();
+            $record->userid = $USER->id;
+            $record->content = $jsonstring;
+            $record->currentstep = 0;
+            $record->maxstep = $maxstep;
+            $record->timecreated = time();
+            $record->timemodified = time();
+            $DB->insert_record('tool_wbinstaller_install', $record);
+        }
+        $this->finished = [
+            'status' => false,
+            'currentstep' => $record->currentstep,
+            'maxstep' => $maxstep,
+        ];
     }
 }

@@ -79,7 +79,6 @@ class wbInstaller {
     /**
      * Get all tests.
      *
-     * @return array
      */
     public function add_step() {
         $this->progress++;
@@ -93,7 +92,6 @@ class wbInstaller {
     public function execute($extractpath) {
         raise_memory_limit(MEMORY_EXTRA);
         $extracted = $this->extract_save_zip_file();
-        // TODO: Check memory.
         if (!$extracted) {
             return $this->feedback;
         }
@@ -105,14 +103,15 @@ class wbInstaller {
     /**
      * Extract and save the zipped file.
      * @param string $extracted
-     * @return string
+     * @return array
      *
      */
     public function execute_recipe($extracted) {
         $recipefolder = $extracted . str_replace('.zip', '', $this->filename) . '/';
         $jsonstring = file_get_contents($recipefolder . 'recipe.json');
         $jsonarray = json_decode($jsonstring, true);
-        foreach ($jsonarray['steps'] as $step) {
+        $currentstep = $this->get_current_step($jsonstring, count($jsonarray['steps']));
+        foreach ($jsonarray['steps'][$currentstep] as $step) {
             $installerclass = __NAMESPACE__ . '\\' . $step . 'Installer';
             if (
                 class_exists($installerclass) &&
@@ -120,14 +119,14 @@ class wbInstaller {
             ) {
                 if ($step == 'plugins') {
                     $instance = new $installerclass(
-                      $jsonarray[$step],
-                      $this->dbid,
-                      $this->optionalplugins
+                        $jsonarray[$step],
+                        $this->dbid,
+                        $this->optionalplugins
                     );
                 } else {
                     $instance = new $installerclass(
-                      $jsonarray[$step],
-                      $this->dbid
+                        $jsonarray[$step],
+                        $this->dbid
                     );
                 }
                 if ($step == 'localdata') {
@@ -145,13 +144,72 @@ class wbInstaller {
             } else {
                 $this->feedback[$step] = get_string('classnotfound', 'tool_wbinstaller', $step);
             }
-
         }
+        $finished = $this->set_current_step($jsonstring);
+
         return [
             'feedback' => $this->feedback,
             'status' => $this->status,
+            'finished' => $finished,
         ];
     }
+
+    /**
+     * Extract and save the zipped file.
+     * @param string $jsonstring
+     * @return object
+     *
+     */
+    public function set_current_step($jsonstring): object {
+        global $DB, $USER;
+        $sql = "SELECT id, currentstep, maxstep
+            FROM {tool_wbinstaller_install}
+            WHERE " . $DB->sql_compare_text('content') . " = " . $DB->sql_compare_text(':content');
+
+        $record = $DB->get_record_sql($sql, ['content' => $jsonstring]);
+        $record->currentstep += 1;
+        $finished = (object) [
+            'status' => false,
+            'currentstep' => $record->currentstep,
+            'maxstep' => $record->maxstep,
+        ];
+        if ($record->currentstep == $record->maxstep) {
+            $DB->delete_records('tool_wbinstaller_install', ['id' => $record->id]);
+            $finished->status = true;
+        } else {
+            $DB->update_record('tool_wbinstaller_install', $record);
+        }
+        return $finished;
+    }
+
+    /**
+     * Extract and save the zipped file.
+     * @param string $jsonstring
+     * @return int
+     *
+     */
+    public function get_current_step($jsonstring, $maxstep): int {
+        global $DB, $USER;
+        $sql = "SELECT id, currentstep
+            FROM {tool_wbinstaller_install}
+            WHERE " . $DB->sql_compare_text('content') . " = " . $DB->sql_compare_text(':content');
+
+        $record = $DB->get_record_sql($sql, ['content' => $jsonstring]);
+        if ($record) {
+            return $record->currentstep;
+        }
+        $newrecord = new stdClass();
+        $newrecord->userid = $USER->id;
+        $newrecord->content = $jsonstring;
+        $newrecord->currentstep = 0;
+        $newrecord->maxstep = $maxstep;
+        $newrecord->timecreated = time();
+        $newrecord->timemodified = time();
+
+        $DB->insert_record('tool_wbinstaller_install', $newrecord);
+        return 0;
+    }
+
 
     /**
      * Extract and save the zipped file.

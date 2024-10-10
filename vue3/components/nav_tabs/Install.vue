@@ -150,6 +150,7 @@ import ProgressTracking from '../feedback/ProgressTracking.vue';
 // Reactive state for the list of links and courses
 const store = useStore();
 const feedback = ref([]);
+const finished = ref(false);
 const checkedOptionalPlugins = ref([]);
 let uploadedFile = null;
 let uploadedFileName = ref('');
@@ -177,7 +178,9 @@ const installRecipe = async () => {
           selectedOptionalPlugins: selectedPlugins
         }
       );
-      feedback.value = JSON.parse(response.feedback)
+      const responseparsed = JSON.parse(response.feedback)
+      feedback.value = responseparsed.feedback
+      finished.value = responseparsed.finished
       if (response.status == 0) {
         notify({
           title: store.state.strings.success,
@@ -239,9 +242,11 @@ const handleFileUpload = async (event) => {
           filename: uploadedFileName.value,
         }
       );
-      feedback.value = JSON.parse(response.feedback)
-      console.log('response')
-      console.log(feedback.value)
+      const responseparsed = JSON.parse(response.feedback)
+      feedback.value = responseparsed.feedback
+      finished.value = responseparsed.finished
+      console.log('respons')
+      console.log(responseparsed)
     } catch (error) {
       console.error('Error reading ZIP file:', error);
     }

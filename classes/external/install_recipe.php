@@ -91,6 +91,7 @@ class install_recipe extends external_api {
         return [
             'feedback' => json_encode($response['feedback']),
             'status' => $response['status'],
+            'finished' => json_encode($response['finished']),
         ];
     }
 
@@ -103,6 +104,7 @@ class install_recipe extends external_api {
         return new external_single_structure([
             'feedback' => new external_value(PARAM_RAW, 'Feedback message'),
             'status' => new external_value(PARAM_INT, 'Feedback status'),
+            'finished' => new external_value(PARAM_RAW, 'Finished status'),
         ]);
     }
 }

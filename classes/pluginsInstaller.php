@@ -67,6 +67,8 @@ class pluginsInstaller extends wbInstaller {
     public $knownsubplugins;
     /** @var tool_installaddon_installer Plugin installer. */
     protected $addoninstaller;
+    /** @var string version file. */
+    protected $plugincontent;
 
     /**
      * Entities constructor.
@@ -80,6 +82,7 @@ class pluginsInstaller extends wbInstaller {
         $this->progress = 0;
         $this->optionalplugins = $optionalplugins;
         $this->addoninstaller = tool_installaddon_installer::instance();
+        $this->plugincontent = null;
         $this->knownsubplugins = [
           'adaptivequizcatmodel_catquiz' => 'mod',
         ];
@@ -135,11 +138,13 @@ class pluginsInstaller extends wbInstaller {
         }
         if (download_file_content($gitzipurl, null, null, true, 300, 20, true, $zipfile)) {
             $component = $installer->detect_plugin_component($zipfile);
+            $plugin = $this->parse_version_file($this->plugincontent);
             return (object)[
                 'component' => $component,
                 'zipfilepath' => $zipfile,
                 'url' => $gitzipurl,
                 'type' => $type,
+                'version' => $plugin['version'],
             ];
         } else {
             $this->feedback[$type][$gitzipurl]['error'][] = get_string('filedownloadfailed', 'tool_wbinstaller', $gitzipurl);
@@ -168,9 +173,9 @@ class pluginsInstaller extends wbInstaller {
      * @return int
      */
     public function check_plugin_compability($gitzipurl, $type, $execute = false) {
-        $plugincontent = $this->get_github_file_content($gitzipurl);
-        if ($plugincontent) {
-            $plugin = $this->parse_version_file($plugincontent);
+        $this->plugincontent = $this->get_github_file_content($gitzipurl);
+        if ($this->plugincontent) {
+            $plugin = $this->parse_version_file($this->plugincontent);
             if (isset($plugin['component'])) {
                 $installedversion = $this->is_component_installed($plugin['component']);
                 $a = new stdClass();
@@ -368,7 +373,7 @@ class pluginsInstaller extends wbInstaller {
                                 $this->feedback[$plugin->type][$plugin->component]['error'][] =
                                   get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $tempdir);
                             }
-                            continue; // Skip this iteration and move on to the next plugin.
+                            continue;
                         }
                     }
                     $zip->extractTo($tempdir);
@@ -399,15 +404,6 @@ class pluginsInstaller extends wbInstaller {
                     get_string('installerfailextract', 'tool_wbinstaller', $plugin->component);
                     $this->set_status(2);
                 }
-            }
-            manager::write_close();
-            rebuild_course_cache(0, true);
-            ob_start();
-            try {
-                upgrade_noncore(true);
-                ob_end_clean();
-            } catch (\moodle_exception $e) {
-                ob_end_clean();
             }
         }
     }

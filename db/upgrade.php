@@ -46,11 +46,9 @@ function xmldb_tool_wbinstaller_upgrade($oldversion) {
         // Adding fields to table tool_wbinstaller_install.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('filename', XMLDB_TYPE_TEXT, null, null, null, null, null);
-        $table->add_field('content', XMLDB_TYPE_TEXT, null, null, null, null, null);
-        $table->add_field('progress', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        $table->add_field('subprogress', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        $table->add_field('status', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('content', XMLDB_TYPE_, null, null, null, null, null);
+        $table->add_field('currentstep', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('maxstep', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
 

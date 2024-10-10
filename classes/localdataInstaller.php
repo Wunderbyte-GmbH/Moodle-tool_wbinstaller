@@ -71,7 +71,12 @@ class localdataInstaller extends wbInstaller {
     public function execute($extractpath) {
         $coursespath = $extractpath . $this->recipe['path'];
         foreach (glob("$coursespath/*") as $coursefile) {
-            $this->upload_csv_file($coursefile);
+            try {
+                $this->upload_csv_file($coursefile);
+            } catch (\Exception $e) {
+                $this->feedback['needed']['local_data']['error'][] =
+                  get_string('jsoninvalid', 'tool_wbinstaller', $coursefile);
+            }
         }
         return '1';
     }
