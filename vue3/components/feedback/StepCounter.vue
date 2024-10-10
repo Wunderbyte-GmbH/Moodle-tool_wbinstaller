@@ -33,8 +33,6 @@ const progressWidth = ref(0);
 const updateProgress = () => {
   if (props.finished) {
     progressWidth.value = (props.finished.currentstep / props.finished.maxstep) * 100;
-    console.log(progressWidth.value)
-
   }
 }
 

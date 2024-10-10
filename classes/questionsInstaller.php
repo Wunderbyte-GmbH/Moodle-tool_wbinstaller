@@ -51,7 +51,7 @@ class questionsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
-     * @return array
+     * @return int
      */
     public function execute($extractpath) {
         $questionspath = $extractpath . $this->recipe['path'];
