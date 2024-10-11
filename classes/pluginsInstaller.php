@@ -304,7 +304,7 @@ class pluginsInstaller extends wbInstaller {
      */
     public function get_target_dir($componentname) {
         global $CFG;
-        list($plugintype, $pluginname) = core_component::normalize_component(component: $componentname);
+        list($plugintype, $pluginname) = core_component::normalize_component($componentname);
         $pluginman = \core_plugin_manager::instance();
         $targetdir = $pluginman->get_plugintype_root($plugintype);
         if (
@@ -353,7 +353,7 @@ class pluginsInstaller extends wbInstaller {
                     continue;
                 }
                 $targetdir = $this->get_target_dir($component);
-                list($plugintype, $pluginname) = core_component::normalize_component(component: $component);
+                list($plugintype, $pluginname) = core_component::normalize_component($component);
 
                 // Check if it's a core plugin or a subplugin.
                 if (!is_dir($targetdir)) {
