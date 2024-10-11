@@ -182,6 +182,7 @@ class pluginsInstaller extends wbInstaller {
                 $a->name = $plugin['component'] ?? '';
                 $a->installedversion = (int)$installedversion ?? '';
                 $a->componentversion = (int)$plugin['version'] ?? '';
+                $targetdir = $this->get_target_dir($plugin['component']);
                 if ($a->installedversion == 0) {
                     if ($execute) {
                         $this->feedback[$type][$plugin['component']]['success'][] =
@@ -300,13 +301,35 @@ class pluginsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param string $componentname
+     * @return string
+     */
+    public function get_target_dir($componentname) {
+        global $CFG;
+        list($plugintype, $pluginname) = core_component::normalize_component(component: $componentname);
+        $pluginman = \core_plugin_manager::instance();
+        $targetdir = $pluginman->get_plugintype_root($plugintype);
+        if (
+            $targetdir == null &&
+            isset($this->recipe['subplugins'][$plugintype])
+        ) {
+            $targetdir = $CFG->dirroot . $this->recipe['subplugins'][$plugintype];
+        }
+        return $targetdir;
+    }
+
+    /**
+     * Exceute the installer.
      * @param array $installable
      */
     public function upgrade_install_plugins_recipe($installable) {
         if (!empty($installable)) {
             try {
                 ob_start();
-                upgrade_install_plugins($installable, 1, get_string('installfromzip', 'tool_wbinstaller'),
+                upgrade_install_plugins(
+                    $installable,
+                    1,
+                    get_string('installfromzip', 'tool_wbinstaller'),
                     new moodle_url('/admin/tool/wbinstaller/index.php', ['installzipconfirm' => 1])
                 );
                 ob_end_clean();
@@ -331,18 +354,8 @@ class pluginsInstaller extends wbInstaller {
                         get_string('plugincomponentdetectfailed', 'tool_wbinstaller');
                     continue;
                 }
-                // Dynamically split the component into plugin type and name.
-                list($plugintype, $pluginname) = core_component::normalize_component($component);
-
-                // Use core_plugin_manager to get the plugin type and directory structure.
-                $pluginman = \core_plugin_manager::instance();
-                $targetdir = $pluginman->get_plugintype_root($plugintype);
-                if (
-                    $targetdir == null &&
-                    isset($this->recipe['subplugins'][$plugintype])
-                ) {
-                    $targetdir = $CFG->dirroot . $this->recipe['subplugins'][$plugintype];
-                }
+                $targetdir = $this->get_target_dir($component);
+                list($plugintype, $pluginname) = core_component::normalize_component(component: $component);
 
                 // Check if it's a core plugin or a subplugin.
                 if (!is_dir($targetdir)) {
@@ -350,10 +363,10 @@ class pluginsInstaller extends wbInstaller {
                     if (!$result) {
                         // Check if the directory was not created due to insufficient permissions.
                         if (is_dir($targetdir)) {
-                            $this->feedback[$plugin->type][$plugin->component]['error'][] =
+                            $this->feedback[$plugin->type][$component]['error'][] =
                               get_string('jsonfailalreadyexist', 'tool_wbinstaller', $targetdir);
                         } else {
-                            $this->feedback[$plugin->type][$plugin->component]['error'][] =
+                            $this->feedback[$plugin->type][$component]['error'][] =
                               get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
                         }
                         continue;
@@ -367,10 +380,10 @@ class pluginsInstaller extends wbInstaller {
                         if (!$result) {
                             // Similar check for temporary directory creation.
                             if (is_dir($tempdir)) {
-                                $this->feedback[$plugin->type][$plugin->component]['error'][] =
+                                $this->feedback[$plugin->type][$component]['error'][] =
                                   get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
                             } else {
-                                $this->feedback[$plugin->type][$plugin->component]['error'][] =
+                                $this->feedback[$plugin->type][$component]['error'][] =
                                   get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $tempdir);
                             }
                             continue;
@@ -392,7 +405,8 @@ class pluginsInstaller extends wbInstaller {
                         rename($tempdir . '/' . $extracteddirname, $finaldir);
                         rmdir($tempdir);
                         $this->feedback[$plugin->type][$plugin->component]['success'][] =
-                          get_string('installersuccessinstalled', 'tool_wbinstaller', $plugin->component);
+                            get_string('upgradeplugincompleted', 'tool_wbinstaller', $plugin->component);
+                        //$returnvalue = upgrade_noncore($component)
                     } else {
                         $this->feedback[$plugin->type][$plugin->component]['error'][] =
                           get_string('installerfailfinddir', 'tool_wbinstaller', $plugin->component);

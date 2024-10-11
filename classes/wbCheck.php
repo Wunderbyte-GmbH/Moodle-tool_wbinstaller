@@ -189,6 +189,7 @@ class wbCheck {
     /**
      * Extract and save the zipped file.
      * @param string $jsonstring
+     * @param int $maxstep
      *
      */
     public function get_current_step($jsonstring, $maxstep) {

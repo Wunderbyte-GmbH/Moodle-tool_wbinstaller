@@ -99,10 +99,23 @@ class coursesInstaller extends wbInstaller {
         $precheck = $this->precheck($coursefile);
         if ($precheck) {
             $this->restore_course($coursefile, $precheck);
-            $this->feedback['needed'][$precheck['courseshortname']]['success'][] =
-                get_string('coursessuccess', 'tool_wbinstaller', $precheck['courseshortname']);
+            $this->feedback['needed'][$precheck['courseshortname']]['success'][] = $this->get_success_message($precheck);
         }
         return 1;
+    }
+
+    /**
+     * Recursively copies a directory.
+     *
+     * @param array $precheck
+     * @return string
+     */
+    protected function get_success_message($precheck): string {
+        global $DB;
+        $msgparams = new stdClass();
+        $msgparams->courseshortname = $precheck['courseshortname'];
+        $msgparams->category = $DB->get_field('course_categories', 'name', ['id' => 1]);
+        return get_string('coursessuccess', 'tool_wbinstaller', $msgparams);
     }
 
     /**
@@ -184,10 +197,23 @@ class coursesInstaller extends wbInstaller {
         $newcourse->visible = 0;
         $newcourse->timecreated = time();
         $newcourse->timemodified = time();
+        $newcourse->newsitems = 0;
         $newcourse = create_course($newcourse);
         $this->matchingcourseids[$precheck['courseoriginalid']] = $newcourse->id;
         $this->restore_with_controller($coursefile, $newcourse);
+        $this->force_course_visibility($newcourse->id);
         return;
+    }
+
+    /**
+     * Recursively copies a directory.
+     *
+     * @param string $courseid
+     */
+    protected function force_course_visibility($courseid) {
+        global $DB;
+        $DB->set_field('course', 'visible', 0, ['id' => $courseid]);
+        rebuild_course_cache($courseid, true);
     }
 
     /**

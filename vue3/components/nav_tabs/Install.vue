@@ -263,6 +263,7 @@ const handleFileUpload = async (event) => {
           filename: uploadedFileName.value,
         }
       );
+
       const responseparsed = JSON.parse(response.feedback)
       feedback.value = responseparsed.feedback
       finished.value = responseparsed.finished

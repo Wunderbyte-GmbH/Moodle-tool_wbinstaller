@@ -185,6 +185,7 @@ class wbInstaller {
     /**
      * Extract and save the zipped file.
      * @param string $jsonstring
+     * @param int $maxstep
      * @return int
      *
      */
