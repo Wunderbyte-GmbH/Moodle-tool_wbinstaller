@@ -1,12 +1,18 @@
  <template>
   <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
-    <div v-if="refreshpage && !finished.status">
-      <p>{{ store.state.strings.vuerefreshpage }}</p>
-      <a  :href="store.state.wwwroot">
-        <button class="btn btn-primary mt-4">
-          {{ store.state.strings.vuerefreshpagebtn }}
+    <div v-if="nextstep && !finished.status">
+      <p>{{ store.state.strings.vuenextstep }}</p>
+        <button
+          v-if="nextstep"
+          class="btn btn-primary mt-4"
+          @click="installRecipe"
+          :disabled="isInstalling"
+        >
+          {{ store.state.strings.vuenextstepbtn }}
         </button>
-      </a>
+    </div>
+    <div  v-if="finished.status">
+      <p>{{ store.state.strings.vuefinishedrecipe }}</p>
     </div>
     <StepCounter :finished/>
     <div class="form-group">
@@ -20,7 +26,7 @@
         @change="handleFileUpload"
         accept=".zip"
         ref="fileInput"
-        :disabled="refreshpage"
+        :disabled="nextstep"
       />
     </div>
     <transition name="fade">
@@ -139,6 +145,7 @@
           </ul>
         </div>
         <button
+          v-if="!nextstep"
           class="btn btn-primary mt-4"
           @click="installRecipe"
           :disabled="isInstalling"
@@ -156,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import { useStore } from 'vuex';
 import { notify } from "@kyvg/vue3-notification"
 import PluginFeedback from '../feedback/PluginFeedback.vue';
@@ -172,12 +179,11 @@ const checkedOptionalPlugins = ref([]);
 let uploadedFile = null;
 let uploadedFileName = ref('');
 const fileInput = ref(null);
-let refreshpage = ref(false);
+let nextstep = ref(false);
 
 const isInstalling = ref(false);
 const totalProgress = ref(0);
 const taskProgress = ref(0);
-let progressInterval = null;
 
 const installRecipe = async () => {
   if (uploadedFile) {
@@ -185,7 +191,6 @@ const installRecipe = async () => {
     isInstalling.value = true;
     totalProgress.value = 0;
     taskProgress.value = 0;
-    startProgressPolling();
     try {
       const base64File = await convertFileToBase64(uploadedFile);
       const selectedPlugins = JSON.stringify(checkedOptionalPlugins.value);
@@ -199,7 +204,7 @@ const installRecipe = async () => {
       feedback.value = JSON.parse(response.feedback)
       finished.value = JSON.parse(response.finished)
       if (!finished.value.status) {
-        refreshpage.value  = true
+        nextstep.value  = true
       }
 
       if (feedback.value.status == 0) {
@@ -228,12 +233,14 @@ const installRecipe = async () => {
         type: 'error'
       });
     }  finally {
-      uploadedFile.value = null
-      uploadedFileName.value = ''
-      if (fileInput.value) {
-        fileInput.value.value = '';
+      if (finished.value.status) {
+        nextstep.value  = false
+        uploadedFile.value = null
+        uploadedFileName.value = ''
+        if (fileInput.value) {
+          fileInput.value.value = '';
+        }
       }
-      stopProgressPolling()
       isInstalling.value = false
     }
   }
@@ -275,33 +282,6 @@ const handleFileUpload = async (event) => {
   }
   isInstalling.value = false;
 };
-
-const startProgressPolling = () => {
-  //progressInterval = setInterval(getProgress, 100);
-};
-
-const stopProgressPolling = () => {
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
-  }
-};
-
-const getProgress = async () => {
-  try {
-    const response = await store.dispatch('getInstallProgress', {
-      filename: uploadedFileName.value
-    });
-    totalProgress.value = response.progress * 10
-    taskProgress.value = response.subprogress * 10
-  } catch (error) {
-    console.error('Error fetching progress:', error);
-  }
-};
-
-onUnmounted(() => {
-  stopProgressPolling();
-});
 
 </script>
 

@@ -26,7 +26,6 @@ namespace tool_wbinstaller;
 
 use moodle_url;
 use context_system;
-use core\session\manager;
 use core_component;
 use Exception;
 use stdClass;
@@ -183,34 +182,33 @@ class pluginsInstaller extends wbInstaller {
                 $a->installedversion = (int)$installedversion ?? '';
                 $a->componentversion = (int)$plugin['version'] ?? '';
                 $targetdir = $this->get_target_dir($plugin['component']);
+
+                if (!is_writable($targetdir)) {
+                    $this->feedback[$type][$plugin['component']]['error'][] =
+                        get_string('targetdirnotwritable', 'tool_wbinstaller', $targetdir);
+                    $this->set_status(2);
+                    if ($execute) {
+                        return 2;
+                    }
+                }
                 if ($a->installedversion == 0) {
                     if ($execute) {
+                        return $plugin['component'];
+                    } else {
                         $this->feedback[$type][$plugin['component']]['success'][] =
                             get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
-                        return $plugin['component'];
-                    } else {
-                        $this->feedback[$type][$plugin['component']]['success'][] =
-                          get_string('pluginnotinstalled', 'tool_wbinstaller', $plugin['component']);
                     }
                 } else if ($a->installedversion > $a->componentversion) {
+                    $this->feedback[$type][$plugin['component']]['warning'][] =
+                      get_string('pluginduplicate', 'tool_wbinstaller', $a);
                     if ($execute) {
-                        $this->feedback[$type][$plugin['component']]['warning'][] =
-                          get_string('pluginduplicate', 'tool_wbinstaller', $a);
                         return $plugin['component'];
-                    } else {
-                        $this->feedback[$type][$plugin['component']]['warning'][] =
-                          get_string('pluginduplicate', 'tool_wbinstaller', $a);
-                        $this->set_status(1);
                     }
                 } else if ($a->installedversion <= $a->componentversion) {
+                    $this->feedback[$type][$plugin['component']]['warning'][] =
+                      get_string('pluginolder', 'tool_wbinstaller', $a);
                     if ($execute) {
-                        $this->feedback[$type][$plugin['component']]['warning'][] =
-                          get_string('pluginolder', 'tool_wbinstaller', $a);
                         return 2;
-                    } else {
-                        $this->feedback[$type][$plugin['component']]['warning'][] =
-                          get_string('pluginolder', 'tool_wbinstaller', $a);
-                        $this->set_status(2);
                     }
                 }
             } else {
@@ -406,7 +404,7 @@ class pluginsInstaller extends wbInstaller {
                         rmdir($tempdir);
                         $this->feedback[$plugin->type][$plugin->component]['success'][] =
                             get_string('upgradeplugincompleted', 'tool_wbinstaller', $plugin->component);
-                        //$returnvalue = upgrade_noncore($component)
+                        $this->trigger_upgrade_after_plugin_install();
                     } else {
                         $this->feedback[$plugin->type][$plugin->component]['error'][] =
                           get_string('installerfailfinddir', 'tool_wbinstaller', $plugin->component);
@@ -419,6 +417,23 @@ class pluginsInstaller extends wbInstaller {
                     $this->set_status(2);
                 }
             }
+        }
+    }
+
+    /**
+     * Function to trigger Moodle's upgrade.php script.
+     */
+    private function trigger_upgrade_after_plugin_install() {
+        global $CFG;
+        $output = null;
+        $retval = null;
+
+        $phpclipath = '/usr/bin/php';
+        $cmd = $phpclipath . ' ' . escapeshellarg($CFG->dirroot . '/admin/cli/upgrade.php') . ' --non-interactive';
+        exec($cmd, $output, $retval);
+
+        if ($retval !== 0) {
+            throw new Exception('Moodle upgrade failed after plugin installation.');
         }
     }
 }

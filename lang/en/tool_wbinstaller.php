@@ -69,6 +69,7 @@ $string['pluginolder'] = 'Component {$a->name} is already installed with newer v
 $string['pluginnotinstalled'] = 'Component {$a} is not installed.';
 $string['plugininstalled'] = 'Component {$a} is installed.';
 $string['pluginfailedinformation'] = 'Failed to retrieve component information.';
+$string['upgradeplugincompleted'] = 'Component {$a} was installed successfully.';
 $string['questionfilefound'] = 'Found the question file.';
 $string['questionsuccesinstall'] = 'Successfully uploaded the questions.';
 $string['simulationfilefound'] = 'Found the simulation file.';
@@ -117,6 +118,6 @@ $string['vueerror'] = 'Error: ';
 $string['vuesuccess'] = 'Success: ';
 $string['vuestepcountersetp'] = 'Step ';
 $string['vuestepcounterof'] = ' of ';
-$string['vuerefreshpage'] = 'Refresh the page in order to initialize the changes. Afterwards upload the recipe again to finish the installation';
-$string['vuerefreshpagebtn'] = 'Refresh page';
-
+$string['vuenextstep'] = 'All plugins have been installed yet. Before you continue, you can adjust the plugins configuration if needed. Click on next step or if you reenter the page drag and drop the recipe again to continue the installation process';
+$string['vuenextstepbtn'] = 'Next step';
+$string['vuefinishedrecipe'] = 'The recipe was installed completely.';
