@@ -140,20 +140,36 @@ class localdataInstaller extends wbInstaller {
                 }
 
                 if (isset($this->recipe['translator']['catscalename'])) {
-                    $parentscaleid = $DB->get_record('local_catquiz_catscales',
-                        ['name' => $this->recipe['translator']['catscalename']], 'id');
+                    $parentscaleid = $DB->get_record(
+                        'local_catquiz_catscales',
+                        ['name' => $this->recipe['translator']['catscalename']],
+                        'id'
+                    );
                     $newdata->catscaleid = $parentscaleid->id;
                 }
-
+                $position = strpos($row['component'], '_');
+                $moudlename = substr($row['component'], $position + 1);
+                $moudleid = $DB->get_field('modules', 'id', ['name' => $moudlename]);
+                $cm = get_coursemodule_from_instance(
+                    'adaptivequiz',
+                    $newdata->componentid,
+                    $newdata->courseid
+                );
+                $coursemoduleid = 0;
+                if ($cm) {
+                    $coursemoduleid = $cm->id;
+                }
                 foreach ($row as $key => $rowcol) {
                     if (isset($this->recipe['translator']['changingcolumn'][$key])) {
                         if (isset($newdata->$key)) {
                             $record->$key = $newdata->$key;
                         } else if ($this->recipe['translator']['changingcolumn'][$key]['nested']) {
                             $record->$key = $this->update_nested_json(
-                              $rowcol,
-                              $newdata->catscaleid,
-                              $this->recipe['translator']['changingcolumn'][$key]['keys']
+                                $rowcol,
+                                $newdata->catscaleid,
+                                $this->recipe['translator']['changingcolumn'][$key]['keys'],
+                                $moudleid,
+                                $coursemoduleid
                             );
                         }
                     } else if ($key != 'id') {
@@ -216,15 +232,21 @@ class localdataInstaller extends wbInstaller {
      * @param string $json
      * @param string $sacleid
      * @param array $keys
+     * @param int $moudleid
+     * @param int $coursemoduleid
      * @return string
      */
-    public function update_nested_json($json, $sacleid, $keys) {
+    public function update_nested_json($json, $sacleid, $keys, $moudleid, $coursemoduleid) {
         $json = json_decode($json, true);
         $translationsclaeids = $this->get_scale_matcher($json, $sacleid);
         foreach ($keys as $changingkey) {
             foreach ($json as $key => $value) {
                 if ($key == 'catquiz_catscales') {
                     $json[$key] = $sacleid;
+                } else if ($key == 'module') {
+                    $json[$key] = $moudleid;
+                } else if ($key == 'update' || $key == 'coursemodule') {
+                    $json[$key] = $coursemoduleid;
                 } else if (preg_match('/' . $changingkey . '_(\d+)(?:_(\d+))?/', $key, $matches)) {
                     $oldid = (int)$matches[1];
                     $suffix = $matches[2];
