@@ -98,6 +98,7 @@ $string['scalemismatchlocaldata'] = 'Es wurde keine passende Cat-Skala gefunden'
 $string['courseidmismatchlocaldata'] = 'Die Kursids können nicht zugeordnet werden';
 $string['noadaptivequizfound'] = 'Kein passendes adaptivequiz gefunden';
 $string['oldermoodlebackupversion'] = 'Das Kurs-Backup ist älter als die aktuelle Moodle Version {$a}';
+$string['targetdirnotwritable'] = 'Keine Schreibrechte für das Verzeichnis {$a}';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';

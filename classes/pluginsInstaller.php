@@ -413,7 +413,7 @@ class pluginsInstaller extends wbInstaller {
                     unlink($zipfile);
                 } else {
                     $this->feedback[$plugin->type][$plugin->component]['error'][] =
-                    get_string('installerfailextract', 'tool_wbinstaller', $plugin->component);
+                      get_string('installerfailextract', 'tool_wbinstaller', $plugin->component);
                     $this->set_status(2);
                 }
             }
@@ -431,9 +431,5 @@ class pluginsInstaller extends wbInstaller {
         $phpclipath = '/usr/bin/php';
         $cmd = $phpclipath . ' ' . escapeshellarg($CFG->dirroot . '/admin/cli/upgrade.php') . ' --non-interactive';
         exec($cmd, $output, $retval);
-
-        if ($retval !== 0) {
-            throw new Exception('Moodle upgrade failed after plugin installation.');
-        }
     }
 }

@@ -98,6 +98,7 @@ $string['scalemismatchlocaldata'] = 'The cat scales did not match';
 $string['courseidmismatchlocaldata'] = 'The course id did not match';
 $string['noadaptivequizfound'] = 'No matching adaptivequiz was found';
 $string['oldermoodlebackupversion'] = 'The course-backup is older than the current moodle version {$a}';
+$string['targetdirnotwritable'] = 'No write permission for the directory {$a}';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';

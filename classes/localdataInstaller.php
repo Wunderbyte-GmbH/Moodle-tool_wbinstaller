@@ -56,7 +56,7 @@ class localdataInstaller extends wbInstaller {
      * @param mixed $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid=null) {
+    public function __construct($recipe, $dbid = null) {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
@@ -127,10 +127,10 @@ class localdataInstaller extends wbInstaller {
                 $newdata = new stdClass();
                 if (isset($this->matchingcourseids[$row['courseid']])) {
                     $newdata = $DB->get_record_sql(
-                      $this->recipe['translator']['sql'],
-                      [
-                        'id' => $this->matchingcourseids[$row['courseid']],
-                      ]
+                        $this->recipe['translator']['sql'],
+                        [
+                          'id' => $this->matchingcourseids[$row['courseid']],
+                        ]
                     );
                     if (!$newdata) {
                         $this->feedback['needed']['local_data']['error'][] =
