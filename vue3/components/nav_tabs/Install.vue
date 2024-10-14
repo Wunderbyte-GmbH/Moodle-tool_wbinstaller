@@ -41,12 +41,14 @@
     <transition name="fade">
       <div v-if="uploadedFileName && Object.values(feedback).length > 0" class="mt-4">
         <div v-if="feedback.plugins">
-          <h3>Plugins of the recipe</h3>
+          <h3>
+            {{ store.state.strings.vuepluginfeedback }}
+          </h3>
           <div v-if="feedback.plugins.needed">
             <ul class="list-group">
               <li class="list-group-item">
                 <b>
-                  Mandatory plugins in the ZIP:
+                  {{ store.state.strings.vuemandatoryplugin }}
                 </b>
                 <ul>
                   <li v-for="(message, key) in feedback.plugins.needed" :key="key" style="margin-left: 20px; list-style-type: disc;">
@@ -63,7 +65,7 @@
             <ul class="list-group">
               <li class="list-group-item">
                 <b>
-                  Optional plugins in the ZIP:
+                  {{ store.state.strings.vueoptionalplugin }}
                 </b>
                 <ul>
                   <li v-for="(message, key) in feedback.plugins.optional" :key="key" style="margin-left: 20px; list-style-type: none;">
@@ -141,6 +143,22 @@
                 {{ key }}
               </h4>
               <PluginFeedback :message/>
+            </li>
+          </ul>
+        </div>
+        <div v-if="feedback.config" class="mt-4">
+          <h3>
+            {{ store.state.strings.vueconfigzip }}
+          </h3>
+          <ul class="list-group">
+            <li class="list-group-item" v-for="(message, key) in feedback.config.needed" :key="key">
+              <h4 style="text-decoration: underline;">
+                {{ key }}
+              </h4>
+              <PluginFeedback
+                :message
+                showlevel = 1
+              />
             </li>
           </ul>
         </div>
@@ -272,6 +290,7 @@ const handleFileUpload = async (event) => {
       );
 
       const responseparsed = JSON.parse(response.feedback)
+      console.log(responseparsed)
       feedback.value = responseparsed.feedback
       finished.value = responseparsed.finished
     } catch (error) {

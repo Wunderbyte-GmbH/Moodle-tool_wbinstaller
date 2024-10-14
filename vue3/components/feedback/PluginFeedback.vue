@@ -31,7 +31,7 @@
         </ul>
       </div>
     </div>
-    <div v-if="message.success && !message.error && !message.warning">
+    <div v-if="message.success && ((!message.error && !message.warning) ||showlevel == 1)">
       <h6>
         {{ store.state.strings.vuesuccess }}
       </h6>
@@ -62,6 +62,11 @@ const props = defineProps({
       warning: [],
       error: []
     })
+  },
+  showlevel: {
+    type: Number,
+    required: false,
+    default: () => (0)
   }
 });
 

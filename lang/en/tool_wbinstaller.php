@@ -99,6 +99,9 @@ $string['courseidmismatchlocaldata'] = 'The course id did not match';
 $string['noadaptivequizfound'] = 'No matching adaptivequiz was found';
 $string['oldermoodlebackupversion'] = 'The course-backup is older than the current moodle version {$a}';
 $string['targetdirnotwritable'] = 'No write permission for the directory {$a}';
+$string['configvalueset'] = 'The config setting {$a} was successfully set';
+$string['confignotfound'] = 'The config setting {$a} was not found';
+$string['configsettingfound'] = 'The config setting {$a} was found';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';
@@ -108,6 +111,7 @@ $string['vuenotfound'] = 'Not found';
 $string['vueinstallbtn'] = 'Install Recipe';
 $string['vuequestionszip'] = 'Questions in the ZIP:';
 $string['vuesimulationzip'] = 'Simulations in the ZIP:';
+$string['vueconfigzip'] = 'Config settings in the ZIP:';
 $string['vuecourseszip'] = 'Courses in the ZIP:';
 $string['vuelocaldata'] = 'Local data insiode the ZIP:';
 $string['vuecategories'] = 'Category: ';
@@ -122,3 +126,6 @@ $string['vuestepcounterof'] = ' of ';
 $string['vuenextstep'] = 'All plugins have been installed yet. Before you continue, you can adjust the plugins configuration if needed. Click on next step or if you reenter the page drag and drop the recipe again to continue the installation process';
 $string['vuenextstepbtn'] = 'Next step';
 $string['vuefinishedrecipe'] = 'The recipe was installed completely.';
+$string['vuepluginfeedback'] = 'Plugins of the recipe';
+$string['vuemandatoryplugin'] = 'Mandatory plugins in the ZIP:';
+$string['vueoptionalplugin'] = 'Optional plugins in the ZIP:';
