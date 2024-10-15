@@ -133,6 +133,8 @@ class customfieldsInstaller extends wbInstaller {
             'shortname' => $fieldset['shortname'],
             'name' => $fieldset['name'],
             'type' => $fieldset['type'],
+            'description' => $fieldset['description'] ?? '',
+            'descriptionformat' => $fieldset['descriptionformat'] ?? 0,
             'configdata' => $configdata,
         ]);
     }
