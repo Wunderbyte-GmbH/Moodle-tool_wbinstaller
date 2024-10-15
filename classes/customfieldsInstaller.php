@@ -94,9 +94,6 @@ class customfieldsInstaller extends wbInstaller {
     public function upload_category($customfields) {
         global $DB;
         $category = $DB->get_record('customfield_category', ['name' => $customfields['name']], 'id');
-        if ($category) {
-            return $category->id;
-        }
         $namespace = "\\core_customfield\\handler";
         if (
             isset($customfields['namespace']) &&
@@ -108,6 +105,9 @@ class customfieldsInstaller extends wbInstaller {
             $customfields['component'],
             $customfields['area']
         );
+        if ($category) {
+            return $category->id;
+        }
         return $this->handler->create_category($customfields['name']);
     }
 
