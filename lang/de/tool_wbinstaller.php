@@ -102,6 +102,7 @@ $string['targetdirnotwritable'] = 'Keine Schreibrechte für das Verzeichnis {$a}
 $string['configvalueset'] = 'Die Konfigurationseinstellung {$a} wurde erfolgreich gesetzt';
 $string['confignotfound'] = 'Die Konfigurationseinstellung {$a} wurde nicht gefunden';
 $string['configsettingfound'] = 'Die Konfigurationseinstellung {$a} wurde gefunden';
+$string['jsoninvalid'] = 'Die json Datei {$a} konnte nicht korrekt hochgeladen werden';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';
