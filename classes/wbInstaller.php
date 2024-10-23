@@ -134,7 +134,7 @@ class wbInstaller {
                 }
                 $instance->execute($recipefolder);
                 if ($step == 'courses') {
-                    $this->matchingcourseids = $instance->get_matchingcourseids();
+                    $this->matchingcourseids = $instance->get_matchingids();
                 }
                 if ($instance->upgraderunning != 0) {
                     $this->upgraderunning = $instance->upgraderunning;

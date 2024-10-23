@@ -80,6 +80,21 @@
             </ul>
           </div>
         </div>
+        <div v-for="(feedbackparts, index) in feedback" :key="index">
+            <div v-if="index!='plugins'">
+              <h3>
+                {{ store.state.strings['vue'+index+'heading'] }}
+              </h3>
+              <ul class="list-group">
+                <li class="list-group-item" v-for="(message, key) in feedbackparts.needed" :key="key">
+                  <h4 style="text-decoration: underline;">
+                    {{ key }}
+                  </h4>
+                  <PluginFeedback :message/>
+                </li>
+              </ul>
+            </div>
+        </div>
         <div v-if="feedback.customfields" class="mt-4">
           <h3>
             {{ store.state.strings.vuecustomfieldzip }}
@@ -87,19 +102,6 @@
           <ul class="list-group">
             <li class="list-group-item" v-for="(message, key) in feedback.customfields.needed" :key="key">
               {{ store.state.strings.vuecategories }}
-              <h4 style="text-decoration: underline;">
-                {{ key }}
-              </h4>
-              <PluginFeedback :message/>
-            </li>
-          </ul>
-        </div>
-        <div v-if="feedback.courses" class="mt-4">
-          <h3>
-            {{ store.state.strings.vuecourseszip }}
-          </h3>
-          <ul class="list-group">
-            <li class="list-group-item" v-for="(message, key) in feedback.courses.needed" :key="key">
               <h4 style="text-decoration: underline;">
                 {{ key }}
               </h4>

@@ -76,9 +76,10 @@ class coursesInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return string
      */
-    public function check($extractpath) {
+    public function check($extractpath, $parent) {
         $coursespath = $extractpath . $this->recipe['path'];
         foreach (glob("$coursespath/*") as $coursefile) {
             $precheck = $this->precheck($coursefile);
@@ -286,7 +287,7 @@ class coursesInstaller extends wbInstaller {
      * Check if course already exists.
      * @return array
      */
-    public function get_matchingcourseids() {
+    public function get_matchingids() {
         return $this->matchingcourseids;
     }
 }

@@ -103,6 +103,9 @@ $string['configvalueset'] = 'Die Konfigurationseinstellung {$a} wurde erfolgreic
 $string['confignotfound'] = 'Die Konfigurationseinstellung {$a} wurde nicht gefunden';
 $string['configsettingfound'] = 'Die Konfigurationseinstellung {$a} wurde gefunden';
 $string['jsoninvalid'] = 'Die json Datei {$a} konnte nicht korrekt hochgeladen werden';
+$string['dbtablenotfound'] = 'Die DB Tabelle {$a} konnte nicht gefunden werden';
+$string['missingcourses'] = 'Folgende Kursids sind notwendig für den Lernpfad, wurden aber nicht im Rezept gefunden: {$a}';
+$string['coursetypenotfound'] = 'Der Datentyp der Kursid wurde nicht erkannt';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';
@@ -112,12 +115,13 @@ $string['vuenotfound'] = 'Nicht gefunden';
 $string['vueinstallbtn'] = 'Rezept installieren';
 $string['vuequestionszip'] = 'Fragen in der ZIP-Datei:';
 $string['vuesimulationzip'] = 'Simulationen in der ZIP-Datei:';
-$string['vueconfigzip'] = 'Konfigurationseinstellung in the ZIP-Datei:';
-$string['vuecourseszip'] = 'Kurse in der ZIP-Datei:';
+$string['vueconfigzip'] = 'Konfigurationseinstellung in der ZIP-Datei:';
+$string['vuecoursesheading'] = 'Kurse in der ZIP-Datei:';
 $string['vuelocaldata'] = 'Lokale Daten im ZIP:';
 $string['vuecategories'] = 'Kategorie: ';
 $string['vuecustomfieldzip'] = 'Customfield in der ZIP-Datei:';
 $string['vuewaitingtext'] = 'Bitte warten Sie, während die Installation läuft...';
+$string['vuelearningpathsheading'] = 'Lernpfade in der ZIP-Datei';
 $string['vuechooserecipe'] = 'Rezeptdatei auswählen';
 $string['vuewarining'] = 'Warnung: ';
 $string['vueerror'] = 'Fehler: ';

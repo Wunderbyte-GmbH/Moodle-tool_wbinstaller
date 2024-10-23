@@ -36,16 +36,16 @@ use ZipArchive;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class wbCheck {
-
     /** @var array Content of the recipe. */
     public $recipe;
     /** @var string Name of the recipe. */
     public $filename;
     /** @var array Install errors. */
     public $feedback;
+    /** @var array Matching ids array. */
+    public $matchingids;
     /** @var array Install errors. */
     public $finished;
-
 
     /**
      * Entities constructor.
@@ -56,6 +56,7 @@ class wbCheck {
         $this->recipe = $recipe;
         $this->filename = $filename;
         $this->feedback = [];
+        $this->matchingids = [];
         $this->finished = [];
     }
 
@@ -120,8 +121,9 @@ class wbCheck {
                     isset($jsonarray[$steptype])
                 ) {
                     $instance = new $installerclass($jsonarray[$steptype]);
-                    $instance->check($extractpath);
+                    $instance->check($extractpath, $this);
                     $this->feedback[$steptype] = $instance->get_feedback();
+                    $this->matchingids[$steptype] = $instance->get_matchingids();
                 } else {
                     $this->feedback[$steptype] = get_string('classnotfound', 'tool_wbinstaller', $steptype);
                 }

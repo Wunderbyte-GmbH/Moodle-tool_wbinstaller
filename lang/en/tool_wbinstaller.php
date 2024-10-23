@@ -103,6 +103,9 @@ $string['configvalueset'] = 'The config setting {$a} was successfully set';
 $string['confignotfound'] = 'The config setting {$a} was not found';
 $string['configsettingfound'] = 'The config setting {$a} was found';
 $string['jsoninvalid'] = 'The json file {$a} could not be uploaded correctly';
+$string['dbtablenotfound'] = 'The DB table {$a} could not be found';
+$string['missingcourses'] = 'Follwoing course ids are required for the learning path but are not inside the recipe: {$a}';
+$string['coursetypenotfound'] = 'The course id type inside the learning path is unknown';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';
@@ -113,11 +116,12 @@ $string['vueinstallbtn'] = 'Install Recipe';
 $string['vuequestionszip'] = 'Questions in the ZIP:';
 $string['vuesimulationzip'] = 'Simulations in the ZIP:';
 $string['vueconfigzip'] = 'Config settings in the ZIP:';
-$string['vuecourseszip'] = 'Courses in the ZIP:';
+$string['vuecoursesheading'] = 'Courses in the ZIP:';
 $string['vuelocaldata'] = 'Local data insiode the ZIP:';
 $string['vuecategories'] = 'Category: ';
 $string['vuecustomfieldzip'] = 'Customfield in the ZIP:';
 $string['vuewaitingtext'] = 'Please wait while the installation is in progress...';
+$string['vuelearningpathsheading'] = 'Learningpaths in the ZIP:';
 $string['vuechooserecipe'] = 'Choose Recipe File';
 $string['vuewarining'] = 'Warning: ';
 $string['vueerror'] = 'Error: ';
