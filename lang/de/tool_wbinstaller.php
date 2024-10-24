@@ -105,6 +105,7 @@ $string['configsettingfound'] = 'Die Konfigurationseinstellung {$a} wurde gefund
 $string['jsoninvalid'] = 'Die json Datei {$a} konnte nicht korrekt hochgeladen werden';
 $string['dbtablenotfound'] = 'Die DB Tabelle {$a} konnte nicht gefunden werden';
 $string['missingcourses'] = 'Folgende Kursids sind notwendig für den Lernpfad, wurden aber nicht im Rezept gefunden: {$a}';
+$string['missingcomponents'] = 'Folgende Komponentenids sind notwendig für den Lernpfad, wurden aber nicht im Rezept gefunden: {$a}';
 $string['coursetypenotfound'] = 'Der Datentyp der Kursid wurde nicht erkannt';
 
 // Vue Strings.

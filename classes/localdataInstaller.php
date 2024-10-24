@@ -50,6 +50,8 @@ class localdataInstaller extends wbInstaller {
 
     /** @var bool Check if data will be uploaded */
     public $uploaddata;
+    /** @var array Matching ids old to new. */
+    public $matchingids;
 
     /**
      * Entities constructor.
@@ -61,6 +63,7 @@ class localdataInstaller extends wbInstaller {
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->uploaddata = true;
+        $this->matchingids = [];
     }
 
     /**
@@ -91,10 +94,35 @@ class localdataInstaller extends wbInstaller {
         foreach (glob("$coursespath/*") as $coursefile) {
             $filenameproperties = basename($coursefile);
             $fileinfo = pathinfo($filenameproperties, PATHINFO_FILENAME);
+            $jsondata = file_get_contents($coursefile);
+            $decodeddata = json_decode($jsondata, true);
+            $this->process_nested_json($decodeddata);
             $this->feedback['needed']['local_data']['success'][] =
                 get_string('newlocaldatafilefound', 'tool_wbinstaller', $fileinfo);
         }
         return '1';
+    }
+
+    /**
+     * Recursively process nested JSON objects.
+     * @param array $data
+     */
+    protected function process_nested_json($entries) {
+        foreach ($entries as $entry) {
+            if (isset($entry['id'])) {
+                $this->matchingids['testid'][$entry['id']] = $entry['id'];
+            }
+            if (isset($entry['componentid'])) {
+                $this->matchingids['componentid'][$entry['componentid']] = $entry['componentid'];
+                $this->matchingids['quizid'][$entry['componentid']] = $entry['componentid'];
+            }
+            if (isset($entry['courseid'])) {
+                $this->matchingids['testid_courseid'][$entry['courseid']] = $entry['courseid'];
+            }
+            if (isset($entry['catscaleid'])) {
+                $this->matchingids['scales'][$entry['catscaleid']] = $entry['catscaleid'];
+            }
+        }
     }
 
     /**
@@ -326,5 +354,13 @@ class localdataInstaller extends wbInstaller {
             }
         }
         return $matcher;
+    }
+
+    /**
+     * Check if course already exists.
+     * @return array
+     */
+    public function get_matchingids() {
+        return $this->matchingids;
     }
 }

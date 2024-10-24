@@ -29,14 +29,14 @@ use backup;
 use restore_controller;
 use stdClass;
 
-require_once(__DIR__.'/../../../../config.php');
-require_once(__DIR__.'/../../../../lib/setup.php');
+require_once(__DIR__ . '/../../../../config.php');
+require_once(__DIR__ . '/../../../../lib/setup.php');
 global $CFG;
-require_once($CFG->libdir.'/filelib.php');
-require_once($CFG->libdir.'/moodlelib.php');
-require_once($CFG->dirroot.'/course/lib.php');
-require_once($CFG->dirroot.'/backup/util/includes/backup_includes.php');
-require_once($CFG->dirroot.'/backup/util/includes/restore_includes.php');
+require_once($CFG->libdir . '/filelib.php');
+require_once($CFG->libdir . '/moodlelib.php');
+require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
+require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 require_login();
 
 /**
@@ -48,16 +48,19 @@ require_login();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class coursesInstaller extends wbInstaller {
+    /** @var array Matching ids old to new. */
+    public $matchingids;
 
     /**
      * Entities constructor.
      * @param mixed $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid=null) {
+    public function __construct($recipe, $dbid = null) {
         $this->dbid = $dbid;
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->matchingids = [];
     }
 
     /**
@@ -128,12 +131,20 @@ class coursesInstaller extends wbInstaller {
         $xml = simplexml_load_file($coursefile . '/moodle_backup.xml');
         $courseshortname = $this->get_course_short_name($xml);
         $courseoriginalid = $this->get_course_og_id($xml);
+        $activitiespath = $coursefile . '/activities';
+        foreach (glob("$activitiespath/adaptivequiz_*") as $activityfolder) {
+            $activityid = $this->extract_adaptivequiz_activity_id($activityfolder);
+            if ($activityid) {
+                $this->matchingids['components'][$activityid] = $activityid;
+            }
+        }
+
         if (!$courseshortname || !$courseoriginalid) {
             $this->feedback['needed'][$coursefile]['error'][] =
               get_string('coursesnoshortname', 'tool_wbinstaller', $coursefile);
             return 0;
         } else if ($course = $this->course_exists($courseshortname)) {
-            $this->matchingcourseids[$courseoriginalid] = $course->id;
+            $this->matchingids['courses'][$courseoriginalid] = $course->id;
             $this->feedback['needed'][$courseshortname]['warning'][] =
               get_string('coursesduplicateshortname', 'tool_wbinstaller', $courseshortname);
             return 0;
@@ -142,6 +153,21 @@ class coursesInstaller extends wbInstaller {
             "courseshortname" => $courseshortname,
             "courseoriginalid" => $courseoriginalid,
         ];
+    }
+
+    /**
+     * Get activity id of quiz
+     * @param string $activityfolder
+     * @return mixed
+     */
+    protected function extract_adaptivequiz_activity_id($activityfolder) {
+        $xmlpath = $activityfolder . '/adaptivequiz.xml';
+        if (!file_exists($xmlpath)) {
+            return null;
+        }
+        $xml = simplexml_load_file($xmlpath);
+        $activityid = (string)$xml['id'];
+        return $activityid;
     }
 
     /**
@@ -200,7 +226,7 @@ class coursesInstaller extends wbInstaller {
         $newcourse->timemodified = time();
         $newcourse->newsitems = 0;
         $newcourse = create_course($newcourse);
-        $this->matchingcourseids[$precheck['courseoriginalid']] = $newcourse->id;
+        $this->matchingids['course'][$precheck['courseoriginalid']] = $newcourse->id;
         $this->restore_with_controller($coursefile, $newcourse);
         $this->force_course_visibility($newcourse->id);
         return;
@@ -288,6 +314,6 @@ class coursesInstaller extends wbInstaller {
      * @return array
      */
     public function get_matchingids() {
-        return $this->matchingcourseids;
+        return $this->matchingids;
     }
 }

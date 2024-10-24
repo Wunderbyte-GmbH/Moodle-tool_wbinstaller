@@ -105,6 +105,7 @@ $string['configsettingfound'] = 'The config setting {$a} was found';
 $string['jsoninvalid'] = 'The json file {$a} could not be uploaded correctly';
 $string['dbtablenotfound'] = 'The DB table {$a} could not be found';
 $string['missingcourses'] = 'Follwoing course ids are required for the learning path but are not inside the recipe: {$a}';
+$string['missingcomponents'] = 'Follwoing component ids are required for the learning path but are not inside the recipe: {$a}';
 $string['coursetypenotfound'] = 'The course id type inside the learning path is unknown';
 
 // Vue strings.

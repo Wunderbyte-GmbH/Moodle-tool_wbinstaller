@@ -173,7 +173,7 @@ class wbCheck {
               get_string('installerfilenotreadable', 'tool_wbinstaller', $zipfilepath);
             return false;
         }
-        $zip = new ZipArchive;
+        $zip = new ZipArchive();
         if ($zip->open($zipfilepath) === true) {
             $extractpath = $pluginpath . 'precheck/';
             if (!is_dir($extractpath)) {

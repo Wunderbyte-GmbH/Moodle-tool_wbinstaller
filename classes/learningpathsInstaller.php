@@ -113,6 +113,41 @@ class learningpathsInstaller extends wbInstaller {
     }
 
     /**
+     * Check if the local data exists.
+     * @param array $properties
+     * @param object $learningpath
+     */
+    public function check_component_exists($properties, $learningpath) {
+        $missingcomponents = [];
+        foreach ($properties as $property => $options) {
+            $nodes = self::get_value_by_path($learningpath, $property);
+            foreach ($nodes as $node) {
+                foreach ($options as $property => $dataoptions) {
+                    $completionnodes = self::get_value_by_path($node, $property);
+                    foreach ($completionnodes as $completionnode) {
+                        $componentvalue = self::get_value_by_path($completionnode, $dataoptions);
+                        if ($componentvalue) {
+                            foreach ($componentvalue as $testkey => $testvalue) {
+                                self::check_entity_id_exists(
+                                    $testvalue,
+                                    $learningpath['name'],
+                                    $missingcomponents,
+                                    'localdata',
+                                    $testkey
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (!empty($missingcomponents)) {
+            $this->feedback['needed'][$learningpath['name']]['error'][] =
+              get_string('missingcomponents', 'tool_wbinstaller', implode(', ', array_unique($missingcourses)));
+        }
+    }
+
+    /**
      * Exceute the installer.
      * @param string $extractpath
      * @param object $learningpath
@@ -124,10 +159,12 @@ class learningpathsInstaller extends wbInstaller {
             foreach ($nodes as $node) {
                 foreach ($options as $property => $dataoptions) {
                     $nodesdata = self::get_value_by_path($node, $property);
-                    self::check_course_id_exists(
+                    self::check_entity_id_exists(
                         $nodesdata,
                         $learningpath['name'],
-                        $missingcourses
+                        $missingcourses,
+                        'courses',
+                        'courses'
                     );
                 }
             }
@@ -140,24 +177,35 @@ class learningpathsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param mixed $nodesdata
+     * @param mixed $data
      * @param string $name
-     * @param array $missingcourses
+     * @param array $missingentities
+     * @param string $matchingtype
+     * @param string $checkname
      */
-    public function check_course_id_exists($nodesdata, $name, &$missingcourses) {
-        if (is_array($nodesdata)) {
-            foreach ($nodesdata as $courseid) {
-                if (!in_array($courseid, $this->parent->matchingids['courses'])) {
-                    $missingcourses[] = $courseid;
+    public function check_entity_id_exists($data, $name, &$missingentities, $matchingtype, $checkname) {
+        if (isset($this->parent->matchingids[$matchingtype][$checkname])) {
+            if (is_array($data)) {
+                foreach ($data as $courseid) {
+                    if (!in_array($courseid, $this->parent->matchingids[$matchingtype][$checkname])) {
+                        $missingentities[] = $courseid;
+                    }
                 }
+            } else if (is_string($data)) {
+                if (!in_array($data, haystack: $this->parent->matchingids[$matchingtype][$checkname])) {
+                    $missingentities[] = $data;
+                }
+            } else if (is_object($data)) {
+                if (
+                    isset($data->parent->id) &&
+                    !in_array($data->parent->id, $this->parent->matchingids[$matchingtype][$checkname])
+                ) {
+                    $missingentities[] = $data;
+                }
+            } else {
+                $this->feedback['needed'][$name]['error'][] =
+                    get_string('coursetypenotfound', 'tool_wbinstaller');
             }
-        } else if (is_string($nodesdata)) {
-            if (!in_array($nodesdata, $this->parent->matchingids['courses'])) {
-                $missingcourses[] = $nodesdata;
-            }
-        } else {
-            $this->feedback['needed'][$name]['error'][] =
-                get_string('coursetypenotfound', 'tool_wbinstaller');
         }
     }
 
