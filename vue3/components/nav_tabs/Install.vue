@@ -109,19 +109,6 @@
             </li>
           </ul>
         </div>
-        <div v-if="feedback.localdata" class="mt-4">
-          <h3>
-            {{ store.state.strings.vuelocaldata }}
-          </h3>
-          <ul class="list-group">
-            <li class="list-group-item" v-for="(message, key) in feedback.localdata.needed" :key="key">
-              <h4 style="text-decoration: underline;">
-                {{ key }}
-              </h4>
-              <PluginFeedback :message/>
-            </li>
-          </ul>
-        </div>
         <div v-if="feedback.simulations" class="mt-4">
           <h3>
             {{ store.state.strings.vuesimulationzip }}
@@ -292,7 +279,6 @@ const handleFileUpload = async (event) => {
       );
 
       const responseparsed = JSON.parse(response.feedback)
-      console.log(responseparsed)
       feedback.value = responseparsed.feedback
       finished.value = responseparsed.finished
     } catch (error) {
