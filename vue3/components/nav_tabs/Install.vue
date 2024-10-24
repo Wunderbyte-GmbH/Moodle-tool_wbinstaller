@@ -254,8 +254,6 @@ const installRecipe = async () => {
 };
 
 const convertFileToBase64 = (file) => {
-  console.log('convertFileToBase64')
-  console.log(file)
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
@@ -271,21 +269,18 @@ const handleFileUpload = async (event) => {
   uploadedFile = event.target.files[0];
   if (uploadedFile && uploadedFile.name.endsWith('.zip')) {
     uploadedFileName.value = uploadedFile.name;
-    try {
-      const base64File = await convertFileToBase64(uploadedFile);
-      const response = await store.dispatch('checkRecipe',
-        {
-          uploadedFile: base64File,
-          filename: uploadedFileName.value,
-        }
-      );
-
-      const responseparsed = JSON.parse(response.feedback)
-      feedback.value = responseparsed.feedback
-      finished.value = responseparsed.finished
-    } catch (error) {
-      console.error('Error reading ZIP file:', error);
-    }
+    console.log('uploadedFile')
+    console.log(uploadedFile)
+    const base64File = await convertFileToBase64(uploadedFile);
+    const response = await store.dispatch('checkRecipe',
+      {
+        uploadedFile: base64File,
+        filename: uploadedFileName.value,
+      }
+    );
+    const responseparsed = JSON.parse(response.feedback)
+    feedback.value = responseparsed.feedback
+    finished.value = responseparsed.finished
   } else {
     uploadedFileName.value = '';
   }
