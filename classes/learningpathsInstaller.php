@@ -115,7 +115,7 @@ class learningpathsInstaller extends wbInstaller {
     /**
      * Check if the local data exists.
      * @param array $properties
-     * @param object $learningpath
+     * @param array $learningpath
      */
     public function check_component_exists($properties, $learningpath) {
         $missingcomponents = [];
@@ -211,7 +211,7 @@ class learningpathsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param object $data
+     * @param mixed $data
      * @param string $path
      */
     public function get_value_by_path($data, $path) {

@@ -254,6 +254,8 @@ const installRecipe = async () => {
 };
 
 const convertFileToBase64 = (file) => {
+  console.log('convertFileToBase64')
+  console.log(file)
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
