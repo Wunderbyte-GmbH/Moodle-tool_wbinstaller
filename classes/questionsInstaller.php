@@ -41,19 +41,19 @@ class questionsInstaller extends wbInstaller {
     /**
      * Entities constructor.
      * @param string $recipe
-     * @param int $dbid
      */
-    public function __construct($recipe, $dbid=null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
     }
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return int
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
+        $this->parent = $parent;
         $questionspath = $extractpath . $this->recipe['path'];
         foreach (glob("$questionspath/*") as $questionfile) {
             try {
@@ -71,10 +71,9 @@ class questionsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
-
-     * @return array
+     * @param \tool_wbinstaller\wbCheck $parent
      */
-    public function check($extractpath) {
+    public function check($extractpath, $parent) {
         $questionspath = $extractpath . $this->recipe['path'];
         foreach (glob("$questionspath/*") as $questionfile) {
             $this->feedback['needed'][basename($questionfile)]['success'][] =

@@ -50,28 +50,28 @@ class localdataInstaller extends wbInstaller {
 
     /** @var bool Check if data will be uploaded */
     public $uploaddata;
-    /** @var array Matching ids old to new. */
-    public $matchingids;
+    /** @var \tool_wbinstaller\wbCheck Parent matching ids. */
+    public $parent;
 
     /**
      * Entities constructor.
      * @param mixed $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid = null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->uploaddata = true;
-        $this->matchingids = [];
     }
 
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return string
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
+        $this->parent = $parent;
         $coursespath = $extractpath . $this->recipe['path'];
         foreach (glob("$coursespath/*") as $coursefile) {
             try {
@@ -89,7 +89,7 @@ class localdataInstaller extends wbInstaller {
      * @param string $extractpath
      * @return string
      */
-    public function check($extractpath) {
+    public function check($extractpath, $parent) {
         $coursespath = $extractpath . $this->recipe['path'];
         foreach (glob("$coursespath/*") as $coursefile) {
             $filenameproperties = basename($coursefile);
@@ -153,11 +153,11 @@ class localdataInstaller extends wbInstaller {
                 $this->uploaddata = true;
                 $record = new stdClass();
                 $newdata = new stdClass();
-                if (isset($this->matchingcourseids[$row['courseid']])) {
+                if (isset($this->matchingids[$row['courseid']])) {
                     $newdata = $DB->get_record_sql(
                         $this->recipe['translator']['sql'],
                         [
-                          'id' => $this->matchingcourseids[$row['courseid']],
+                          'id' => $this->parent->matchingids['courses']['courses'][$row['courseid']],
                         ]
                     );
                     if (!$newdata) {
@@ -210,7 +210,8 @@ class localdataInstaller extends wbInstaller {
                         get_string('localdatauploadduplicate', 'tool_wbinstaller', $fileinfo);
                     break;
                 } else if ($this->uploaddata) {
-                    $DB->insert_record($fileinfo, $record);
+                    $newid = $DB->insert_record($fileinfo, dataobject: $record);
+                    $this->matchingids['testid'][$row['id']] = $newid;
                     $this->feedback['needed']['local_data']['success'][] =
                         get_string('localdatauploadsuccess', 'tool_wbinstaller', $fileinfo);
                 } else {
@@ -249,14 +250,6 @@ class localdataInstaller extends wbInstaller {
 
     /**
      * Check if course already exists.
-     * @param array $matchingcourseids
-     */
-    public function set_matchingcourseids($matchingcourseids) {
-        $this->matchingcourseids = $matchingcourseids;
-    }
-
-    /**
-     * Check if course already exists.
      * @param string $json
      * @param string $sacleid
      * @param array $keys
@@ -267,6 +260,7 @@ class localdataInstaller extends wbInstaller {
     public function update_nested_json($json, $sacleid, $keys, $moudleid, $coursemoduleid) {
         $json = json_decode($json, true);
         $translationsclaeids = $this->get_scale_matcher($json, $sacleid);
+        $newdata = [];
         foreach ($keys as $changingkey) {
             foreach ($json as $key => $value) {
                 if ($key == 'catquiz_catscales') {
@@ -311,8 +305,8 @@ class localdataInstaller extends wbInstaller {
     public function course_matching($values) {
         $courseids = [];
         foreach ($values as $value) {
-            if (isset($this->matchingcourseids[$value])) {
-                $courseids[] = $this->matchingcourseids[$value];
+            if (isset($this->parent->matchingids['courses']['courses'][$value])) {
+                $courseids[] = $this->matchingids['courses']['courses'][$value];
             } else {
                 if ($this->uploaddata) {
                     $this->feedback['needed']['local_data']['error'][] =
@@ -321,7 +315,6 @@ class localdataInstaller extends wbInstaller {
                 $this->uploaddata = false;
             }
         }
-
         return $courseids;
     }
 
@@ -353,14 +346,7 @@ class localdataInstaller extends wbInstaller {
                 return 0;
             }
         }
+        $this->matchingids['catscales'] = $matcher;
         return $matcher;
-    }
-
-    /**
-     * Check if course already exists.
-     * @return array
-     */
-    public function get_matchingids() {
-        return $this->matchingids;
     }
 }

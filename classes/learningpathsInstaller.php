@@ -42,8 +42,8 @@ class learningpathsInstaller extends wbInstaller {
     public $jsondata;
     /** @var \tool_wbinstaller\wbCheck Parent matching ids. */
     public $parent;
-    /** @var array Matching ids old to new. */
-    public $matchingids;
+    /** @var bool Update or check values. */
+    public $update;
 
     /**
      * Entities constructor.
@@ -62,24 +62,49 @@ class learningpathsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return int
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
+        $this->parent = $parent;
+        $this->update = true;
+        $this->run_recipe($extractpath);
+        return '1';
+    }
+
+    /**
+     * Exceute the installer.
+     * @param string $extractpath
+     * @param bool $update
+     */
+    public function run_recipe($extractpath) {
         global $DB;
-        foreach ($this->recipe as $pluginname => $configfields) {
-            foreach ($configfields as $configfield => $value) {
-                $currentvalue = get_config($pluginname, $configfield);
-                if ($currentvalue !== false) {
-                    set_config($configfield, $value, $pluginname);
-                    $this->feedback['needed'][$pluginname]['success'][] =
-                        get_string('configvalueset', 'tool_wbinstaller', $configfield);
-                } else {
-                    $this->feedback['needed'][$pluginname]['error'][] =
-                      get_string('confignotfound', 'tool_wbinstaller', $configfield);
+        $coursespath = $extractpath . $this->recipe['path'];
+        foreach (glob("$coursespath/*") as $coursefile) {
+            $filecontents = file_get_contents($coursefile);
+            $this->jsondata = json_decode($filecontents, true);
+            $filenameproperties = basename($coursefile);
+            $this->fileinfo = pathinfo($filenameproperties, PATHINFO_FILENAME);
+            foreach ($this->jsondata as &$learningpath) {
+                $learningpath['json'] = json_decode($learningpath['json']);
+                if (isset($this->recipe['checks'])) {
+                    foreach ($this->recipe['checks'] as $checktype => $checkproperties) {
+                        if (method_exists($this, $checktype)) {
+                            $this->$checktype($checkproperties, $learningpath);
+                        }
+                    }
                 }
+                if ($this->update) {
+                    if (isset($learningpath['id'])) {
+                        unset($learningpath['id']);
+                    }
+                    $learningpath['json'] = json_encode($learningpath['json']);
+                    $DB->insert_record($this->fileinfo, $learningpath);
+                }
+                $this->feedback['needed'][$learningpath['name']]['success'][] =
+                    get_string('newlocaldatafilefound', 'tool_wbinstaller', $learningpath['name']);
             }
         }
-        return 1;
     }
 
     /**
@@ -90,25 +115,8 @@ class learningpathsInstaller extends wbInstaller {
      */
     public function check($extractpath, $parent) {
         $this->parent = $parent;
-        $coursespath = $extractpath . $this->recipe['path'];
-        foreach (glob("$coursespath/*") as $coursefile) {
-            $filecontents = file_get_contents($coursefile);
-            $this->jsondata = json_decode($filecontents, true);
-            $filenameproperties = basename($coursefile);
-            $this->fileinfo = pathinfo($filenameproperties, PATHINFO_FILENAME);
-            foreach ($this->jsondata as $learningpath) {
-                $learningpath['json'] = json_decode($learningpath['json']);
-                if (isset($this->recipe['checks'])) {
-                    foreach ($this->recipe['checks'] as $checktype => $checkproperties) {
-                        if (method_exists($this, $checktype)) {
-                            $this->$checktype($checkproperties, $learningpath);
-                        }
-                    }
-                }
-                $this->feedback['needed'][$learningpath['name']]['success'][] =
-                    get_string('newlocaldatafilefound', 'tool_wbinstaller', $learningpath['name']);
-            }
-        }
+        $this->update = false;
+        $this->run_recipe($extractpath);
         return '1';
     }
 
@@ -117,17 +125,17 @@ class learningpathsInstaller extends wbInstaller {
      * @param array $properties
      * @param array $learningpath
      */
-    public function check_component_exists($properties, $learningpath) {
+    public function check_component_exists($properties, &$learningpath) {
         $missingcomponents = [];
         foreach ($properties as $property => $options) {
             $nodes = self::get_value_by_path($learningpath, $property);
             foreach ($nodes as $node) {
                 foreach ($options as $property => $dataoptions) {
                     $completionnodes = self::get_value_by_path($node, $property);
-                    foreach ($completionnodes as $completionnode) {
+                    foreach ($completionnodes as &$completionnode) {
                         $componentvalue = self::get_value_by_path($completionnode, $dataoptions);
                         if ($componentvalue) {
-                            foreach ($componentvalue as $testkey => $testvalue) {
+                            foreach ($componentvalue as $testkey => &$testvalue) {
                                 self::check_entity_id_exists(
                                     $testvalue,
                                     $learningpath['name'],
@@ -137,26 +145,30 @@ class learningpathsInstaller extends wbInstaller {
                                 );
                             }
                         }
+                        if ($this->update) {
+                            self::set_value_by_path($completionnode, $property, $componentvalue);
+                        }
+                        $testing = 1;
                     }
                 }
             }
         }
         if (!empty($missingcomponents)) {
             $this->feedback['needed'][$learningpath['name']]['error'][] =
-              get_string('missingcomponents', 'tool_wbinstaller', implode(', ', array_unique($missingcourses)));
+              get_string('missingcomponents', 'tool_wbinstaller', implode(', ', array_unique($missingcomponents)));
         }
     }
 
     /**
      * Exceute the installer.
-     * @param string $properties
+     * @param array $properties
      * @param object $learningpath
      */
-    public function check_courses_exists($properties, $learningpath) {
+    public function check_courses_exists($properties, &$learningpath) {
         $missingcourses = [];
         foreach ($properties as $property => $options) {
             $nodes = self::get_value_by_path($learningpath, $property);
-            foreach ($nodes as $node) {
+            foreach ($nodes as &$node) {
                 foreach ($options as $property => $dataoptions) {
                     $nodesdata = self::get_value_by_path($node, $property);
                     self::check_entity_id_exists(
@@ -166,6 +178,9 @@ class learningpathsInstaller extends wbInstaller {
                         'courses',
                         'courses'
                     );
+                    if ($this->update) {
+                        self::set_value_by_path($node, $property, $nodesdata);
+                    }
                 }
             }
         }
@@ -183,24 +198,30 @@ class learningpathsInstaller extends wbInstaller {
      * @param string $matchingtype
      * @param string $checkname
      */
-    public function check_entity_id_exists($data, $name, &$missingentities, $matchingtype, $checkname) {
+    public function check_entity_id_exists(&$data, $name, &$missingentities, $matchingtype, $checkname) {
         if (isset($this->parent->matchingids[$matchingtype][$checkname])) {
             if (is_array($data)) {
-                foreach ($data as $courseid) {
-                    if (!in_array($courseid, $this->parent->matchingids[$matchingtype][$checkname])) {
+                foreach ($data as &$courseid) {
+                    if (!isset($this->parent->matchingids[$matchingtype][$checkname][$courseid])) {
                         $missingentities[] = $courseid;
+                    } else if ($this->update) {
+                        $courseid = $this->parent->matchingids[$matchingtype][$checkname][$courseid] ?? $courseid;
                     }
                 }
             } else if (is_string($data)) {
-                if (!in_array($data, haystack: $this->parent->matchingids[$matchingtype][$checkname])) {
+                if (!isset($this->parent->matchingids[$matchingtype][$checkname][$data])) {
                     $missingentities[] = $data;
+                } else if ($this->update) {
+                    $data = $this->parent->matchingids[$matchingtype][$checkname][$data] ?? $data;
                 }
-            } else if (is_object($data)) {
-                if (
-                    isset($data->parent->id) &&
-                    !in_array($data->parent->id, $this->parent->matchingids[$matchingtype][$checkname])
-                ) {
+            } else if (
+                is_object($data) &&
+                isset($data->parent->id)
+              ) {
+                if (!in_array($data->parent->id, $this->parent->matchingids[$matchingtype][$checkname])) {
                     $missingentities[] = $data;
+                } else if ($this->update) {
+                    $data->parent->id = $this->parent->matchingids[$matchingtype][$checkname][$data->parent->id] ?? $data->parent->id;
                 }
             } else {
                 $this->feedback['needed'][$name]['error'][] =
@@ -229,6 +250,33 @@ class learningpathsInstaller extends wbInstaller {
     }
 
     /**
+     * Set the value by path in a multi-dimensional array or object.
+     * @param mixed $data The original array or object
+     * @param string $path The path where to set the value (e.g., "key1->key2")
+     * @param mixed $value The value to set
+     */
+    public function set_value_by_path(&$data, $path, $value) {
+        $parts = explode('->', $path);
+        $lastpart = array_pop($parts);
+
+        foreach ($parts as $part) {
+            if (is_array($data) && isset($data[$part])) {
+                $data = &$data[$part];
+            } else if (is_object($data) && isset($data->$part)) {
+                $data = &$data->$part;
+            } else {
+                return;
+            }
+        }
+
+        if (is_array($data)) {
+            $data[$lastpart] = $value;
+        } else if (is_object($data)) {
+            $data->$lastpart = $value;
+        }
+    }
+
+    /**
      * Exceute the installer.
      * @param string $properties
      * @param object $learningpath
@@ -240,13 +288,5 @@ class learningpathsInstaller extends wbInstaller {
             $this->feedback['needed'][$learningpath['name']]['error'][] =
               get_string('dbtablenotfound', 'tool_wbinstaller', $this->fileinfo);
         }
-    }
-
-    /**
-     * Check if course already exists.
-     * @return array
-     */
-    public function get_matchingids() {
-        return $this->matchingids;
     }
 }

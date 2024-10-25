@@ -38,7 +38,6 @@ use ZipArchive;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class wbInstaller {
-
     /** @var int ID of the install status db entry. */
     public $dbid;
     /** @var mixed Content of the recipe. */
@@ -56,8 +55,9 @@ class wbInstaller {
     /** @var int Upgrade time. */
     public $upgraderunning;
     /** @var array Matching the course ids from the old => new. */
-    public $matchingcourseids;
-
+    public $matchingids;
+    /** @var mixed Parent data */
+    public $parent;
 
     /**
      * Entities constructor.
@@ -65,7 +65,7 @@ class wbInstaller {
      * @param string $filename
      * @param string $optionalplugins
      */
-    public function __construct($recipe, $filename=null, $optionalplugins=null) {
+    public function __construct($recipe, $filename = null, $optionalplugins = null) {
         $this->filename = $filename;
         $this->recipe = $recipe;
         $this->progress = 0;
@@ -73,7 +73,7 @@ class wbInstaller {
         $this->optionalplugins = json_decode($optionalplugins);
         $this->status = 0;
         $this->upgraderunning = 0;
-        $this->matchingcourseids = [];
+        $this->matchingids = [];
     }
 
     /**
@@ -87,9 +87,10 @@ class wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return array
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
         raise_memory_limit(MEMORY_EXTRA);
         $extracted = $this->extract_save_zip_file();
         if (!$extracted) {
@@ -111,38 +112,22 @@ class wbInstaller {
         $jsonstring = file_get_contents($recipefolder . 'recipe.json');
         $jsonarray = json_decode($jsonstring, true);
         $currentstep = $this->get_current_step($jsonstring, count($jsonarray['steps']));
-        foreach ($jsonarray['steps'][$currentstep] as $step) {
-            $installerclass = __NAMESPACE__ . '\\' . $step . 'Installer';
+        foreach ($jsonarray['steps'][$currentstep] as $steptype) {
+            $installerclass = __NAMESPACE__ . '\\' . $steptype . 'Installer';
             if (
                 class_exists($installerclass) &&
-                isset($jsonarray[$step])
+                isset($jsonarray[$steptype])
             ) {
-                if ($step == 'plugins') {
-                    $instance = new $installerclass(
-                        $jsonarray[$step],
-                        $this->dbid,
-                        $this->optionalplugins
-                    );
-                } else {
-                    $instance = new $installerclass(
-                        $jsonarray[$step],
-                        $this->dbid
-                    );
-                }
-                if ($step == 'localdata') {
-                    $instance->set_matchingcourseids($this->matchingcourseids);
-                }
-                $instance->execute($recipefolder);
-                if ($step == 'courses') {
-                    $this->matchingcourseids = $instance->get_matchingids();
-                }
+                $instance = new $installerclass($jsonarray[$steptype]);
+                $instance->execute($recipefolder, $this);
                 if ($instance->upgraderunning != 0) {
                     $this->upgraderunning = $instance->upgraderunning;
                 }
-                $this->feedback[$step] = $instance->get_feedback();
+                $this->feedback[$steptype] = $instance->get_feedback();
+                $this->matchingids[$steptype] = $instance->get_matchingids();
                 $this->set_status($instance->get_status());
             } else {
-                $this->feedback[$step] = get_string('classnotfound', 'tool_wbinstaller', $step);
+                $this->feedback[$steptype] = get_string('classnotfound', 'tool_wbinstaller', $step);
             }
         }
         $finished = $this->set_current_step($jsonstring);
@@ -366,9 +351,16 @@ class wbInstaller {
     }
 
     /**
+     * Check if course already exists.
+     * @return array
+     */
+    public function get_matchingids() {
+        return $this->matchingids;
+    }
+
+    /**
      * Returns all errors.
      * @param string $status
-     * @return array
      */
     public function set_status($status) {
         if ($this->status < $status) {
@@ -377,10 +369,9 @@ class wbInstaller {
     }
     /**
      * Returns all errors.
-     * @return array
+     * @return int
      */
     public function get_status() {
-        $this->status;
+        return $this->status;
     }
-
 }

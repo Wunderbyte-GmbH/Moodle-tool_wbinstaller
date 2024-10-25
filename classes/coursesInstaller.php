@@ -48,19 +48,14 @@ require_login();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class coursesInstaller extends wbInstaller {
-    /** @var array Matching ids old to new. */
-    public $matchingids;
-
     /**
      * Entities constructor.
      * @param mixed $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid = null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
-        $this->matchingids = [];
     }
 
     /**
@@ -68,7 +63,7 @@ class coursesInstaller extends wbInstaller {
      * @param string $extractpath
      * @return string
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
         $coursespath = $extractpath . $this->recipe['path'];
         foreach (glob("$coursespath/*") as $coursefile) {
             $this->install_course($coursefile);
@@ -131,8 +126,7 @@ class coursesInstaller extends wbInstaller {
         $xml = simplexml_load_file($coursefile . '/moodle_backup.xml');
         $courseshortname = $this->get_course_short_name($xml);
         $courseoriginalid = $this->get_course_og_id($xml);
-        $activitiespath = $coursefile . '/activities';
-        foreach (glob("$activitiespath/adaptivequiz_*") as $activityfolder) {
+        foreach (glob($coursefile . "/activities/adaptivequiz_*") as $activityfolder) {
             $activityid = $this->extract_adaptivequiz_activity_id($activityfolder);
             if ($activityid) {
                 $this->matchingids['components'][$activityid] = $activityid;
@@ -206,7 +200,7 @@ class coursesInstaller extends wbInstaller {
      * @return mixed
      */
     protected function restore_course($coursefile, $precheck) {
-        global $USER, $CFG;
+        global $USER, $CFG, $DB;
         $destination = $CFG->tempdir . '/backup/' . basename($coursefile);
         if (!is_dir($destination)) {
             mkdir($destination, 0777, true);
@@ -226,10 +220,38 @@ class coursesInstaller extends wbInstaller {
         $newcourse->timemodified = time();
         $newcourse->newsitems = 0;
         $newcourse = create_course($newcourse);
-        $this->matchingids['course'][$precheck['courseoriginalid']] = $newcourse->id;
+        $this->matchingids['courses'][$precheck['courseoriginalid']] = $newcourse->id;
         $this->restore_with_controller($coursefile, $newcourse);
         $this->force_course_visibility($newcourse->id);
+        $this->update_matching_componentids($coursefile, $newcourse->id);
         return;
+    }
+
+    /**
+     * Recursively copies a directory.
+     * @param string $coursefile
+     * @param string $newcourseid
+     */
+    protected function update_matching_componentids($coursefile, $newcourseid) {
+        global $DB;
+        $ogcomponentids = [];
+        foreach (glob($coursefile . "/activities/adaptivequiz_*") as $activityfolder) {
+            $activityid = $this->extract_adaptivequiz_activity_id($activityfolder);
+            if ($activityid) {
+                $ogcomponentids[] = $activityid;
+            }
+        }
+        $newcoursefile = $DB->get_records('adaptivequiz', ['course' => $newcourseid], null, 'id');
+        $newcoursefileids = array_keys($newcoursefile);
+        if (
+            count($ogcomponentids) > 0 &&
+            count($ogcomponentids) == count($newcoursefile)
+        ) {
+            $componentmatch = array_combine($ogcomponentids, $newcoursefileids);
+            foreach ($componentmatch as $ogid => $newid) {
+                $this->matchingids['components'][$ogid] = $newid;
+            }
+        }
     }
 
     /**
@@ -307,13 +329,5 @@ class coursesInstaller extends wbInstaller {
         }
         closedir($dir);
         return true;
-    }
-
-    /**
-     * Check if course already exists.
-     * @return array
-     */
-    public function get_matchingids() {
-        return $this->matchingids;
     }
 }

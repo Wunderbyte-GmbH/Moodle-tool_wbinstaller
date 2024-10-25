@@ -34,7 +34,6 @@ namespace tool_wbinstaller;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class configInstaller extends wbInstaller {
-
     /** @var \core_customfield\handler Matching the course ids from the old => new. */
     public $handler;
 
@@ -43,8 +42,7 @@ class configInstaller extends wbInstaller {
      * @param array $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid = null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->handler = null;
@@ -53,9 +51,10 @@ class configInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return int
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
         global $DB;
         foreach ($this->recipe as $pluginname => $configfields) {
             foreach ($configfields as $configfield => $value) {
@@ -76,8 +75,9 @@ class configInstaller extends wbInstaller {
     /**
      * Exceute the installer check.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      */
-    public function check($extractpath) {
+    public function check($extractpath, $parent = null) {
         global $DB;
         foreach ($this->recipe as $pluginname => $configfields) {
             foreach ($configfields as $configfield => $value) {

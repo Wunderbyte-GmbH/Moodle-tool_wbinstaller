@@ -36,7 +36,6 @@ use Exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class simulationsInstaller extends wbInstaller {
-
     /** @var object Matching the course ids from the old => new. */
     public $installmatcher;
 
@@ -45,8 +44,7 @@ class simulationsInstaller extends wbInstaller {
      * @param array $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid=null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->installmatcher = json_decode(file_get_contents($this->recipe . '/wbinstaller_match.json'));
@@ -54,9 +52,10 @@ class simulationsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return int
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
         $simulationspath = $extractpath . $this->recipe['path'];
         foreach (glob("$simulationspath/*.csv") as $itemparamsfile) {
             if (
@@ -71,9 +70,9 @@ class simulationsInstaller extends wbInstaller {
             } else {
                 $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
                   get_string(
-                    'simulationnoinstallerfilefound',
-                    'tool_wbinstaller',
-                    $this->recipe['matcher']['name']
+                      'simulationnoinstallerfilefound',
+                      'tool_wbinstaller',
+                      $this->recipe['matcher']['name']
                   );
             }
         }
@@ -83,9 +82,9 @@ class simulationsInstaller extends wbInstaller {
      /**
       * Exceute the installer.
       * @param string $extractpath
-      * @return array
+      * @param \tool_wbinstaller\wbCheck $parent
       */
-    public function check($extractpath) {
+    public function check($extractpath, $parent) {
         $simulationspath = $extractpath . $this->recipe['path'];
         foreach (glob("$simulationspath/*.csv") as $itemparamsfile) {
             $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
@@ -96,16 +95,16 @@ class simulationsInstaller extends wbInstaller {
             ) {
                 $this->feedback['needed'][basename($itemparamsfile)]['success'][] =
                   get_string(
-                    'simulationinstallerfilefound',
-                    'tool_wbinstaller',
-                    $this->recipe['matcher']['name']
+                      'simulationinstallerfilefound',
+                      'tool_wbinstaller',
+                      $this->recipe['matcher']['name']
                   );
             } else {
                 $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
                   get_string(
-                    'simulationnoinstallerfilefound',
-                    'tool_wbinstaller',
-                    $this->recipe['matcher']['name']
+                      'simulationnoinstallerfilefound',
+                      'tool_wbinstaller',
+                      $this->recipe['matcher']['name']
                   );
             }
         }
@@ -123,8 +122,8 @@ class simulationsInstaller extends wbInstaller {
         if (! $questions) {
             $this->feedback['needed'][$filename]['error'][] = 'No questions found';
         } else if (
-          isset($this->recipe['matcher']) &&
-          class_exists($this->recipe['matcher']['name'])
+            isset($this->recipe['matcher']) &&
+            class_exists($this->recipe['matcher']['name'])
         ) {
             $installeroptions = $this->recipe['matcher'];
             $importerclass = $installeroptions['name'];

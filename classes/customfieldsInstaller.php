@@ -43,8 +43,7 @@ class customfieldsInstaller extends wbInstaller {
      * @param array $recipe
      * @param int $dbid
      */
-    public function __construct($recipe, $dbid=null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->handler = null;
@@ -53,9 +52,10 @@ class customfieldsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return int
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
         global $DB;
         $customfieldfields = $DB->get_records('customfield_field', null, null, 'shortname');
         foreach ($this->recipe as $customfields) {
@@ -142,8 +142,9 @@ class customfieldsInstaller extends wbInstaller {
     /**
      * Exceute the installer check.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      */
-    public function check($extractpath) {
+    public function check($extractpath, $parent) {
         global $DB;
         $customfieldfields = $DB->get_records('customfield_field', null, null, 'shortname');
         foreach ($this->recipe as $customfields) {

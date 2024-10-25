@@ -1,4 +1,4 @@
- <template>
+<template>
   <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
     <div v-if="nextstep && !finished.status">
       <p>{{ store.state.strings.vuenextstep }}</p>
@@ -35,7 +35,6 @@
         <p>
           {{ store.state.strings.vuewaitingtext }}
         </p>
-        <ProgressTracking :uploadedFileName/>
       </div>
     </transition>
     <transition name="fade">
@@ -119,7 +118,6 @@ import { useStore } from 'vuex';
 import { notify } from "@kyvg/vue3-notification"
 import PluginFeedback from '../feedback/PluginFeedback.vue';
 import FeedbackReport from '../feedback/FeedbackReport.vue';
-import ProgressTracking from '../feedback/ProgressTracking.vue';
 import StepCounter from '../feedback/StepCounter.vue'
 
 // Reactive state for the list of links and courses
@@ -127,7 +125,7 @@ const store = useStore();
 const feedback = ref([]);
 const finished = ref(false);
 const checkedOptionalPlugins = ref([]);
-let uploadedFile = null;
+let uploadedFile = ref(null);
 let uploadedFileName = ref('');
 const fileInput = ref(null);
 let nextstep = ref(false);
@@ -137,13 +135,13 @@ const totalProgress = ref(0);
 const taskProgress = ref(0);
 
 const installRecipe = async () => {
-  if (uploadedFile) {
+  if (uploadedFile.value) {
     feedback.value = []
     isInstalling.value = true;
     totalProgress.value = 0;
     taskProgress.value = 0;
     try {
-      const base64File = await convertFileToBase64(uploadedFile);
+      const base64File = await convertFileToBase64(uploadedFile.value);
       const selectedPlugins = JSON.stringify(checkedOptionalPlugins.value);
       const response = await store.dispatch('installRecipe',
         {
@@ -210,12 +208,12 @@ const convertFileToBase64 = (file) => {
 const handleFileUpload = async (event) => {
   feedback.value = []
   isInstalling.value = true;
-  uploadedFile = event.target.files[0];
-  if (uploadedFile && uploadedFile.name.endsWith('.zip')) {
-    uploadedFileName.value = uploadedFile.name;
+  uploadedFile.value = event.target.files[0];
+  if (uploadedFile.value && uploadedFile.value.name.endsWith('.zip')) {
+    uploadedFileName.value = uploadedFile.value.name;
     console.log('uploadedFile')
-    console.log(uploadedFile)
-    const base64File = await convertFileToBase64(uploadedFile);
+    console.log(uploadedFile.value)
+    const base64File = await convertFileToBase64(uploadedFile.value);
     const response = await store.dispatch('checkRecipe',
       {
         uploadedFile: base64File,

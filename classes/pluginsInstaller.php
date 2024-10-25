@@ -40,10 +40,10 @@ use tool_installaddon_installer;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__.'/../../../../config.php');
-require_once(__DIR__.'/../../../../lib/setup.php');
+require_once(__DIR__ . '/../../../../config.php');
+require_once(__DIR__ . '/../../../../lib/setup.php');
 global $CFG;
-require_once($CFG->libdir.'/adminlib.php');
+require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->libdir . '/filelib.php');
 require_once($CFG->libdir . '/upgradelib.php');
 
@@ -72,29 +72,26 @@ class pluginsInstaller extends wbInstaller {
     /**
      * Entities constructor.
      * @param array $recipe
-     * @param int $dbid
-     * @param array $optionalplugins
      */
-    public function __construct($recipe, $dbid=null, $optionalplugins=null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
-        $this->optionalplugins = $optionalplugins;
         $this->addoninstaller = tool_installaddon_installer::instance();
         $this->plugincontent = null;
         $this->knownsubplugins = [
           'adaptivequizcatmodel_catquiz' => 'mod',
         ];
-
     }
 
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return int
      */
-    public function execute($extractpath) {
+    public function execute($extractpath, $parent = null) {
         global $PAGE, $DB;
+        $this->parent = $parent;
         // Set the page context.
         $PAGE->set_context(context_system::instance());
         $installer = tool_installaddon_installer::instance();
@@ -105,7 +102,7 @@ class pluginsInstaller extends wbInstaller {
                     foreach ($plugins as $gitzipurl) {
                         if (
                             $type != 'optional' ||
-                            in_array($gitzipurl, $this->optionalplugins)
+                            in_array($gitzipurl, $this->parent->optionalplugins)
                         ) {
                             $install = $this->check_plugin_compability($gitzipurl, $type, true);
                             if ($install != 2) {
@@ -153,8 +150,9 @@ class pluginsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      */
-    public function check($extractpath) {
+    public function check($extractpath, $parent) {
         foreach ($this->recipe as $type => $plugins) {
             if ($type != "subplugins") {
                 foreach ($plugins as $gitzipurl) {

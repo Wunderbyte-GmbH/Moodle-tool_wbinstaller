@@ -92,12 +92,7 @@ export function createAppStore() {
               });
             },
             async getInstallProgress(context, payload) {
-              return await ajax('tool_wbinstaller_get_install_progress',
-              {
-                userid: context.state.user,
-                contextid: context.state.contextid,
-                filename: payload.filename,
-              });
+              return 1
             },
             async getExportableCourses(context) {
               return await ajax('tool_wbinstaller_get_exportable_courses',
