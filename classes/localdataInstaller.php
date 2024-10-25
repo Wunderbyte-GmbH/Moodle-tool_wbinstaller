@@ -105,7 +105,7 @@ class localdataInstaller extends wbInstaller {
 
     /**
      * Recursively process nested JSON objects.
-     * @param array $data
+     * @param array $entries
      */
     protected function process_nested_json($entries) {
         foreach ($entries as $entry) {

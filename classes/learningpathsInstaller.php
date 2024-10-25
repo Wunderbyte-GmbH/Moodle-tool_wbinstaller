@@ -149,7 +149,7 @@ class learningpathsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param string $extractpath
+     * @param string $properties
      * @param object $learningpath
      */
     public function check_courses_exists($properties, $learningpath) {
@@ -230,7 +230,7 @@ class learningpathsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param string $extractpath
+     * @param string $properties
      * @param object $learningpath
      */
     public function check_table_exists($properties, $learningpath) {
