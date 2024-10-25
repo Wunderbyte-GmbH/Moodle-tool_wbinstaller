@@ -95,62 +95,6 @@
               </ul>
             </div>
         </div>
-        <div v-if="feedback.customfields" class="mt-4">
-          <h3>
-            {{ store.state.strings.vuecustomfieldzip }}
-          </h3>
-          <ul class="list-group">
-            <li class="list-group-item" v-for="(message, key) in feedback.customfields.needed" :key="key">
-              {{ store.state.strings.vuecategories }}
-              <h4 style="text-decoration: underline;">
-                {{ key }}
-              </h4>
-              <PluginFeedback :message/>
-            </li>
-          </ul>
-        </div>
-        <div v-if="feedback.simulations" class="mt-4">
-          <h3>
-            {{ store.state.strings.vuesimulationzip }}
-          </h3>
-          <ul class="list-group">
-            <li class="list-group-item" v-for="(message, key) in feedback.simulations.needed" :key="key">
-              <h4 style="text-decoration: underline;">
-                {{ key }}
-              </h4>
-              <PluginFeedback :message/>
-            </li>
-          </ul>
-        </div>
-        <div v-if="feedback.questions" class="mt-4">
-          <h3>
-            {{ store.state.strings.vuequestionszip }}
-          </h3>
-          <ul class="list-group">
-            <li class="list-group-item" v-for="(message, key) in feedback.questions.needed" :key="key">
-              <h4 style="text-decoration: underline;">
-                {{ key }}
-              </h4>
-              <PluginFeedback :message/>
-            </li>
-          </ul>
-        </div>
-        <div v-if="feedback.config" class="mt-4">
-          <h3>
-            {{ store.state.strings.vueconfigzip }}
-          </h3>
-          <ul class="list-group">
-            <li class="list-group-item" v-for="(message, key) in feedback.config.needed" :key="key">
-              <h4 style="text-decoration: underline;">
-                {{ key }}
-              </h4>
-              <PluginFeedback
-                :message
-                showlevel = 1
-              />
-            </li>
-          </ul>
-        </div>
         <button
           v-if="!nextstep"
           class="btn btn-primary mt-4"
