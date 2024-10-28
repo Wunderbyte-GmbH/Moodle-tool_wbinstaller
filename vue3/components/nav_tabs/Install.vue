@@ -15,10 +15,15 @@
       <p>{{ store.state.strings.vuefinishedrecipe }}</p>
     </div>
     <StepCounter :finished/>
-    <div class="form-group">
-      <label for="zipFileUpload">
-        {{ store.state.strings.vuechooserecipe }}
-      </label>
+    <div
+      class="dropzone"
+      @dragover.prevent="isDragging = true"
+      @dragleave.prevent="isDragging = false"
+      @drop.prevent="handleDrop"
+      :class="{ 'is-dragging': isDragging }"
+    >
+      <p v-if="!uploadedFileName">{{ store.state.strings.vuechooserecipe }}</p>
+      <p v-else>{{ uploadedFileName }}</p>
       <input
         type="file"
         class="form-control-file"
@@ -27,7 +32,9 @@
         accept=".zip"
         ref="fileInput"
         :disabled="nextstep"
+        hidden
       />
+      <label for="zipFileUpload" class="upload-button">{{ store.state.strings.uploadButtonText || 'Choose File' }}</label>
     </div>
     <transition name="fade">
       <div v-if="isInstalling" class="waiting-screen mt-4">
@@ -39,61 +46,7 @@
     </transition>
     <transition name="fade">
       <div v-if="uploadedFileName && Object.values(feedback).length > 0" class="mt-4">
-        <div v-if="feedback.plugins">
-          <h3>
-            {{ store.state.strings.vuepluginfeedback }}
-          </h3>
-          <div v-if="feedback.plugins.needed">
-            <ul class="list-group">
-              <li class="list-group-item">
-                <b>
-                  {{ store.state.strings.vuemandatoryplugin }}
-                </b>
-                <ul>
-                  <li v-for="(message, key) in feedback.plugins.needed" :key="key" style="margin-left: 20px; list-style-type: disc;">
-                    <h4 style="text-decoration: underline;">
-                      {{ key }}
-                    </h4>
-                    <PluginFeedback :message/>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-          <div v-if="feedback.plugins.optional">
-            <ul class="list-group">
-              <li class="list-group-item">
-                <b>
-                  {{ store.state.strings.vueoptionalplugin }}
-                </b>
-                <ul>
-                  <li v-for="(message, key) in feedback.plugins.optional" :key="key" style="margin-left: 20px; list-style-type: none;">
-                    <input type="checkbox" v-model="checkedOptionalPlugins" :value="key" />
-                    <h4 style="text-decoration: underline;">
-                      {{ key }}
-                    </h4>
-                    <PluginFeedback :message/>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div v-for="(feedbackparts, index) in feedback" :key="index">
-            <div v-if="index!='plugins'">
-              <h3>
-                {{ store.state.strings['vue'+index+'heading'] }}
-              </h3>
-              <ul class="list-group">
-                <li class="list-group-item" v-for="(message, key) in feedbackparts.needed" :key="key">
-                  <h4 style="text-decoration: underline;">
-                    {{ key }}
-                  </h4>
-                  <PluginFeedback :message/>
-                </li>
-              </ul>
-            </div>
-        </div>
+        <CheckFeedbackReport :feedback/>
         <button
           v-if="!nextstep"
           class="btn btn-primary mt-4"
@@ -116,8 +69,8 @@
 import { ref } from 'vue';
 import { useStore } from 'vuex';
 import { notify } from "@kyvg/vue3-notification"
-import PluginFeedback from '../feedback/PluginFeedback.vue';
 import FeedbackReport from '../feedback/FeedbackReport.vue';
+import CheckFeedbackReport from '../feedback/CheckFeedbackReport.vue';
 import StepCounter from '../feedback/StepCounter.vue'
 
 // Reactive state for the list of links and courses
@@ -131,8 +84,57 @@ const fileInput = ref(null);
 let nextstep = ref(false);
 
 const isInstalling = ref(false);
+const isDragging = ref(false);
+
 const totalProgress = ref(0);
 const taskProgress = ref(0);
+
+const handleDrop = (event) => {
+  isDragging.value = false;
+  const file = event.dataTransfer.files[0];
+  if (file && file.name.endsWith('.zip')) {
+    processFile(file);
+  } else {
+    notify({
+      title: "Invalid File",
+      text: "Please upload a valid .zip file.",
+      type: "error"
+    });
+  }
+};
+
+const processFile = async (file) => {
+  feedback.value = [];
+  isInstalling.value = true;
+  uploadedFile.value = file;
+  uploadedFileName.value = file.name;
+  checkRecipe(file)
+
+};
+
+const checkRecipe = async (file) => {
+  try {
+    const base64File = await convertFileToBase64(file);
+    const response = await store.dispatch('checkRecipe', {
+      uploadedFile: base64File,
+      filename: uploadedFileName.value,
+    });
+    const responseparsed = JSON.parse(response.feedback)
+    feedback.value = responseparsed.feedback
+    finished.value = responseparsed.finished
+  } catch (error) {
+    console.log('error')
+    console.log(error)
+    notify({
+      title: store.state.strings.error,
+      text: store.state.strings.error_description,
+      type: 'error'
+    });
+  } finally {
+    isInstalling.value = false;
+  }
+}
+
 
 const installRecipe = async () => {
   if (uploadedFile.value) {
@@ -211,18 +213,7 @@ const handleFileUpload = async (event) => {
   uploadedFile.value = event.target.files[0];
   if (uploadedFile.value && uploadedFile.value.name.endsWith('.zip')) {
     uploadedFileName.value = uploadedFile.value.name;
-    console.log('uploadedFile')
-    console.log(uploadedFile.value)
-    const base64File = await convertFileToBase64(uploadedFile.value);
-    const response = await store.dispatch('checkRecipe',
-      {
-        uploadedFile: base64File,
-        filename: uploadedFileName.value,
-      }
-    );
-    const responseparsed = JSON.parse(response.feedback)
-    feedback.value = responseparsed.feedback
-    finished.value = responseparsed.finished
+    checkRecipe(uploadedFile.value)
   } else {
     uploadedFileName.value = '';
   }
@@ -232,6 +223,25 @@ const handleFileUpload = async (event) => {
 </script>
 
 <style scoped>
+.dropzone {
+  border: 2px dashed #3498db;
+  padding: 1rem;
+  text-align: center;
+  margin-top: 1rem;
+  position: relative;
+  cursor: pointer;
+}
+
+.dropzone.is-dragging {
+  background-color: #f0f8ff;
+}
+
+.upload-button {
+  cursor: pointer;
+  color: #3498db;
+  display: inline-block;
+  margin-top: 1rem;
+}
 .waiting-screen {
   display: flex;
   flex-direction: column;
