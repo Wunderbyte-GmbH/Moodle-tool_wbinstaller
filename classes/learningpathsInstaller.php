@@ -136,11 +136,12 @@ class learningpathsInstaller extends wbInstaller {
                         $componentvalue = self::get_value_by_path($completionnode, $dataoptions);
                         if ($componentvalue) {
                             foreach ($componentvalue as $testkey => &$testvalue) {
+                                $table = $testkey == 'quizid' ? 'courses' : 'localdata';
                                 self::check_entity_id_exists(
                                     $testvalue,
                                     $learningpath['name'],
                                     $missingcomponents,
-                                    'localdata',
+                                    $table,
                                     $testkey
                                 );
                             }
@@ -148,7 +149,6 @@ class learningpathsInstaller extends wbInstaller {
                         if ($this->update) {
                             self::set_value_by_path($completionnode, $property, $componentvalue);
                         }
-                        $testing = 1;
                     }
                 }
             }
@@ -212,7 +212,7 @@ class learningpathsInstaller extends wbInstaller {
                 if (!isset($this->parent->matchingids[$matchingtype][$checkname][$data])) {
                     $missingentities[] = $data;
                 } else if ($this->update) {
-                    $data = $this->parent->matchingids[$matchingtype][$checkname][$data] ?? $data;
+                    $data = (string) $this->parent->matchingids[$matchingtype][$checkname][$data] ?? $data;
                 }
             } else if (
                 is_object($data) &&

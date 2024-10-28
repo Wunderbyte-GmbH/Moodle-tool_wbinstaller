@@ -127,9 +127,15 @@ class coursesInstaller extends wbInstaller {
         $courseshortname = $this->get_course_short_name($xml);
         $courseoriginalid = $this->get_course_og_id($xml);
         foreach (glob($coursefile . "/activities/adaptivequiz_*") as $activityfolder) {
-            $activityid = $this->extract_adaptivequiz_activity_id($activityfolder);
+            $activityid = $this->extract_activity_id($activityfolder, 'adaptivequiz');
             if ($activityid) {
                 $this->matchingids['components'][$activityid] = $activityid;
+            }
+        }
+        foreach (glob($coursefile . "/activities/quiz_*") as $activityfolder) {
+            $activityid = $this->extract_activity_id($activityfolder, 'quiz');
+            if ($activityid) {
+                $this->matchingids['quizid'][$activityid] = $activityid;
             }
         }
 
@@ -152,10 +158,11 @@ class coursesInstaller extends wbInstaller {
     /**
      * Get activity id of quiz
      * @param string $activityfolder
+     * @param string $component
      * @return mixed
      */
-    protected function extract_adaptivequiz_activity_id($activityfolder) {
-        $xmlpath = $activityfolder . '/adaptivequiz.xml';
+    protected function extract_activity_id($activityfolder, $component) {
+        $xmlpath = $activityfolder . '/' . $component . '.xml';
         if (!file_exists($xmlpath)) {
             return null;
         }
@@ -223,7 +230,20 @@ class coursesInstaller extends wbInstaller {
         $this->matchingids['courses'][$precheck['courseoriginalid']] = $newcourse->id;
         $this->restore_with_controller($coursefile, $newcourse);
         $this->force_course_visibility($newcourse->id);
-        $this->update_matching_componentids($coursefile, $newcourse->id);
+        $this->update_matching_componentids(
+            $coursefile,
+            $newcourse->id,
+            '/activities/adaptivequiz_*',
+            'adaptivequiz',
+            'components'
+        );
+        $this->update_matching_componentids(
+            $coursefile,
+            $newcourse->id,
+            '/activities/quiz_*',
+            'quiz',
+            'quizid'
+        );
         return;
     }
 
@@ -232,16 +252,22 @@ class coursesInstaller extends wbInstaller {
      * @param string $coursefile
      * @param string $newcourseid
      */
-    protected function update_matching_componentids($coursefile, $newcourseid) {
+    protected function update_matching_componentids(
+        $coursefile,
+        $newcourseid,
+        $componentfolder,
+        $componenttable,
+        $matchinglabel
+    ) {
         global $DB;
         $ogcomponentids = [];
-        foreach (glob($coursefile . "/activities/adaptivequiz_*") as $activityfolder) {
-            $activityid = $this->extract_adaptivequiz_activity_id($activityfolder);
+        foreach (glob($coursefile . $componentfolder) as $activityfolder) {
+            $activityid = $this->extract_activity_id($activityfolder, $componenttable);
             if ($activityid) {
                 $ogcomponentids[] = $activityid;
             }
         }
-        $newcoursefile = $DB->get_records('adaptivequiz', ['course' => $newcourseid], null, 'id');
+        $newcoursefile = $DB->get_records($componenttable, ['course' => $newcourseid], null, 'id');
         $newcoursefileids = array_keys($newcoursefile);
         if (
             count($ogcomponentids) > 0 &&
@@ -249,7 +275,7 @@ class coursesInstaller extends wbInstaller {
         ) {
             $componentmatch = array_combine($ogcomponentids, $newcoursefileids);
             foreach ($componentmatch as $ogid => $newid) {
-                $this->matchingids['components'][$ogid] = $newid;
+                $this->matchingids[$matchinglabel][$ogid] = $newid;
             }
         }
     }
