@@ -59,8 +59,8 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param mixed $parent
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return string
      */
     public function execute($extractpath, $parent = null) {
