@@ -34,7 +34,6 @@ namespace tool_wbinstaller;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class customfieldsInstaller extends wbInstaller {
-
     /** @var \core_customfield\handler Matching the course ids from the old => new. */
     public $handler;
 
@@ -123,10 +122,7 @@ class customfieldsInstaller extends wbInstaller {
 
         $fieldcontroller->set('shortname', $fieldset['shortname']);
         $fieldcontroller->set('name', $fieldset['name']);
-
-        $configdata = (object) $fieldset['data'];
-        $configdata = json_encode($configdata);
-        $fieldcontroller->set('configdata', $configdata);
+        $fieldcontroller->set('configdata', $fieldset['configdata']);
 
         $this->handler->save_field_configuration($fieldcontroller, (object)[
             'shortname' => $fieldset['shortname'],
@@ -134,7 +130,7 @@ class customfieldsInstaller extends wbInstaller {
             'type' => $fieldset['type'],
             'description' => $fieldset['description'] ?? '',
             'descriptionformat' => $fieldset['descriptionformat'] ?? 0,
-            'configdata' => $configdata,
+            'configdata' => $fieldset['configdata'],
         ]);
     }
 
