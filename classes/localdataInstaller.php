@@ -47,7 +47,6 @@ require_login();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class localdataInstaller extends wbInstaller {
-
     /** @var bool Check if data will be uploaded */
     public $uploaddata;
     /** @var \tool_wbinstaller\wbCheck Parent matching ids. */
@@ -56,7 +55,6 @@ class localdataInstaller extends wbInstaller {
     /**
      * Entities constructor.
      * @param mixed $recipe
-     * @param int $dbid
      */
     public function __construct($recipe) {
         $this->recipe = $recipe;
@@ -87,9 +85,11 @@ class localdataInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return string
      */
     public function check($extractpath, $parent) {
+        $this->parent = $parent;
         $coursespath = $extractpath . $this->recipe['path'];
         foreach (glob("$coursespath/*") as $coursefile) {
             $filenameproperties = basename($coursefile);
@@ -153,7 +153,7 @@ class localdataInstaller extends wbInstaller {
                 $this->uploaddata = true;
                 $record = new stdClass();
                 $newdata = new stdClass();
-                if (isset($this->matchingids[$row['courseid']])) {
+                if (isset($this->parent->matchingids['courses']['courses'][$row['courseid']])) {
                     $newdata = $DB->get_record_sql(
                         $this->recipe['translator']['sql'],
                         [

@@ -51,7 +51,6 @@ class coursesInstaller extends wbInstaller {
     /**
      * Entities constructor.
      * @param mixed $recipe
-     * @param int $dbid
      */
     public function __construct($recipe) {
         $this->recipe = $recipe;
@@ -60,6 +59,7 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
+     * @param mixed $parent
      * @param string $extractpath
      * @return string
      */
@@ -251,6 +251,9 @@ class coursesInstaller extends wbInstaller {
      * Recursively copies a directory.
      * @param string $coursefile
      * @param string $newcourseid
+     * @param string $componentfolder
+     * @param string $componenttable
+     * @param string $matchinglabel
      */
     protected function update_matching_componentids(
         $coursefile,

@@ -75,7 +75,6 @@ class learningpathsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $extractpath
-     * @param bool $update
      */
     public function run_recipe($extractpath) {
         global $DB;
@@ -221,7 +220,9 @@ class learningpathsInstaller extends wbInstaller {
                 if (!in_array($data->parent->id, $this->parent->matchingids[$matchingtype][$checkname])) {
                     $missingentities[] = $data;
                 } else if ($this->update) {
-                    $data->parent->id = $this->parent->matchingids[$matchingtype][$checkname][$data->parent->id] ?? $data->parent->id;
+                    $data->parent->id =
+                        $this->parent->matchingids[$matchingtype][$checkname][$data->parent->id] ??
+                        $data->parent->id;
                 }
             } else {
                 $this->feedback['needed'][$name]['error'][] =

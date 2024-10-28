@@ -40,7 +40,6 @@ class configInstaller extends wbInstaller {
     /**
      * Entities constructor.
      * @param array $recipe
-     * @param int $dbid
      */
     public function __construct($recipe) {
         $this->recipe = $recipe;
