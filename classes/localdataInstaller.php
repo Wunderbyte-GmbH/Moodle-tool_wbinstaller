@@ -210,7 +210,7 @@ class localdataInstaller extends wbInstaller {
                         get_string('localdatauploadduplicate', 'tool_wbinstaller', $fileinfo);
                     break;
                 } else if ($this->uploaddata) {
-                    $newid = $DB->insert_record($fileinfo, dataobject: $record);
+                    $newid = $DB->insert_record($fileinfo, $record);
                     $this->matchingids['testid'][$row['id']] = $newid;
                     $this->feedback['needed']['local_data']['success'][] =
                         get_string('localdatauploadsuccess', 'tool_wbinstaller', $fileinfo);
