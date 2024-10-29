@@ -17,7 +17,6 @@
 namespace tool_wbinstaller;
 
 use advanced_testcase;
-use restore_controller;
 use stdClass;
 
 /**
@@ -66,7 +65,6 @@ class coursesinstaller_test extends advanced_testcase {
 
         // Run the execute method.
         $installer->execute($extractpath);
-
     }
 
     /**
@@ -99,7 +97,7 @@ class coursesinstaller_test extends advanced_testcase {
         // Run check method and verify feedback.
         $feedback = [];
         $installer->feedback = &$feedback;
-        $installer->check($extractpath);
+        $installer->check($extractpath, null);
 
         $this->assertArrayHasKey('needed', $installer->feedback);
         $this->assertArrayHasKey('test_shortname', $installer->feedback['needed']);

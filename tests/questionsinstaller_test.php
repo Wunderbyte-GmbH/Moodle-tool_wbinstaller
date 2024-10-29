@@ -52,7 +52,7 @@ class questionsinstaller_test extends advanced_testcase {
             'path' => '/some/question/path',
         ];
 
-        $this->installer = new questionsInstaller($this->recipe, 1);
+        $this->installer = new questionsInstaller($this->recipe);
     }
 
     /**
@@ -61,6 +61,5 @@ class questionsinstaller_test extends advanced_testcase {
     public function test_constructor_initializes_correctly() {
         $this->assertInstanceOf(questionsInstaller::class, $this->installer);
         $this->assertEquals($this->recipe, $this->installer->recipe);
-        $this->assertEquals(1, $this->installer->dbid);
     }
 }
