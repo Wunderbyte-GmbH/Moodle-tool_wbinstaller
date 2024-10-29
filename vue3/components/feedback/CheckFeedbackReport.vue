@@ -8,12 +8,18 @@
       <div v-if="feedback.plugins.needed">
         <ul class="list-group">
           <li class="list-group-item">
-            <b>
+            <h4
+              style="text-decoration: underline;"
+            >
               {{ store.state.strings.vuemandatoryplugin }}
               <button class="toggle-button" @click="toggleFold('plugin_mand')">
-                <span :class="{ rotated: folded['plugin_mand'] }">▼</span>
+                <span
+                  :class="{ rotated: folded['plugin_mand'] }"
+                >
+                  ▼
+                </span>
               </button>
-            </b>
+            </h4>
             <transition name="fold">
               <ul v-show="!folded['plugin_mand']">
                 <li v-for="(message, key) in feedback.plugins.needed" :key="key" style="margin-left: 20px; list-style-type: disc;">
@@ -31,12 +37,18 @@
       <div v-if="feedback.plugins.optional">
         <ul class="list-group">
           <li class="list-group-item">
-            <b>
+            <h4
+              style="text-decoration: underline;"
+            >
               {{ store.state.strings.vueoptionalplugin }}
               <button class="toggle-button" @click="toggleFold('plugin_opit')">
-                <span :class="{ rotated: folded['plugin_opit'] }">▼</span>
+                <span
+                  :class="{ rotated: folded['plugin_opit'] }"
+                >
+                  ▼
+                </span>
               </button>
-            </b>
+            </h4>
             <transition name="fold">
               <ul v-show="!folded['plugin_opit']">
                 <li
@@ -77,7 +89,11 @@
             >
               {{ key }}
               <button class="toggle-button" @click="toggleFold(key)">
-                <span :class="{ rotated: folded[key] }">▼</span>
+                <span
+                  :class="{ rotated: folded[key] }"
+                >
+                  ▼
+                </span>
               </button>
             </h4>
             <transition name="fold">
@@ -123,11 +139,16 @@ const toggleFold = (key) => {
 }
 
 .toggle-button {
-  background: none;
-  border: none;
+  margin-left: 0.5rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   font-size: 1.2rem;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.toggle-button:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.05);
 }
 
 .toggle-button span {
