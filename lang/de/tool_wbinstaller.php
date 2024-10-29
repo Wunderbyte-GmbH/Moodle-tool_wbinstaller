@@ -107,6 +107,7 @@ $string['dbtablenotfound'] = 'Die DB Tabelle {$a} konnte nicht gefunden werden';
 $string['missingcourses'] = 'Folgende Kursids sind notwendig für den Lernpfad, wurden aber nicht im Rezept gefunden: {$a}';
 $string['missingcomponents'] = 'Folgende Komponentenids sind notwendig für den Lernpfad, wurden aber nicht im Rezept gefunden: {$a}';
 $string['coursetypenotfound'] = 'Der Datentyp der Kursid wurde nicht erkannt';
+$string['learningpathalreadyexistis'] = 'Learnpfad mit dem selben Namen existiert bereits';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';
@@ -123,7 +124,8 @@ $string['vuecategories'] = 'Kategorie: ';
 $string['vuecustomfieldsheading'] = 'Customfield in der ZIP-Datei:';
 $string['vuewaitingtext'] = 'Bitte warten Sie, während die Installation läuft...';
 $string['vuelearningpathsheading'] = 'Lernpfade in der ZIP-Datei';
-$string['vuechooserecipe'] = 'Rezeptdatei auswählen';
+$string['uploadbuttontext'] = 'Klicke hier um Rezept auszuwählen';
+$string['vuechooserecipe'] = 'Ziehe Rezeptdatei hier rein oder klicke auf den Knopf unten um Rezept auszuwählen';
 $string['vuewarining'] = 'Warnung: ';
 $string['vueerror'] = 'Fehler: ';
 $string['vuesuccess'] = 'Erfolg: ';

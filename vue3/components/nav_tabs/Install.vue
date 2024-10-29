@@ -34,7 +34,9 @@
         :disabled="nextstep"
         hidden
       />
-      <label for="zipFileUpload" class="upload-button">{{ store.state.strings.uploadButtonText || 'Choose File' }}</label>
+      <label for="zipFileUpload" class="btn btn-primary mt-4">
+        {{ store.state.strings.uploadbuttontext }}
+      </label>
     </div>
     <transition name="fade">
       <div v-if="isInstalling" class="waiting-screen mt-4">
@@ -224,6 +226,7 @@ const handleFileUpload = async (event) => {
 
 <style scoped>
 .dropzone {
+  border-radius: 1rem;
   border: 2px dashed #3498db;
   padding: 1rem;
   text-align: center;

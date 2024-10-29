@@ -93,7 +93,10 @@ class learningpathsInstaller extends wbInstaller {
                         }
                     }
                 }
-                if ($this->update) {
+                if (
+                    $this->update &&
+                    empty($this->feedback['needed'][$learningpath['name']]['error'])
+                ) {
                     if (isset($learningpath['id'])) {
                         unset($learningpath['id']);
                     }
@@ -278,7 +281,7 @@ class learningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Exceute the installer.
+     * Checks if the table exists.
      * @param string $properties
      * @param object $learningpath
      */
@@ -288,6 +291,23 @@ class learningpathsInstaller extends wbInstaller {
         if (!$manager->table_exists($this->fileinfo)) {
             $this->feedback['needed'][$learningpath['name']]['error'][] =
               get_string('dbtablenotfound', 'tool_wbinstaller', $this->fileinfo);
+        }
+    }
+
+    /**
+     * Checks if the path exists.
+     * @param string $properties
+     * @param object $learningpath
+     */
+    public function check_path_exists($properties, $learningpath) {
+        global $DB;
+        $path = $DB->get_record(
+            $this->fileinfo,
+            ['name' => $learningpath['name']]
+        );
+        if ($path) {
+            $this->feedback['needed'][$learningpath['name']]['error'][] =
+              get_string('learningpathalreadyexistis', 'tool_wbinstaller', $this->fileinfo);
         }
     }
 }

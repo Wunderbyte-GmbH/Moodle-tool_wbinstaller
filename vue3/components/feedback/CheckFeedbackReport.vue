@@ -39,11 +39,22 @@
             </b>
             <transition name="fold">
               <ul v-show="!folded['plugin_opit']">
-                <li v-for="(message, key) in feedback.plugins.optional" :key="key" style="margin-left: 20px; list-style-type: none;">
-                  <input type="checkbox" v-model="checkedOptionalPlugins" :value="key" />
-                  <h4 style="text-decoration: underline;">
-                    {{ key }}
-                  </h4>
+                <li
+                  v-for="(message, key) in feedback.plugins.optional"
+                  :key="key"
+                  style="margin-left: 20px; list-style-type: none;"
+                >
+                  <div style="display: flex;">
+                    <input
+                      type="checkbox"
+                      v-model="checkedOptionalPlugins"
+                      :value="key"
+                      class="check-margin"
+                    />
+                    <h4 style="text-decoration: underline;">
+                      {{ key }}
+                    </h4>
+                  </div>
                   <transition name="fold">
                     <PluginFeedback v-show="!folded[key]" :message/>
                   </transition>
@@ -106,6 +117,11 @@ const toggleFold = (key) => {
 </script>
 
 <style scoped>
+.check-margin {
+  margin-bottom: 0.25rem;
+  margin-right: 0.5rem;
+}
+
 .toggle-button {
   background: none;
   border: none;

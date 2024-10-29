@@ -107,6 +107,7 @@ $string['dbtablenotfound'] = 'The DB table {$a} could not be found';
 $string['missingcourses'] = 'Follwoing course ids are required for the learning path but are not inside the recipe: {$a}';
 $string['missingcomponents'] = 'Follwoing component ids are required for the learning path but are not inside the recipe: {$a}';
 $string['coursetypenotfound'] = 'The course id type inside the learning path is unknown';
+$string['learningpathalreadyexistis'] = 'Learning path with the same name already exists';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';
@@ -123,7 +124,8 @@ $string['vuecategories'] = 'Category: ';
 $string['vuecustomfieldsheading'] = 'Customfield in the ZIP:';
 $string['vuewaitingtext'] = 'Please wait while the installation is in progress...';
 $string['vuelearningpathsheading'] = 'Learningpaths in the ZIP:';
-$string['vuechooserecipe'] = 'Choose Recipe File';
+$string['uploadbuttontext'] = 'Click here to choose recipe';
+$string['vuechooserecipe'] = 'Drag and drop Recipe File here or click below to upload the recipe';
 $string['vuewarining'] = 'Warning: ';
 $string['vueerror'] = 'Error: ';
 $string['vuesuccess'] = 'Success: ';
