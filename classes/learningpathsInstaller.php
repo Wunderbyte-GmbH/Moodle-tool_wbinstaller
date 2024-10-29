@@ -48,10 +48,8 @@ class learningpathsInstaller extends wbInstaller {
     /**
      * Entities constructor.
      * @param array $recipe
-     * @param int $dbid
      */
-    public function __construct($recipe, $dbid = null) {
-        $this->dbid = $dbid;
+    public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
         $this->handler = null;
@@ -283,7 +281,7 @@ class learningpathsInstaller extends wbInstaller {
     /**
      * Checks if the table exists.
      * @param string $properties
-     * @param object $learningpath
+     * @param array $learningpath
      */
     public function check_table_exists($properties, $learningpath) {
         global $DB;
