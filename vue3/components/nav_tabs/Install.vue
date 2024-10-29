@@ -2,6 +2,7 @@
   <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
     <div v-if="nextstep && !finished.status">
       <p>{{ store.state.strings.vuenextstep }}</p>
+      {{ isInstalling }}
         <button
           v-if="nextstep"
           class="btn btn-primary mt-4"
@@ -31,7 +32,7 @@
         @change="handleFileUpload"
         accept=".zip"
         ref="fileInput"
-        :disabled="nextstep"
+        :disabled="nextstep || isInstalling"
         hidden
       />
       <label for="zipFileUpload" class="btn btn-primary mt-4">
@@ -78,7 +79,7 @@ import StepCounter from '../feedback/StepCounter.vue'
 // Reactive state for the list of links and courses
 const store = useStore();
 const feedback = ref([]);
-const finished = ref(false);
+const finished = ref({ status: false });
 const checkedOptionalPlugins = ref([]);
 let uploadedFile = ref(null);
 let uploadedFileName = ref('');
@@ -115,6 +116,7 @@ const processFile = async (file) => {
 };
 
 const checkRecipe = async (file) => {
+  isInstalling.value = true;
   try {
     const base64File = await convertFileToBase64(file);
     const response = await store.dispatch('checkRecipe', {
@@ -154,8 +156,9 @@ const installRecipe = async () => {
           selectedOptionalPlugins: selectedPlugins
         }
       );
-      feedback.value = JSON.parse(response.feedback)
-      finished.value = JSON.parse(response.finished)
+      const responseparsed = JSON.parse(response);
+      feedback.value = responseparsed.feedback || []
+      finished.value = responseparsed.finished || { status: false }
       if (!finished.value.status) {
         nextstep.value  = true
       }
@@ -219,7 +222,6 @@ const handleFileUpload = async (event) => {
   } else {
     uploadedFileName.value = '';
   }
-  isInstalling.value = false;
 };
 
 </script>
