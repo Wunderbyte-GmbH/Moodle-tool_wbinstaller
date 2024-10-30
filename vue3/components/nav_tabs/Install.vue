@@ -40,21 +40,6 @@
           {{ store.state.strings.uploadbuttontext }}
         </label>
       </p>
-      <p>
-        <input
-          type="file"
-          class="form-control-file"
-          id="zipFileUploadWithout"
-          @change="handleFileUploadWithout"
-          accept=".zip"
-          ref="fileInputWithout"
-          :disabled="nextstep || isInstalling"
-          hidden
-        />
-        <label for="zipFileUploadWithout" class="btn btn-primary mt-4">
-          checkRecipeWithout
-        </label>
-      </p>
     </div>
     <transition name="fade">
       <div v-if="isInstalling" class="waiting-screen mt-4">
@@ -65,17 +50,34 @@
       </div>
     </transition>
     <transition name="fade">
-      <div v-if="uploadedFileName && Object.values(feedback).length > 0" class="mt-4">
-        <CheckFeedbackReport :feedback/>
-        <button
-          v-if="!nextstep"
-          class="btn btn-primary mt-4"
-          @click="installRecipe"
-          :disabled="isInstalling"
+      <div v-if="uploadedFileName"
+        class="mt-4"
+      >
+
+        <div v-if="feedback.error"
+          class="mt-4"
         >
-          {{ store.state.strings.vueinstallbtn }}
-        </button>
+          <div v-if="feedback.error" class="error-message mt-4">
+            <i class="fas fa-exclamation-circle"></i> {{ feedback.error[0] }}
+          </div>
+        </div>
+        <div v-else-if="
+          feedback &&
+          Object.values(feedback).length > 0"
+          class="mt-4"
+        >
+          <CheckFeedbackReport :feedback/>
+          <button
+            v-if="!nextstep"
+            class="btn btn-primary mt-4"
+            @click="installRecipe"
+            :disabled="isInstalling"
+          >
+            {{ store.state.strings.vueinstallbtn }}
+          </button>
+        </div>
       </div>
+
     </transition>
     <transition name="fade">
       <div v-if="!uploadedFileName && Object.values(feedback).length > 0" class="mt-4">
@@ -134,32 +136,13 @@ const processFile = async (file) => {
 };
 
 const checkRecipe = async (file) => {
-  console.log(file)
-  console.log('entering function', feedback.value);
-  console.log('feedback:', feedback.value);
-  console.log('finished:', finished.value);
-  console.log('uploadedFileName:', uploadedFileName.value);
-  console.log('isInstalling:', isInstalling.value);
   isInstalling.value = true;
   try {
-    console.log('before convertFileToBase64');
-    console.log('feedback:', feedback.value);
-    console.log('finished:', finished.value);
-    console.log('uploadedFileName:', uploadedFileName.value);
     const base64File = await convertFileToBase64(file);
-    console.log('before dispatch checkRecipe');
-    console.log('feedback:', feedback.value);
-    console.log('finished:', finished.value);
-    console.log('uploadedFileName:', uploadedFileName.value);
     const response = await store.dispatch('checkRecipe', {
       uploadedFile: base64File,
       filename: uploadedFileName.value,
     });
-    console.log('after dispatch checkRecipe');
-    console.log('feedback:', response);
-    console.log('feedback:', feedback.value);
-    console.log('finished:', finished.value);
-    console.log('uploadedFileName:', uploadedFileName.value);
     const responseparsed = JSON.parse(response.feedback)
     feedback.value = responseparsed.feedback
     finished.value = responseparsed.finished
@@ -174,14 +157,6 @@ const checkRecipe = async (file) => {
   } finally {
     isInstalling.value = false;
   }
-}
-
-const checkRecipeWithout = async (file) => {
-  console.log(file)
-  isInstalling.value = true;
-  const base64File = await convertFileToBase64(file);
-  console.log(base64File)
-  isInstalling.value = false;
 }
 
 const installRecipe = async () => {
@@ -285,6 +260,20 @@ const handleFileUploadWithout = async (event) => {
 </script>
 
 <style scoped>
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+}
+
+.error-message i {
+  color: #721c24;
+  margin-right: 0.5rem;
+}
 .dropzone {
   border-radius: 1rem;
   border: 2px dashed #3498db;

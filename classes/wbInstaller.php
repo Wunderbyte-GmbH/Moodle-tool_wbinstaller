@@ -94,7 +94,14 @@ class wbInstaller {
         raise_memory_limit(MEMORY_EXTRA);
         $extracted = $this->extract_save_zip_file();
         if (!$extracted) {
-            return $this->feedback;
+            return [
+                'feedback' => $this->feedback,
+                'finished' => [
+                  'status' => false,
+                  'currentstep' => 0,
+                  'maxstep' => 0,
+                ]
+            ];
         }
         $response = $this->execute_recipe($extracted);
         $this->clean_after_installment();
@@ -228,12 +235,11 @@ class wbInstaller {
     public function extract_save_zip_file() {
         global $CFG;
         $extractpath = null;
-        $base64string = str_replace('data:application/zip;base64,', '', $this->recipe);
-        if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
-            $this->feedback['wbinstaller']['error'][] = ["The base64 string is not valid."];
-            $this->set_status(2);
-            return false;
+        $base64string = $this->recipe;
+        if (preg_match('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', $this->recipe)) {
+            $base64string = preg_replace('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', '', $this->recipe);
         }
+
         $filecontent = base64_decode($base64string, true);
 
         if ($filecontent === false || empty($filecontent)) {
