@@ -100,7 +100,7 @@ class wbInstaller {
                   'status' => false,
                   'currentstep' => 0,
                   'maxstep' => 0,
-                ]
+                ],
             ];
         }
         $response = $this->execute_recipe($extracted);

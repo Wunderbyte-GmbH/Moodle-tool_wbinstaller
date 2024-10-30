@@ -68,14 +68,14 @@ class wbCheck {
         raise_memory_limit(MEMORY_EXTRA);
         $extracted = $this->extract_save_zip_file();
         if (!$extracted) {
-          return [
-              'feedback' => $this->feedback,
-              'finished' => [
-                'status' => false,
-                'currentstep' => 0,
-                'maxstep' => 0,
-              ]
-          ];
+            return [
+                'feedback' => $this->feedback,
+                'finished' => [
+                  'status' => false,
+                  'currentstep' => 0,
+                  'maxstep' => 0,
+                ],
+            ];
         }
         $this->check_recipe($extracted);
         $this->clean_after_installment();
