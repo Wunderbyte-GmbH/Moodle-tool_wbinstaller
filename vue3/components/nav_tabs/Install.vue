@@ -25,19 +25,36 @@
     >
       <p v-if="!uploadedFileName">{{ store.state.strings.vuechooserecipe }}</p>
       <p v-else>{{ uploadedFileName }}</p>
-      <input
-        type="file"
-        class="form-control-file"
-        id="zipFileUpload"
-        @change="handleFileUpload"
-        accept=".zip"
-        ref="fileInput"
-        :disabled="nextstep || isInstalling"
-        hidden
-      />
-      <label for="zipFileUpload" class="btn btn-primary mt-4">
-        {{ store.state.strings.uploadbuttontext }}
-      </label>
+      <p>
+        <input
+          type="file"
+          class="form-control-file"
+          id="zipFileUpload"
+          @change="handleFileUpload"
+          accept=".zip"
+          ref="fileInput"
+          :disabled="nextstep || isInstalling"
+          hidden
+        />
+        <label for="zipFileUpload" class="btn btn-primary mt-4">
+          {{ store.state.strings.uploadbuttontext }}
+        </label>
+      </p>
+      <p>
+        <input
+          type="file"
+          class="form-control-file"
+          id="zipFileUploadWithout"
+          @change="handleFileUploadWithout"
+          accept=".zip"
+          ref="fileInputWithout"
+          :disabled="nextstep || isInstalling"
+          hidden
+        />
+        <label for="zipFileUploadWithout" class="btn btn-primary mt-4">
+          checkRecipeWithout
+        </label>
+      </p>
     </div>
     <transition name="fade">
       <div v-if="isInstalling" class="waiting-screen mt-4">
@@ -84,6 +101,7 @@ const checkedOptionalPlugins = ref([]);
 let uploadedFile = ref(null);
 let uploadedFileName = ref('');
 const fileInput = ref(null);
+const fileInputWithout = ref(null);
 let nextstep = ref(false);
 
 const isInstalling = ref(false);
@@ -116,13 +134,32 @@ const processFile = async (file) => {
 };
 
 const checkRecipe = async (file) => {
+  console.log(file)
+  console.log('entering function', feedback.value);
+  console.log('feedback:', feedback.value);
+  console.log('finished:', finished.value);
+  console.log('uploadedFileName:', uploadedFileName.value);
+  console.log('isInstalling:', isInstalling.value);
   isInstalling.value = true;
   try {
+    console.log('before convertFileToBase64');
+    console.log('feedback:', feedback.value);
+    console.log('finished:', finished.value);
+    console.log('uploadedFileName:', uploadedFileName.value);
     const base64File = await convertFileToBase64(file);
+    console.log('before dispatch checkRecipe');
+    console.log('feedback:', feedback.value);
+    console.log('finished:', finished.value);
+    console.log('uploadedFileName:', uploadedFileName.value);
     const response = await store.dispatch('checkRecipe', {
       uploadedFile: base64File,
       filename: uploadedFileName.value,
     });
+    console.log('after dispatch checkRecipe');
+    console.log('feedback:', response);
+    console.log('feedback:', feedback.value);
+    console.log('finished:', finished.value);
+    console.log('uploadedFileName:', uploadedFileName.value);
     const responseparsed = JSON.parse(response.feedback)
     feedback.value = responseparsed.feedback
     finished.value = responseparsed.finished
@@ -139,6 +176,13 @@ const checkRecipe = async (file) => {
   }
 }
 
+const checkRecipeWithout = async (file) => {
+  console.log(file)
+  isInstalling.value = true;
+  const base64File = await convertFileToBase64(file);
+  console.log(base64File)
+  isInstalling.value = false;
+}
 
 const installRecipe = async () => {
   if (uploadedFile.value) {
@@ -213,12 +257,26 @@ const convertFileToBase64 = (file) => {
 
 // Function to handle file upload
 const handleFileUpload = async (event) => {
+  console.log(event)
   feedback.value = []
   isInstalling.value = true;
   uploadedFile.value = event.target.files[0];
   if (uploadedFile.value && uploadedFile.value.name.endsWith('.zip')) {
     uploadedFileName.value = uploadedFile.value.name;
     checkRecipe(uploadedFile.value)
+  } else {
+    uploadedFileName.value = '';
+  }
+};
+
+const handleFileUploadWithout = async (event) => {
+  console.log(event)
+  feedback.value = []
+  isInstalling.value = true;
+  uploadedFile.value = event.target.files[0];
+  if (uploadedFile.value && uploadedFile.value.name.endsWith('.zip')) {
+    uploadedFileName.value = uploadedFile.value.name;
+    checkRecipeWithout(uploadedFile.value)
   } else {
     uploadedFileName.value = '';
   }
