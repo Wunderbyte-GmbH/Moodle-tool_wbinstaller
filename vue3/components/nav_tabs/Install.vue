@@ -2,7 +2,6 @@
   <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
     <div v-if="nextstep && !finished.status">
       <p>{{ store.state.strings.vuenextstep }}</p>
-      {{ isInstalling }}
         <button
           v-if="nextstep"
           class="btn btn-primary mt-4"
@@ -15,7 +14,10 @@
     <div  v-if="finished.status">
       <p>{{ store.state.strings.vuefinishedrecipe }}</p>
     </div>
-    <StepCounter :finished/>
+    <StepCounter
+      v-if="finished.maxstep"
+      :finished
+    />
     <div
       class="dropzone"
       @dragover.prevent="isDragging = true"
@@ -103,7 +105,6 @@ const checkedOptionalPlugins = ref([]);
 let uploadedFile = ref(null);
 let uploadedFileName = ref('');
 const fileInput = ref(null);
-const fileInputWithout = ref(null);
 let nextstep = ref(false);
 
 const isInstalling = ref(false);
@@ -132,7 +133,6 @@ const processFile = async (file) => {
   uploadedFile.value = file;
   uploadedFileName.value = file.name;
   checkRecipe(file)
-
 };
 
 const checkRecipe = async (file) => {
@@ -175,9 +175,9 @@ const installRecipe = async () => {
           selectedOptionalPlugins: selectedPlugins
         }
       );
-      const responseparsed = JSON.parse(response);
-      feedback.value = responseparsed.feedback || []
-      finished.value = responseparsed.finished || { status: false }
+      feedback.value = JSON.parse(response.feedback) || []
+      finished.value = JSON.parse(response.finished) || { status: false }
+
       if (!finished.value.status) {
         nextstep.value  = true
       }

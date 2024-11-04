@@ -26,7 +26,6 @@
                   <h4 style="text-decoration: underline;">
                     {{ key }}
                   </h4>
-
                     <PluginFeedback v-show="!folded[key]" :message/>
                 </li>
               </ul>

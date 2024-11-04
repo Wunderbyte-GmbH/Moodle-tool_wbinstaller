@@ -95,7 +95,6 @@ class pluginsInstaller extends wbInstaller {
         // Set the page context.
         $PAGE->set_context(context_system::instance());
         $installer = tool_installaddon_installer::instance();
-        $installable = [];
         if (isset($this->recipe)) {
             foreach ($this->recipe as $type => $plugins) {
                 if ($type != "subplugins") {
@@ -106,14 +105,17 @@ class pluginsInstaller extends wbInstaller {
                         ) {
                             $install = $this->check_plugin_compability($gitzipurl, $type, true);
                             if ($install != 2) {
-                                $installable[] = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
+                                $installable = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
+                                $this->manual_install_plugins($installable);
                             }
                         }
                     }
                 }
             }
+            if ($install != 2) {
+                $this->trigger_upgrade_after_plugin_install();
+            }
         }
-        $this->manual_install_plugins($installable);
         return 1;
     }
 
@@ -337,83 +339,77 @@ class pluginsInstaller extends wbInstaller {
 
     /**
      * Manual plugin installation.
-     * @param array $installable
+     * @param stdClass $installable
      */
     public function manual_install_plugins($installable) {
         global $CFG, $DB;
         if (!empty($installable)) {
-            foreach ($installable as $plugin) {
-                $zipfile = $plugin->zipfilepath;
-                $component = $plugin->component;
-                if (!$component) {
-                    $this->feedback[$plugin->type][$plugin->component]['error'][] =
-                        get_string('plugincomponentdetectfailed', 'tool_wbinstaller');
-                    continue;
-                }
-                $targetdir = $this->get_target_dir($component);
-                list($plugintype, $pluginname) = core_component::normalize_component($component);
+            $zipfile = $installable->zipfilepath;
+            $component = $installable->component;
+            if (!$component) {
+                $this->feedback[$installable->type][$installable->component]['error'][] =
+                    get_string('plugincomponentdetectfailed', 'tool_wbinstaller');
+            }
+            $targetdir = $this->get_target_dir($component);
+            list($plugintype, $pluginname) = core_component::normalize_component($component);
 
-                // Check if it's a core plugin or a subplugin.
-                if (!is_dir($targetdir)) {
-                    $result = mkdir($targetdir, 0777, true);
-                    if (!$result) {
-                        // Check if the directory was not created due to insufficient permissions.
-                        if (is_dir($targetdir)) {
-                            $this->feedback[$plugin->type][$component]['error'][] =
-                              get_string('jsonfailalreadyexist', 'tool_wbinstaller', $targetdir);
-                        } else {
-                            $this->feedback[$plugin->type][$component]['error'][] =
-                              get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
-                        }
-                        continue;
+            // Check if it's a core plugin or a subplugin.
+            if (!is_dir($targetdir)) {
+                $result = mkdir($targetdir, 0777, true);
+                if (!$result) {
+                    // Check if the directory was not created due to insufficient permissions.
+                    if (is_dir($targetdir)) {
+                        $this->feedback[$installable->type][$component]['error'][] =
+                          get_string('jsonfailalreadyexist', 'tool_wbinstaller', $targetdir);
+                    } else {
+                        $this->feedback[$installable->type][$component]['error'][] =
+                          get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $targetdir);
                     }
                 }
-                $zip = new \ZipArchive();
-                if ($zip->open($zipfile) === true) {
-                    $tempdir = $targetdir . '/temp_extract_' . $pluginname;
-                    if (!is_dir($tempdir)) {
-                        $result = mkdir($tempdir, 0777, true);
-                        if (!$result) {
-                            // Similar check for temporary directory creation.
-                            if (is_dir($tempdir)) {
-                                $this->feedback[$plugin->type][$component]['error'][] =
-                                  get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
-                            } else {
-                                $this->feedback[$plugin->type][$component]['error'][] =
-                                  get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $tempdir);
-                            }
-                            continue;
+            }
+            $zip = new \ZipArchive();
+            if ($zip->open($zipfile) === true) {
+                $tempdir = $targetdir . '/temp_extract_' . $pluginname;
+                if (!is_dir($tempdir)) {
+                    $result = mkdir($tempdir, 0777, true);
+                    if (!$result) {
+                        // Similar check for temporary directory creation.
+                        if (is_dir($tempdir)) {
+                            $this->feedback[$installable->type][$component]['error'][] =
+                              get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
+                        } else {
+                            $this->feedback[$installable->type][$component]['error'][] =
+                              get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $tempdir);
                         }
                     }
-                    $zip->extractTo($tempdir);
-                    $zip->close();
-                    $extracteddirname = null;
-                    $handle = opendir($tempdir);
-                    while (($entry = readdir($handle)) !== false) {
-                        if ($entry != '.' && $entry != '..' && is_dir($tempdir . '/' . $entry)) {
-                            $extracteddirname = $entry;
-                            break;
-                        }
+                }
+                $zip->extractTo($tempdir);
+                $zip->close();
+                $extracteddirname = null;
+                $handle = opendir($tempdir);
+                while (($entry = readdir($handle)) !== false) {
+                    if ($entry != '.' && $entry != '..' && is_dir($tempdir . '/' . $entry)) {
+                        $extracteddirname = $entry;
+                        break;
                     }
-                    closedir($handle);
-                    if ($extracteddirname) {
-                        $finaldir = $targetdir . '/' . $pluginname;
-                        rename($tempdir . '/' . $extracteddirname, $finaldir);
-                        rmdir($tempdir);
-                        $this->feedback[$plugin->type][$plugin->component]['success'][] =
-                            get_string('upgradeplugincompleted', 'tool_wbinstaller', $plugin->component);
-                        $this->trigger_upgrade_after_plugin_install();
-                    } else {
-                        $this->feedback[$plugin->type][$plugin->component]['error'][] =
-                          get_string('installerfailfinddir', 'tool_wbinstaller', $plugin->component);
-                        $this->set_status(2);
-                    }
-                    unlink($zipfile);
+                }
+                closedir($handle);
+                if ($extracteddirname) {
+                    $finaldir = $targetdir . '/' . $pluginname;
+                    rename($tempdir . '/' . $extracteddirname, $finaldir);
+                    rmdir($tempdir);
+                    $this->feedback[$installable->type][$installable->component]['success'][] =
+                        get_string('upgradeplugincompleted', 'tool_wbinstaller', $installable->component);
                 } else {
-                    $this->feedback[$plugin->type][$plugin->component]['error'][] =
-                      get_string('installerfailextract', 'tool_wbinstaller', $plugin->component);
+                    $this->feedback[$installable->type][$installable->component]['error'][] =
+                      get_string('installerfailfinddir', 'tool_wbinstaller', $installable->component);
                     $this->set_status(2);
                 }
+                unlink($zipfile);
+            } else {
+                $this->feedback[$installable->type][$installable->component]['error'][] =
+                  get_string('installerfailextract', 'tool_wbinstaller', $installable->component);
+                $this->set_status(2);
             }
         }
     }
