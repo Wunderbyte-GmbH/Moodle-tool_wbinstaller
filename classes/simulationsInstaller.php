@@ -69,7 +69,7 @@ class simulationsInstaller extends wbInstaller {
             } else {
                 $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
                   get_string(
-                      'simulationnoinstallerfilefound',
+                      'simulationnoinstallerfilefoundexecute',
                       'tool_wbinstaller',
                       $this->recipe['matcher']['name']
                   );
@@ -99,7 +99,7 @@ class simulationsInstaller extends wbInstaller {
                       $this->recipe['matcher']['name']
                   );
             } else {
-                $this->feedback['needed'][basename($itemparamsfile)]['error'][] =
+                $this->feedback['needed'][basename($itemparamsfile)]['warning'][] =
                   get_string(
                       'simulationnoinstallerfilefound',
                       'tool_wbinstaller',
@@ -140,7 +140,7 @@ class simulationsInstaller extends wbInstaller {
                   get_string('simulationinstallersuccess', 'tool_wbinstaller', $installeroptions['name']);
         } else {
             $this->feedback['needed'][basename($filename)]['error'][] =
-              get_string('simulationnoinstallerfilefound', 'tool_wbinstaller');
+              get_string('simulationnoinstallerfilefoundexecute', 'tool_wbinstaller');
         }
     }
 }

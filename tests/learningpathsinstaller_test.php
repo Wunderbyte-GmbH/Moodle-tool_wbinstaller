@@ -107,7 +107,7 @@ class learningpathsinstaller_test extends advanced_testcase {
         $this->assertArrayHasKey('error', $installer->feedback['needed']['Test Learning Path']);
         $this->assertStringContainsString(
             get_string('dbtablenotfound', 'tool_wbinstaller', $installer->fileinfo),
-            $installer->feedback['needed']['Test Learning Path']['error'][0]
+            $installer->feedback['needed']['Test Learning Path']['warning'][0]
         );
         $installer->feedback = null;
         $dbman = $DB->get_manager();

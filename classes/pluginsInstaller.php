@@ -128,7 +128,6 @@ class pluginsInstaller extends wbInstaller {
      */
     public function download_install_plugins_testing($gitzipurl, $type, $installer, $install) {
         global $CFG;
-
         $zipfile = $CFG->dataroot . '/wbinstaller/' . $install . '.zip';
 
         if (!file_exists($CFG->dataroot . '/wbinstaller')) {
@@ -181,10 +180,10 @@ class pluginsInstaller extends wbInstaller {
                 $a->name = $plugin['component'] ?? '';
                 $a->installedversion = (int)$installedversion ?? '';
                 $a->componentversion = (int)$plugin['version'] ?? '';
-                $targetdir = $this->get_target_dir($plugin['component']);
+                $targetdir = $this->get_target_dir($plugin['component'], $type);
 
                 if (!is_writable($targetdir)) {
-                    $this->feedback[$type][$plugin['component']]['error'][] =
+                    $this->feedback[$type][$plugin['component']]['warning'][] =
                         get_string('targetdirnotwritable', 'tool_wbinstaller', $targetdir);
                     $this->set_status(2);
                     if ($execute) {
@@ -300,9 +299,10 @@ class pluginsInstaller extends wbInstaller {
     /**
      * Exceute the installer.
      * @param string $componentname
+     * @param string $type
      * @return string
      */
-    public function get_target_dir($componentname) {
+    public function get_target_dir($componentname, $type) {
         global $CFG;
         list($plugintype, $pluginname) = core_component::normalize_component($componentname);
         $pluginman = \core_plugin_manager::instance();
@@ -312,6 +312,8 @@ class pluginsInstaller extends wbInstaller {
             isset($this->recipe['subplugins'][$plugintype])
         ) {
             $targetdir = $CFG->dirroot . $this->recipe['subplugins'][$plugintype];
+            $this->feedback[$type][$componentname]['warning'][] =
+                get_string('targetdirsubplugin', 'tool_wbinstaller', $this->recipe['subplugins'][$plugintype]);
         }
         return $targetdir;
     }
@@ -350,7 +352,7 @@ class pluginsInstaller extends wbInstaller {
                 $this->feedback[$installable->type][$installable->component]['error'][] =
                     get_string('plugincomponentdetectfailed', 'tool_wbinstaller');
             }
-            $targetdir = $this->get_target_dir($component);
+            $targetdir = $this->get_target_dir($component, $installable->type);
             list($plugintype, $pluginname) = core_component::normalize_component($component);
 
             // Check if it's a core plugin or a subplugin.
@@ -398,8 +400,9 @@ class pluginsInstaller extends wbInstaller {
                     $finaldir = $targetdir . '/' . $pluginname;
                     rename($tempdir . '/' . $extracteddirname, $finaldir);
                     rmdir($tempdir);
-                    $this->feedback[$installable->type][$installable->component]['success'][] =
-                        get_string('upgradeplugincompleted', 'tool_wbinstaller', $installable->component);
+                    $this->feedback[$installable->type][$installable->component] = [
+                        'success' => [get_string('upgradeplugincompleted', 'tool_wbinstaller', $installable->component)]
+                    ];
                 } else {
                     $this->feedback[$installable->type][$installable->component]['error'][] =
                       get_string('installerfailfinddir', 'tool_wbinstaller', $installable->component);

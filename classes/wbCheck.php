@@ -132,7 +132,7 @@ class wbCheck {
                     $this->feedback[$steptype] = $instance->get_feedback();
                     $this->matchingids[$steptype] = $instance->get_matchingids();
                 } else {
-                    $this->feedback[$steptype] = get_string('classnotfound', 'tool_wbinstaller', $steptype);
+                    $this->feedback[$steptype]['needed'][$steptype]['error'][] = get_string('classnotfound', 'tool_wbinstaller', $steptype);
                 }
             }
         }

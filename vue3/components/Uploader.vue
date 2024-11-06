@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="container mt-4">
     <notifications width="100%"/>
     <div class="nav nav-tabs custom-nav-tabs">

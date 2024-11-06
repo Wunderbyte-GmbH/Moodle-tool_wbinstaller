@@ -287,7 +287,7 @@ class learningpathsInstaller extends wbInstaller {
         global $DB;
         $manager = $DB->get_manager();
         if (!$manager->table_exists($this->fileinfo)) {
-            $this->feedback['needed'][$learningpath['name']]['error'][] =
+            $this->feedback['needed'][$learningpath['name']]['warning'][] =
               get_string('dbtablenotfound', 'tool_wbinstaller', $this->fileinfo);
         }
     }

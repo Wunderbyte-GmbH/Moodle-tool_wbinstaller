@@ -35,10 +35,13 @@
           @change="handleFileUpload"
           accept=".zip"
           ref="fileInput"
-          :disabled="nextstep || isInstalling"
           hidden
         />
-        <label for="zipFileUpload" class="btn btn-primary mt-4">
+        <label
+          for="zipFileUpload"
+          class="btn btn-primary mt-4"
+          :class="{ 'btn-disabled': isInstalling }"
+        >
           {{ store.state.strings.uploadbuttontext }}
         </label>
       </p>
@@ -55,7 +58,6 @@
       <div v-if="uploadedFileName"
         class="mt-4"
       >
-
         <div v-if="feedback.error"
           class="mt-4"
         >
@@ -232,7 +234,6 @@ const convertFileToBase64 = (file) => {
 
 // Function to handle file upload
 const handleFileUpload = async (event) => {
-  console.log(event)
   feedback.value = []
   isInstalling.value = true;
   uploadedFile.value = event.target.files[0];
@@ -244,22 +245,15 @@ const handleFileUpload = async (event) => {
   }
 };
 
-const handleFileUploadWithout = async (event) => {
-  console.log(event)
-  feedback.value = []
-  isInstalling.value = true;
-  uploadedFile.value = event.target.files[0];
-  if (uploadedFile.value && uploadedFile.value.name.endsWith('.zip')) {
-    uploadedFileName.value = uploadedFile.value.name;
-    checkRecipeWithout(uploadedFile.value)
-  } else {
-    uploadedFileName.value = '';
-  }
-};
-
 </script>
 
 <style scoped>
+.btn-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .error-message {
   background-color: #f8d7da;
   color: #721c24;

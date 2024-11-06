@@ -263,22 +263,25 @@ class coursesInstaller extends wbInstaller {
         $matchinglabel
     ) {
         global $DB;
-        $ogcomponentids = [];
-        foreach (glob($coursefile . $componentfolder) as $activityfolder) {
-            $activityid = $this->extract_activity_id($activityfolder, $componenttable);
-            if ($activityid) {
-                $ogcomponentids[] = $activityid;
+        $manager = $DB->get_manager();
+        if ($manager->table_exists($componenttable)) {
+            $ogcomponentids = [];
+            foreach (glob($coursefile . $componentfolder) as $activityfolder) {
+                $activityid = $this->extract_activity_id($activityfolder, $componenttable);
+                if ($activityid) {
+                    $ogcomponentids[] = $activityid;
+                }
             }
-        }
-        $newcoursefile = $DB->get_records($componenttable, ['course' => $newcourseid], null, 'id');
-        $newcoursefileids = array_keys($newcoursefile);
-        if (
-            count($ogcomponentids) > 0 &&
-            count($ogcomponentids) == count($newcoursefile)
-        ) {
-            $componentmatch = array_combine($ogcomponentids, $newcoursefileids);
-            foreach ($componentmatch as $ogid => $newid) {
-                $this->matchingids[$matchinglabel][$ogid] = $newid;
+            $newcoursefile = $DB->get_records($componenttable, ['course' => $newcourseid], null, 'id');
+            $newcoursefileids = array_keys($newcoursefile);
+            if (
+                count($ogcomponentids) > 0 &&
+                count($ogcomponentids) == count($newcoursefile)
+            ) {
+                $componentmatch = array_combine($ogcomponentids, $newcoursefileids);
+                foreach ($componentmatch as $ogid => $newid) {
+                    $this->matchingids[$matchinglabel][$ogid] = $newid;
+                }
             }
         }
     }
