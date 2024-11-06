@@ -187,7 +187,7 @@ class pluginsInstaller extends wbInstaller {
                     $permissions = fileperms($targetdir);
                     $permissions = substr(sprintf('%o', $permissions), -4);
                     if ($permissions != '0') {
-                      $feedbacktarget .= ' (' . $permissions . ')';
+                        $feedbacktarget .= ' (' . $permissions . ')';
                     }
                     $this->feedback[$type][$plugin['component']]['warning'][] =
                         get_string('targetdirnotwritable', 'tool_wbinstaller', $feedbacktarget);
