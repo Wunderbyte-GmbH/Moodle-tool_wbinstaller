@@ -93,6 +93,7 @@ class learningpathsInstaller extends wbInstaller {
                 }
                 if (
                     $this->update &&
+                    empty($this->feedback['needed'][$learningpath['name']]['warning']) &&
                     empty($this->feedback['needed'][$learningpath['name']]['error'])
                 ) {
                     if (isset($learningpath['id'])) {

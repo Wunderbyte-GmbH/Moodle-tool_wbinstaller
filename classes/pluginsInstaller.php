@@ -183,8 +183,14 @@ class pluginsInstaller extends wbInstaller {
                 $targetdir = $this->get_target_dir($plugin['component'], $type);
 
                 if (!is_writable($targetdir)) {
+                    $feedbacktarget = $targetdir;
+                    $permissions = fileperms($targetdir);
+                    $permissions = substr(sprintf('%o', $permissions), -4);
+                    if ($permissions != '0') {
+                      $feedbacktarget .= ' (' . $permissions . ')';
+                    }
                     $this->feedback[$type][$plugin['component']]['warning'][] =
-                        get_string('targetdirnotwritable', 'tool_wbinstaller', $targetdir);
+                        get_string('targetdirnotwritable', 'tool_wbinstaller', $feedbacktarget);
                     $this->set_status(2);
                     if ($execute) {
                         return 2;
