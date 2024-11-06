@@ -134,7 +134,8 @@ class wbInstaller {
                 $this->matchingids[$steptype] = $instance->get_matchingids();
                 $this->set_status($instance->get_status());
             } else {
-                $this->feedback[$steptype]['needed'][$steptype]['error'][] = get_string('classnotfound', 'tool_wbinstaller', $steptype);
+                $this->feedback[$steptype]['needed'][$steptype]['error'][] =
+                    get_string('classnotfound', 'tool_wbinstaller', $steptype);
             }
         }
         $finished = $this->set_current_step($jsonstring);

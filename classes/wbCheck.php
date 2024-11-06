@@ -117,7 +117,12 @@ class wbCheck {
     public function check_recipe($extracted) {
         global $CFG;
         $extractpath = $CFG->tempdir . '/zip/precheck/' . str_replace('.zip', '', $this->filename) . '/';
-        $jsonstring = file_get_contents($extracted . str_replace('.zip', '', $this->filename) . '/recipe.json');
+        $jsonstring =
+          file_get_contents(
+            $extracted .
+            str_replace('.zip', '', $this->filename) .
+            '/recipe.json'
+        );
         $jsonarray = json_decode($jsonstring, true);
         $this->get_current_step($jsonstring, count($jsonarray['steps']));
         foreach ($jsonarray['steps'] as $step) {

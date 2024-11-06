@@ -401,7 +401,9 @@ class pluginsInstaller extends wbInstaller {
                     rename($tempdir . '/' . $extracteddirname, $finaldir);
                     rmdir($tempdir);
                     $this->feedback[$installable->type][$installable->component] = [
-                        'success' => [get_string('upgradeplugincompleted', 'tool_wbinstaller', $installable->component)]
+                        'success' => [
+                          get_string('upgradeplugincompleted', 'tool_wbinstaller', $installable->component),
+                        ],
                     ];
                 } else {
                     $this->feedback[$installable->type][$installable->component]['error'][] =
