@@ -1,6 +1,15 @@
 <template>
   <div :class="{ 'loading-cursor': isInstalling }" class="container mt-4">
-    <div v-if="nextstep && !finished.status">
+    <div v-if="status == 3">
+      <p>{{ store.state.strings.vuemanualupdate }}</p>
+        <button
+          class="btn btn-primary mt-4"
+          @click="updateMoodle"
+        >
+          {{ store.state.strings.vuemanualupdatebtn }}
+        </button>
+    </div>
+    <div v-else-if="nextstep && !finished.status">
       <p>{{ store.state.strings.vuenextstep }}</p>
         <button
           v-if="nextstep"
@@ -102,6 +111,7 @@ import StepCounter from '../feedback/StepCounter.vue'
 // Reactive state for the list of links and courses
 const store = useStore();
 const feedback = ref([]);
+const status = ref(null);
 const finished = ref({ status: false });
 const checkedOptionalPlugins = ref([]);
 let uploadedFile = ref(null);
@@ -161,6 +171,12 @@ const checkRecipe = async (file) => {
   }
 }
 
+const updateMoodle = () => {
+  status.value = 0
+  const moodleUrl = store.state.wwwroot + "/admin";
+  window.open(moodleUrl, "_blank");
+}
+
 const installRecipe = async () => {
   if (uploadedFile.value) {
     feedback.value = []
@@ -179,6 +195,7 @@ const installRecipe = async () => {
       );
       feedback.value = JSON.parse(response.feedback) || []
       finished.value = JSON.parse(response.finished) || { status: false }
+      status.value = check_update_status(response.status, feedback.value)
 
       if (!finished.value.status) {
         nextstep.value  = true
@@ -222,6 +239,25 @@ const installRecipe = async () => {
     }
   }
 };
+
+const check_update_status = (status, feedback) => {
+  if (status != 3) {
+    return
+  }
+  console.log('check_update_status')
+  console.log(status)
+  console.log(feedback)
+  outerLoop: for (const feedbacktypes of feedback) {
+    for (const feedbackcomponent of feedbacktypes) {
+  console.log(feedbacktypes)
+
+      if ('success' in feedbackcomponent) {
+        status = 2;
+        break outerLoop; // Exits both loops
+      }
+    }
+  }
+}
 
 const convertFileToBase64 = (file) => {
   return new Promise((resolve, reject) => {

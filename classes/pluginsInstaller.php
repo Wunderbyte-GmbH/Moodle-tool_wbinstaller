@@ -115,6 +115,7 @@ class pluginsInstaller extends wbInstaller {
             if ($install != 2) {
                 $this->trigger_upgrade_after_plugin_install();
             }
+            $this->trigger_upgrade_after_plugin_install();
         }
         return 1;
     }
@@ -432,9 +433,32 @@ class pluginsInstaller extends wbInstaller {
         global $CFG;
         $output = null;
         $retval = null;
-
-        $phpclipath = '/usr/bin/php';
-        $cmd = $phpclipath . ' ' . escapeshellarg($CFG->dirroot . '/admin/cli/upgrade.php') . ' --non-interactive';
+        if (!function_exists('exec')) {
+            $this->set_status(3);
+            $this->feedback['needed']['phpcli']['error'][] = get_string(
+                'execdisabled',
+                'tool_wbinstaller'
+            );
+            return;
+        }
+        $phptocli = get_config('core', 'pathtophp');
+        if ($phptocli == null) {
+            $this->set_status(3);
+            return;
+        }
+        $phptocli .= 'wesgnfwersgnfs';
+        $cmd = $phptocli . ' ' . escapeshellarg($CFG->dirroot . '/admin/cli/upgrade.php') . ' --non-interactive';
         exec($cmd, $output, $retval);
+        if ($retval === 0) {
+          // Command was successful
+          $this->set_status(0);
+      } else {
+          // Command failed, handle the error
+          $this->set_status(3);
+          if (!empty($output)) {
+              $this->feedback['needed']['phpcli']['error'][] =
+                    get_string('installerfailextract', 'tool_wbinstaller', implode("\n", $output));
+          }
+      }
     }
 }
