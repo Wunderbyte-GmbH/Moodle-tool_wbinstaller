@@ -141,4 +141,4 @@ $string['vuefinishedrecipe'] = 'Das Rezept wurde vollständig angewandt.';
 $string['vuepluginfeedback'] = 'Plugins aus dem Rezept';
 $string['vuemandatoryplugin'] = 'Notwendige Plugins aus dem Rezept:';
 $string['vueoptionalplugin'] = 'Optionale Plugins aus dem Rezept:';
-$string['execdisabled'] = 'Die exec Funktion ist nicht verfügbar.'
+$string['execdisabled'] = 'Die exec Funktion ist nicht verfügbar.';

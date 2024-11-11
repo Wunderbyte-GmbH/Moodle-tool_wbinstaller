@@ -141,4 +141,4 @@ $string['vuefinishedrecipe'] = 'The recipe was installed completely.';
 $string['vuepluginfeedback'] = 'Plugins of the recipe';
 $string['vuemandatoryplugin'] = 'Mandatory plugins in the ZIP:';
 $string['vueoptionalplugin'] = 'Optional plugins in the ZIP:';
-$string['execdisabled'] = 'The exec function is disabled on this server.'
+$string['execdisabled'] = 'The exec function is disabled on this server.';
