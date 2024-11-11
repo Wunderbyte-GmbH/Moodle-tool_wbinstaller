@@ -446,18 +446,19 @@ class pluginsInstaller extends wbInstaller {
             $this->set_status(3);
             return;
         }
-        $phptocli .= 'wesgnfwersgnfs';
-        $cmd = $phptocli . ' ' . escapeshellarg($CFG->dirroot . '/admin/cli/upgrade.php') . ' --non-interactive';
+        $cmd = $phptocli . ' ' . escapeshellarg($CFG->dirroot . '/admin/cli/upgrade.php') . ' --non-interactive 2>&1';
         exec($cmd, $output, $retval);
         if ($retval === 0) {
-          // Command was successful
           $this->set_status(0);
       } else {
-          // Command failed, handle the error
+          // Command failed, handle the error.
           $this->set_status(3);
           if (!empty($output)) {
               $this->feedback['needed']['phpcli']['error'][] =
                     get_string('installerfailextract', 'tool_wbinstaller', implode("\n", $output));
+          } else {
+            $this->feedback['needed']['phpcli']['error'][] =
+                    get_string('installerfailextractcode', 'tool_wbinstaller', $retval);
           }
       }
     }

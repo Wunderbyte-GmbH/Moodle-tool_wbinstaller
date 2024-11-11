@@ -11,7 +11,16 @@
       <div v-else>
         <ul>
           <li v-for="error in message.error" :key="error" class="error-text">
-            {{ error }}
+            <span>
+              {{ isFolded(error) ? error.slice(0, maxLength) + '...' : error }}
+            </span>
+            <button
+              v-if="error.length > maxLength"
+              @click="toggleFolded(error)"
+              class="toggle-button"
+            >
+              {{ isFolded(error) ? store.state.strings.vueshowmore : store.state.strings.vueshowless }}
+            </button>
           </li>
         </ul>
       </div>
@@ -50,6 +59,7 @@
 </template>
 
 <script setup>
+import { onMounted, ref } from 'vue';
 import { useStore } from 'vuex'
 
 const store = useStore()
@@ -70,8 +80,33 @@ const props = defineProps({
   }
 });
 
+onMounted(() => {
+  if (props.message.error) {
+    props.message.error.forEach(error => {
+      if (error.length > maxLength) {
+        foldedErrors.value.add(error)
+      }
+    })
+  }
+})
+
+const maxLength = 250  // Set the maximum length for foldable text
+const foldedErrors = ref(new Set())
+
 function isString(value) {
   return typeof value === 'string';
+}
+
+function toggleFolded(message) {
+  if (foldedErrors.value.has(message)) {
+    foldedErrors.value.delete(message)
+  } else {
+    foldedErrors.value.add(message)
+  }
+}
+
+function isFolded(message) {
+  return foldedErrors.value.has(message)
 }
 </script>
 
@@ -90,5 +125,13 @@ function isString(value) {
 .success-text {
   color: rgb(22, 193, 22);
   margin-left: 20px;
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  color: blue;
+  cursor: pointer;
+  margin-left: 5px;
 }
 </style>

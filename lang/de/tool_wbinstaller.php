@@ -86,6 +86,7 @@ $string['installerfailopen'] = 'Fehler beim Öffnen der ZIP-Datei.';
 $string['installerfailfinddir'] = 'Extrahierter Ordner {$a} konnte nicht gefunden werden!';
 $string['installersuccessinstalled'] = '{$a} wurde erfolgreich installiert';
 $string['installerfailextract'] = '{$a} konnte nicht extrahiert werden!';
+$string['installerfailextractcode'] = 'Kommandozeilenbefehl konnte nicht erfolgreich ausgeführt werden und endete mit dem Fehlercode: {$a}';
 $string['customfielderror'] = 'Fieldset konnte nicht hochgeladen werden: {$a}';
 $string['translatorsuccess'] = 'Die Änderung von {$a->changingcolumn} aus der Tabelle {$a->table} war erfolgreich';
 $string['translatorerror'] = 'Die Änderung von {$a->changingcolumn} aus der Tabelle {$a->table} konnte nicht durchgeführt werden';
@@ -110,6 +111,7 @@ $string['missingcourses'] = 'Folgende Kursids sind notwendig für den Lernpfad, 
 $string['missingcomponents'] = 'Folgende Komponentenids sind notwendig für den Lernpfad, wurden aber nicht im Rezept gefunden: {$a}';
 $string['coursetypenotfound'] = 'Der Datentyp der Kursid wurde nicht erkannt';
 $string['learningpathalreadyexistis'] = 'Learnpfad mit dem selben Namen existiert bereits';
+$string['execdisabled'] = 'Die exec Funktion ist nicht verfügbar.';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';
@@ -141,4 +143,5 @@ $string['vuefinishedrecipe'] = 'Das Rezept wurde vollständig angewandt.';
 $string['vuepluginfeedback'] = 'Plugins aus dem Rezept';
 $string['vuemandatoryplugin'] = 'Notwendige Plugins aus dem Rezept:';
 $string['vueoptionalplugin'] = 'Optionale Plugins aus dem Rezept:';
-$string['execdisabled'] = 'Die exec Funktion ist nicht verfügbar.';
+$string['vueshowmore'] = 'Mehr anzeigen';
+$string['vueshowless'] = 'Weniger anzeigen';

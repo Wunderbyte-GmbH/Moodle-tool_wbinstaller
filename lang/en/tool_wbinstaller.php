@@ -86,6 +86,7 @@ $string['installerfailopen'] = 'Failed to open the ZIP file.';
 $string['installerfailfinddir'] = 'Failed to find extracted directory for {$a}';
 $string['installersuccessinstalled'] = 'Successfully installed {$a}';
 $string['installerfailextract'] = 'Failed to extract {$a}';
+$string['installerfailextractcode'] = 'Cli-command was not executed successfully end returned error-code: {$a}';
 $string['customfielderror'] = 'Failed to upload fieldset: {$a}';
 $string['translatorsuccess'] = 'The translation of {$a->changingcolumn} from the table {$a->table} was successfull';
 $string['translatorerror'] = 'The translation of {$a->changingcolumn} from the table {$a->table} could not be executed';
@@ -110,6 +111,7 @@ $string['missingcourses'] = 'Follwoing course ids are required for the learning 
 $string['missingcomponents'] = 'Follwoing component ids are required for the learning path but are not inside the recipe: {$a}';
 $string['coursetypenotfound'] = 'The course id type inside the learning path is unknown';
 $string['learningpathalreadyexistis'] = 'Learning path with the same name already exists';
+$string['execdisabled'] = 'The exec function is disabled on this server.';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';
@@ -141,4 +143,5 @@ $string['vuefinishedrecipe'] = 'The recipe was installed completely.';
 $string['vuepluginfeedback'] = 'Plugins of the recipe';
 $string['vuemandatoryplugin'] = 'Mandatory plugins in the ZIP:';
 $string['vueoptionalplugin'] = 'Optional plugins in the ZIP:';
-$string['execdisabled'] = 'The exec function is disabled on this server.';
+$string['vueshowmore'] = 'Show more';
+$string['vueshowless'] = 'Show less';
