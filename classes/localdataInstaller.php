@@ -216,7 +216,7 @@ class localdataInstaller extends wbInstaller {
                         get_string('localdatauploadsuccess', 'tool_wbinstaller', $fileinfo);
                 } else {
                     $this->feedback['needed']['local_data']['error'][] =
-                        get_string('localdatauploadsuccess', 'tool_wbinstaller', $fileinfo);
+                        get_string('localdatauploadmissingcourse', 'tool_wbinstaller', $fileinfo);
                 }
             }
         }
@@ -269,14 +269,18 @@ class localdataInstaller extends wbInstaller {
                     $json[$key] = $moudleid;
                 } else if ($key == 'update' || $key == 'coursemodule') {
                     $json[$key] = $coursemoduleid;
-                } else if (preg_match('/' . $changingkey . '_(\d+)(?:_(\d+))?/', $key, $matches)) {
-                    $oldid = (int)$matches[1];
-                    $suffix = $matches[2];
-                    if (isset($translationsclaeids[$oldid])) {
+                } else if (str_contains($key, $changingkey)) {
+                    $postfix = str_replace($changingkey . '_', '', $key);
+                    $matches = explode('_', $postfix);
+                    $oldid = (int)$matches[0];
+                    if (
+                      isset($translationsclaeids[$oldid]) &&
+                      count($matches) > 1
+                    ) {
                         $newid = $translationsclaeids[$oldid];
                         $newkey = $changingkey . "_{$newid}";
-                        if ($suffix) {
-                            $newkey .= "_{$suffix}";
+                        if (isset($matches[1])) {
+                            $newkey .= "_{$matches[1]}";
                         }
                         if (
                             isset($this->recipe['translator']['changingcourseids']) &&
@@ -306,7 +310,7 @@ class localdataInstaller extends wbInstaller {
         $courseids = [];
         foreach ($values as $value) {
             if (isset($this->parent->matchingids['courses']['courses'][$value])) {
-                $courseids[] = $this->matchingids['courses']['courses'][$value];
+                $courseids[] = $this->parent->matchingids['courses']['courses'][$value];
             } else {
                 if ($this->uploaddata) {
                     $this->feedback['needed']['local_data']['error'][] =

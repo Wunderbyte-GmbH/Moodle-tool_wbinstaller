@@ -115,7 +115,6 @@ class pluginsInstaller extends wbInstaller {
             if ($install != 2) {
                 $this->trigger_upgrade_after_plugin_install();
             }
-            $this->trigger_upgrade_after_plugin_install();
         }
         return 1;
     }
