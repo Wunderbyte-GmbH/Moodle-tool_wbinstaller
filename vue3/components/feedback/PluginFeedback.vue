@@ -35,7 +35,16 @@
       <div v-else>
         <ul>
           <li v-for="warning in message.warning" :key="warning" class="warning-text">
-            {{ warning }}
+            <span>
+              {{ isFolded(warning) ? warning.slice(0, maxLength) + '...' : warning }}
+            </span>
+            <button
+              v-if="warning.length > maxLength"
+              @click="toggleFolded(warning)"
+              class="toggle-button"
+            >
+              {{ isFolded(warning) ? store.state.strings.vueshowmore : store.state.strings.vueshowless }}
+            </button>
           </li>
         </ul>
       </div>
@@ -88,6 +97,13 @@ onMounted(() => {
       }
     })
   }
+  if (props.message.warning) {
+    props.message.warning.forEach(warning => {
+      if (warning.length > maxLength) {
+        foldedErrors.value.add(warning)
+      }
+    })
+  }
 })
 
 const maxLength = 250  // Set the maximum length for foldable text
@@ -108,6 +124,7 @@ function toggleFolded(message) {
 function isFolded(message) {
   return foldedErrors.value.has(message)
 }
+
 </script>
 
 <style scoped>

@@ -80,7 +80,9 @@
         </div>
         <div v-else-if="
           feedback &&
-          Object.values(feedback).length > 0"
+          Object.values(feedback).length > 0 &&
+          status != 3
+          "
           class="mt-4"
         >
           <CheckFeedbackReport :feedback/>
@@ -204,25 +206,23 @@ const installRecipe = async () => {
       );
       feedback.value = JSON.parse(response.feedback) || []
       finished.value = JSON.parse(response.finished) || { status: false }
-      status.value = check_update_status(response.status, feedback.value)
-
-      if (!finished.value.status) {
+      status.value = response.status
+      if (status.value < 2) {
         nextstep.value  = true
       }
-
-      if (feedback.value.status == 0) {
+      if (status.value == 0) {
         notify({
           title: store.state.strings.success,
           text: store.state.strings.success_description,
           type: 'success'
         });
-      } else if (feedback.value.status == 1) {
+      } else if (status.value == 1) {
         notify({
           title: store.state.strings.warning,
           text: store.state.strings.warning_description,
           type: 'warn'
         });
-      } else if (feedback.value.status == 2) {
+      } else if (status.value == 2) {
         notify({
           title: store.state.strings.error,
           text: store.state.strings.error_description,
@@ -230,6 +230,8 @@ const installRecipe = async () => {
         });
       }
     } catch (error) {
+      console.log('error')
+      console.log(error)
       errormsg.value = error
       notify({
         title: store.state.strings.error,
@@ -249,25 +251,6 @@ const installRecipe = async () => {
     }
   }
 };
-
-const check_update_status = (status, feedback) => {
-  if (status != 3) {
-    return
-  }
-  console.log('check_update_status')
-  console.log(status)
-  console.log(feedback)
-  outerLoop: for (const feedbacktypes of feedback) {
-    for (const feedbackcomponent of feedbacktypes) {
-  console.log(feedbacktypes)
-
-      if ('success' in feedbackcomponent) {
-        status = 2;
-        break outerLoop; // Exits both loops
-      }
-    }
-  }
-}
 
 const convertFileToBase64 = (file) => {
   return new Promise((resolve, reject) => {

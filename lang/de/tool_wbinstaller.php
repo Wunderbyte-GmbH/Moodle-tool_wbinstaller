@@ -87,6 +87,7 @@ $string['installerfailfinddir'] = 'Extrahierter Ordner {$a} konnte nicht gefunde
 $string['installersuccessinstalled'] = '{$a} wurde erfolgreich installiert';
 $string['installerfailextract'] = '{$a} konnte nicht extrahiert werden!';
 $string['installerfailextractcode'] = 'Kommandozeilenbefehl konnte nicht erfolgreich ausgeführt werden und endete mit dem Fehlercode: {$a}';
+$string['installerwarningextractcode'] = 'Kommandozeilenbefehl wurde erfolgreich ausgeführt und endete mit der Rückmeldung: {$a}';
 $string['customfielderror'] = 'Fieldset konnte nicht hochgeladen werden: {$a}';
 $string['translatorsuccess'] = 'Die Änderung von {$a->changingcolumn} aus der Tabelle {$a->table} war erfolgreich';
 $string['translatorerror'] = 'Die Änderung von {$a->changingcolumn} aus der Tabelle {$a->table} konnte nicht durchgeführt werden';

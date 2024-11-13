@@ -24,6 +24,7 @@
  */
 namespace tool_wbinstaller;
 
+use core_plugin_manager;
 use moodle_url;
 use context_system;
 use core_component;
@@ -95,6 +96,7 @@ class pluginsInstaller extends wbInstaller {
         // Set the page context.
         $PAGE->set_context(context_system::instance());
         $installer = tool_installaddon_installer::instance();
+        $installables = [];
         if (isset($this->recipe)) {
             foreach ($this->recipe as $type => $plugins) {
                 if ($type != "subplugins") {
@@ -106,15 +108,19 @@ class pluginsInstaller extends wbInstaller {
                             $install = $this->check_plugin_compability($gitzipurl, $type, true);
                             if ($install != 2) {
                                 $installable = $this->download_install_plugins_testing($gitzipurl, $type, $installer, $install);
+                                if (isset($installable->component)) {
+                                    $installables[] = $installable->component;
+                                }
                                 $this->manual_install_plugins($installable);
                             }
                         }
                     }
                 }
             }
-            if ($install != 2) {
-                $this->trigger_upgrade_after_plugin_install();
+            if (!empty($installables)) {
+                $this->trigger_upgrade_after_plugin_install($installables);
             }
+
         }
         return 1;
     }
@@ -311,7 +317,7 @@ class pluginsInstaller extends wbInstaller {
     public function get_target_dir($componentname, $type) {
         global $CFG;
         list($plugintype, $pluginname) = core_component::normalize_component($componentname);
-        $pluginman = \core_plugin_manager::instance();
+        $pluginman = core_plugin_manager::instance();
         $targetdir = $pluginman->get_plugintype_root($plugintype);
         if (
             $targetdir == null &&
@@ -427,8 +433,9 @@ class pluginsInstaller extends wbInstaller {
 
     /**
      * Function to trigger Moodle's upgrade.php script.
+     * @param array $installables
      */
-    private function trigger_upgrade_after_plugin_install() {
+    private function trigger_upgrade_after_plugin_install($installables) {
         global $CFG;
         $output = null;
         $retval = null;
@@ -441,16 +448,25 @@ class pluginsInstaller extends wbInstaller {
             return;
         }
         $phptocli = get_config('core', 'pathtophp');
-        if ($phptocli == null) {
+        if (empty($phptocli)) {
             $this->set_status(3);
             return;
         }
         $cmd = $phptocli . ' ' . escapeshellarg($CFG->dirroot . '/admin/cli/upgrade.php') . ' --non-interactive 2>&1';
         exec($cmd, $output, $retval);
         if ($retval === 0) {
+            if ($output) {
+                $this->feedback['needed']['phpcli']['warning'][] =
+                      get_string('installerwarningextractcode', 'tool_wbinstaller', implode("\n", $output));
+            }
+            foreach($installables as $installable) {
+                $instconfig = get_config($installable);
+                if (!isset($instconfig->version)) {
+                    $this->set_status(3);
+                }
+          }
           $this->set_status(0);
       } else {
-          // Command failed, handle the error.
           $this->set_status(3);
           if (!empty($output)) {
               $this->feedback['needed']['phpcli']['error'][] =

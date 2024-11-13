@@ -87,6 +87,7 @@ $string['installerfailfinddir'] = 'Failed to find extracted directory for {$a}';
 $string['installersuccessinstalled'] = 'Successfully installed {$a}';
 $string['installerfailextract'] = 'Failed to extract {$a}';
 $string['installerfailextractcode'] = 'Cli-command was not executed successfully end returned error-code: {$a}';
+$string['installerwarningextractcode'] = 'Cli-command was executed successfully with following output: {$a}';
 $string['customfielderror'] = 'Failed to upload fieldset: {$a}';
 $string['translatorsuccess'] = 'The translation of {$a->changingcolumn} from the table {$a->table} was successfull';
 $string['translatorerror'] = 'The translation of {$a->changingcolumn} from the table {$a->table} could not be executed';
