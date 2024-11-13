@@ -27,6 +27,10 @@
       v-if="finished.maxstep"
       :finished
     />
+    <ErrorMsg
+      v-if="errormsg"
+      :errormsg
+    />
     <div
       class="dropzone"
       @dragover.prevent="isDragging = true"
@@ -107,6 +111,7 @@ import { notify } from "@kyvg/vue3-notification"
 import FeedbackReport from '../feedback/FeedbackReport.vue';
 import CheckFeedbackReport from '../feedback/CheckFeedbackReport.vue';
 import StepCounter from '../feedback/StepCounter.vue'
+import ErrorMsg from '../feedback/ErrorMsg.vue'
 
 // Reactive state for the list of links and courses
 const store = useStore();
@@ -118,6 +123,7 @@ let uploadedFile = ref(null);
 let uploadedFileName = ref('');
 const fileInput = ref(null);
 let nextstep = ref(false);
+let errormsg = ref(null);
 
 const isInstalling = ref(false);
 const isDragging = ref(false);
@@ -150,6 +156,7 @@ const processFile = async (file) => {
 const checkRecipe = async (file) => {
   isInstalling.value = true;
   try {
+    errormsg.value = null
     const base64File = await convertFileToBase64(file);
     const response = await store.dispatch('checkRecipe', {
       uploadedFile: base64File,
@@ -161,6 +168,7 @@ const checkRecipe = async (file) => {
   } catch (error) {
     console.log('error')
     console.log(error)
+    errormsg.value = error
     notify({
       title: store.state.strings.error,
       text: store.state.strings.error_description,
@@ -184,6 +192,7 @@ const installRecipe = async () => {
     totalProgress.value = 0;
     taskProgress.value = 0;
     try {
+      errormsg.value = null
       const base64File = await convertFileToBase64(uploadedFile.value);
       const selectedPlugins = JSON.stringify(checkedOptionalPlugins.value);
       const response = await store.dispatch('installRecipe',
@@ -221,6 +230,7 @@ const installRecipe = async () => {
         });
       }
     } catch (error) {
+      errormsg.value = error
       notify({
         title: store.state.strings.error,
         text: store.state.strings.error_description,

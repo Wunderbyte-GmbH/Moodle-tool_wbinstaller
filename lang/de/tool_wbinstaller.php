@@ -145,3 +145,4 @@ $string['vuemandatoryplugin'] = 'Notwendige Plugins aus dem Rezept:';
 $string['vueoptionalplugin'] = 'Optionale Plugins aus dem Rezept:';
 $string['vueshowmore'] = 'Mehr anzeigen';
 $string['vueshowless'] = 'Weniger anzeigen';
+$string['vueerrorheading'] = 'Fehlermeldung';

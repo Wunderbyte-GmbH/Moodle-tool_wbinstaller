@@ -145,3 +145,4 @@ $string['vuemandatoryplugin'] = 'Mandatory plugins in the ZIP:';
 $string['vueoptionalplugin'] = 'Optional plugins in the ZIP:';
 $string['vueshowmore'] = 'Show more';
 $string['vueshowless'] = 'Show less';
+$string['vueerrorheading'] = 'Error Details';
