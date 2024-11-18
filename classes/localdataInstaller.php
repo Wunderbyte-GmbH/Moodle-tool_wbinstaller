@@ -287,8 +287,9 @@ class localdataInstaller extends wbInstaller {
                             str_contains($key, $this->recipe['translator']['changingcourseids'])
                         ) {
                             $newdata[$newkey] = $this->course_matching($value);
+
                         } else {
-                            $newdata[$newkey] = $value;
+                            $newdata[$newkey] = $this->translate_string_links($value);
                         }
                     } else {
                         $newdata[$key] = $value;
@@ -299,6 +300,34 @@ class localdataInstaller extends wbInstaller {
         }
         $json = array_merge($json, $newdata);
         return json_encode($json);
+    }
+
+    /**
+     * Check if course already exists.
+     * @param mixed $value
+     * @return mixed
+     */
+    public function translate_string_links($value) {
+        if (!is_string($value)) {
+            return $value;
+        }
+        preg_match_all('/id=(\d+)/', $value, $matches);
+        $ids = $matches[1];
+        if (!empty($ids)) {
+            foreach ($ids as $currentId) {
+                if (isset($this->parent->matchingids['courses']['courses'][$currentId])) {
+                    $value = preg_replace(
+                        '/id=' . $currentId . '/', // Match the specific ID
+                        'id=' . $this->parent->matchingids['courses']['courses'][$currentId], // Replace with the new ID
+                        $value
+                    );
+                } else {
+                    $this->feedback['needed']['local_data']['error'][] =
+                        get_string('courseidmismatchlocaldatalink', 'tool_wbinstaller', $currentId);
+                }
+            }
+        }
+        return $value;
     }
 
     /**

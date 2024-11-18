@@ -99,6 +99,7 @@ $string['localdatauploadduplicate'] = 'Csv Datei {$a} war bereits vorhanden und 
 $string['localdatauploadmissingcourse'] = 'Csv Datei {$a} konnte nicht hochgeladen werden, weil referenzierte Kurse nicht gefunden wurden';
 $string['scalemismatchlocaldata'] = 'Es wurde keine passende Cat-Skala gefunden';
 $string['courseidmismatchlocaldata'] = 'Die Kursids können nicht zugeordnet werden';
+$string['courseidmismatchlocaldatalink'] = 'Die Kursid in einem Link konnte nicht gefunden werden: {$a}';
 $string['noadaptivequizfound'] = 'Kein passendes adaptivequiz gefunden';
 $string['oldermoodlebackupversion'] = 'Das Kurs-Backup ist älter als die aktuelle Moodle Version {$a}';
 $string['targetdirnotwritable'] = 'Verzeichnis {$a} kann möglicherweise nicht angelegt werden. Dies kann u.a. durch fehlender Schreibrechte oder dadurch bedingt sein, dass der übergeordnete Ordner (noch) nicht existiert. Das Plugin wird im nächsten Schritt dennoch versuchen, die Komponente zu installieren.';

@@ -99,6 +99,7 @@ $string['localdatauploadduplicate'] = 'Csv file {$a} was already uploaded and wa
 $string['localdatauploadmissingcourse'] = 'Csv file {$a} could not be uploaded as referecned courses were not found';
 $string['scalemismatchlocaldata'] = 'The cat scales did not match';
 $string['courseidmismatchlocaldata'] = 'The course id did not match';
+$string['courseidmismatchlocaldatalink'] = 'The course-id inside link was not found: {$a}';
 $string['noadaptivequizfound'] = 'No matching adaptivequiz was found';
 $string['oldermoodlebackupversion'] = 'The course-backup is older than the current moodle version {$a}';
 $string['targetdirnotwritable'] = 'No write permission for the directory {$a}';
