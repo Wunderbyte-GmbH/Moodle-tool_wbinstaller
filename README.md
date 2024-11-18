@@ -27,6 +27,16 @@ Alternatively, you can run
 
 to complete the installation from the command line.
 
+## Known Issues ##
+
+* using under nginx, there might be problems (presumably due to not supporting slashed urls)
+* make sure, your php.ini-settings for upload_max_filesize, post_max_size and max_inputvars are sufficiently set for BOTH, apache2 (or nginx) AND the CLI php interpreter
+* if being prompted to trigger plugin installation manuelly, please complete the procedure before coninueing installing your installation recipe
+* for the local_catquiz plugin, embedded pictures will not be ex- and imported successfully at the moment
+  
+In case you encounter any further issue, please let us know in the issue section of the GitHub repository:
+https://github.com/Wunderbyte-GmbH/Moodle-tool_wbinstaller/issues
+
 ## License ##
 
 2024 Wunderbyte GmbH <info@wunderbyte.at>
