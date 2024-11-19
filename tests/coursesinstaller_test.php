@@ -162,4 +162,38 @@ class coursesinstaller_test extends advanced_testcase {
         $this->assertNotNull($result);
         $this->assertEquals($course->id, $result->id);
     }
+
+    /**
+     * Test course_exists method to check if a course already exists.
+     * @covers ::get_course_category
+     */
+    public function test_get_course_category() {
+        global $DB;
+        $DB = $this->createMock(\moodle_database::class);
+
+        // Define the expected result for the lowest category.
+        $expectedcategory = (object)[
+            'id' => 1,
+            'name' => 'Miscellaneous',
+        ];
+
+        // Setup class and method
+        $installer = new coursesInstaller([]);
+        $reflection = new \ReflectionClass($installer);
+        $method = $reflection->getMethod('get_course_category');
+        $method->setAccessible(true);
+
+        //should return false as db empty
+        $result = $method->invoke($installer);
+        $this->assertEquals(null, $result, 'The returned value should be false.');
+
+        // Mock the behavior of get_record_sql.
+        $DB->expects($this->once())
+            ->method('get_record_sql')
+            ->with('SELECT id, name FROM {course_categories} ORDER BY id ASC LIMIT 1')
+            ->willReturn($expectedcategory);
+
+        $result = $method->invoke($installer);
+        $this->assertEquals($expectedcategory, $result, 'The returned value does not match the expected.');
+    }
 }

@@ -217,10 +217,18 @@ class coursesInstaller extends wbInstaller {
               get_string('coursesfailextract', 'tool_wbinstaller');
             return;
         }
+        $category = $this->get_course_category();
+        if (!$category) {
+            $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
+              get_string('coursescategorynotfound', 'tool_wbinstaller');
+            return;
+        }
+        $this->feedback['needed'][$precheck['courseshortname']]['success'][] =
+              get_string('coursescategoryfound', 'tool_wbinstaller', $category->name);
         $newcourse = new stdClass();
         $newcourse->fullname = 'Temporary Course Fullname';
         $newcourse->shortname = 'temp_' . uniqid();
-        $newcourse->category = 1;
+        $newcourse->category = $category->id;
         $newcourse->format = 'topics';
         $newcourse->visible = 0;
         $newcourse->timecreated = time();
@@ -285,6 +293,17 @@ class coursesInstaller extends wbInstaller {
             }
         }
     }
+
+    /**
+     * Returns course category with lowest id or false to install courses.
+     *
+     * @return mixed
+     */
+    protected function get_course_category() {
+        global $DB;
+        return $DB->get_record_sql('SELECT id, name FROM {course_categories} ORDER BY id ASC LIMIT 1');
+    }
+
 
     /**
      * Recursively copies a directory.
