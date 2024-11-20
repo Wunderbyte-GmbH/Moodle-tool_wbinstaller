@@ -17,6 +17,7 @@
 namespace tool_wbinstaller;
 
 use advanced_testcase;
+use stdClass;
 /**
  * PHPUnit test case for the 'tool_wbinstaller' class in local_adele.
  *
@@ -78,25 +79,81 @@ class localdatainstaller_test extends advanced_testcase {
      * @covers ::translate_string_links
      */
     public function test_translate_string_links() {
-        // Mock matching IDs.
-        $this->installer->parent = (object) [
+        global $CFG;
+
+        // Set up test environment.
+        $CFG->wwwroot = 'https://newdomain.example.com';
+
+        // Mock matching IDs in the parent object.
+        $mockparent = (object)[
             'matchingids' => [
                 'courses' => [
                     'courses' => [
-                        123 => 456,
+                        123 => 456, // Old ID 123 maps to new ID 456.
+                        456 => 23, // Old ID 123 maps to new ID 456.
+                        23 => 550,  // Old ID 23 maps to new ID 550.
                     ],
                 ],
             ],
         ];
 
+        // Create an instance of the actual class.
+        $instance = new \tool_wbinstaller\localdataInstaller([]);
+        $instance->parent = $mockparent;
+
+        // Mock feedback.
+        $instance->feedback = [
+            'needed' => [
+                'local_data' => [
+                    'error' => [],
+                ],
+            ],
+        ];
+
         // Test input string with IDs.
-        $value = 'example.com?id=123&anotherparam=456';
+        $tobeconverted = '<p dir="ltr">Feedback für den Bereich GRÜN von Skala A01</p><p>
+            <strong>
+            <a href="https://alise.wunderbyte.at/course/view.php?id=123">Link</a>
+            <a href="https://alise.wunderbyte.at/course/view.php?id=123">Link</a>
+            <a href="https://alise.wunderbyte.at/course/view.php?id=456">Link</a>
+            <a href="https://alise.wunderbyte.at/course/view.php?id=23">Link</a>
+            <a href="https://alise.wunderbyte.at/course/view.php?id=999">Invalid Link</a>
+            </strong></p>';
 
-        // Call the translate_string_links function.
-        $translatedvalue = $this->installer->translate_string_links($value);
+        // Expected output.
+        $expectedoutput = '<p dir="ltr">Feedback für den Bereich GRÜN von Skala A01</p><p>
+            <strong>
+            <a href="https://newdomain.example.com/course/view.php?id=456">Link</a>
+            <a href="https://newdomain.example.com/course/view.php?id=456">Link</a>
+            <a href="https://newdomain.example.com/course/view.php?id=23">Link</a>
+            <a href="https://newdomain.example.com/course/view.php?id=550">Link</a>
+            <a href="https://alise.wunderbyte.at/course/view.php?id=999">Invalid Link</a>
+            </strong></p>';
 
-        // Assert the ID was replaced.
-        $this->assertEquals('example.com?id=456&anotherparam=456', $translatedvalue);
+        $result = $instance->translate_string_links($tobeconverted);
+
+        // Assert the output matches the expected result.
+        $this->assertEquals($expectedoutput, $result, 'The translated string links do not match the expected output.');
+
+        // Assert an error was logged for the mismatched ID (999).
+        $this->assertNotEmpty(
+            $instance->feedback['needed']['local_data']['error'],
+            'An error should have been logged for the mismatched course ID.'
+        );
+
+        // Assert that the logged error contains the correct ID.
+        $this->assertStringContainsString(
+            '999',
+            $instance->feedback['needed']['local_data']['error'][0],
+            'The error feedback should reference the mismatched ID.'
+        );
+
+        // Assert that valid course IDs were transformed correctly.
+        $this->assertStringContainsString('id=456', $result, 'ID 123 should be transformed to 456.');
+        $this->assertStringContainsString('id=550', $result, 'ID 23 should be transformed to 550.');
+
+        // Assert that the mismatched ID was not transformed.
+        $this->assertStringContainsString('id=999', $result, 'Mismatched ID 999 should remain unchanged.');
     }
 
     /**
@@ -157,4 +214,9 @@ class localdatainstaller_test extends advanced_testcase {
             2 => 20,
         ], $matcher);
     }
+
+    /**
+     * Tests function that translate the links inside feedbacks strings that ref to courses.
+     * @covers ::translate_string_links
+     */
 }

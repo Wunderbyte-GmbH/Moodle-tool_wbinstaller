@@ -303,22 +303,30 @@ class localdataInstaller extends wbInstaller {
     }
 
     /**
-     * Check if course already exists.
+     * Translate the links inside feedbacks strings that ref to courses.
      * @param mixed $value
      * @return mixed
      */
     public function translate_string_links($value) {
+        global $CFG;
         if (!is_string($value)) {
             return $value;
         }
-        preg_match_all('/id=(\d+)/', $value, $matches);
+        preg_match_all('/course\/view\.php\?id=(\d+)/', $value, $matches);
         $ids = $matches[1];
         if (!empty($ids)) {
             foreach ($ids as $currentId) {
-                if (isset($this->parent->matchingids['courses']['courses'][$currentId])) {
+                $newid = $this->parent->matchingids['courses']['courses'][$currentId] ?? false;
+                if ($newid) {
                     $value = preg_replace(
                         '/id=' . $currentId . '/', // Match the specific ID
-                        'id=' . $this->parent->matchingids['courses']['courses'][$currentId], // Replace with the new ID
+                        'ID=' . $newid, // Replace with the new ID
+                        $value
+                    );
+                    // Replace the old root with the new root in the value.
+                    $value = preg_replace(
+                        '/https?:\/\/[^\/]+\/(course\/view\.php\?ID=' . $newid . ')/',
+                        $CFG->wwwroot . '/$1', // Keep the course path and ID intact.
                         $value
                     );
                 } else {
@@ -326,6 +334,11 @@ class localdataInstaller extends wbInstaller {
                         get_string('courseidmismatchlocaldatalink', 'tool_wbinstaller', $currentId);
                 }
             }
+            $value = preg_replace(
+                '/ID=/',
+                'id=',
+                $value
+            );
         }
         return $value;
     }
