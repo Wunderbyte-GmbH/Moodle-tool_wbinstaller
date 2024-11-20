@@ -459,22 +459,22 @@ class pluginsInstaller extends wbInstaller {
                 $this->feedback['needed']['phpcli']['warning'][] =
                       get_string('installerwarningextractcode', 'tool_wbinstaller', implode("\n", $output));
             }
-            foreach($installables as $installable) {
+            foreach ($installables as $installable) {
                 $instconfig = get_config($installable);
                 if (!isset($instconfig->version)) {
                     $this->set_status(3);
                 }
-          }
-          $this->set_status(0);
-      } else {
-          $this->set_status(3);
-          if (!empty($output)) {
-              $this->feedback['needed']['phpcli']['error'][] =
-                    get_string('installerfailextract', 'tool_wbinstaller', implode("\n", $output));
-          } else {
-            $this->feedback['needed']['phpcli']['error'][] =
-                    get_string('installerfailextractcode', 'tool_wbinstaller', $retval);
-          }
-      }
+            }
+            $this->set_status(0);
+        } else {
+            $this->set_status(3);
+            if (!empty($output)) {
+                $this->feedback['needed']['phpcli']['error'][] =
+                      get_string('installerfailextract', 'tool_wbinstaller', implode("\n", $output));
+            } else {
+                $this->feedback['needed']['phpcli']['error'][] =
+                      get_string('installerfailextractcode', 'tool_wbinstaller', $retval);
+            }
+        }
     }
 }

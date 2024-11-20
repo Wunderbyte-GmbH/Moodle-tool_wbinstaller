@@ -54,7 +54,6 @@ class coursesinstaller_test extends advanced_testcase {
         $this->assertFileExists($testcourse1, 'Test course file 1 was not created.');
         $this->assertFileExists($testcourse2, 'Test course file 2 was not created.');
 
-
         // Create instance of coursesInstaller.
         $installer = $this->getMockBuilder(coursesInstaller::class)
             ->setConstructorArgs([$recipe])
@@ -62,18 +61,18 @@ class coursesinstaller_test extends advanced_testcase {
             ->getMock();
 
         // Mock the parent parameter.
-        $mockParent = $this->createMock(\tool_wbinstaller\wbCheck::class);
+        $mockparent = $this->createMock(\tool_wbinstaller\wbCheck::class);
 
-        //Expect install_course to be called exactly 2 times.
+        // Expect install_course to be called exactly 2 times.
         $installer->expects($this->exactly(2))
             ->method('install_course')
             ->withConsecutive(
-              [$this->equalTo($testcourse1), $this->equalTo($mockParent)],
-              [$this->equalTo($testcourse2), $this->equalTo($mockParent)]
+              [$this->equalTo($testcourse1), $this->equalTo($mockparent)],
+              [$this->equalTo($testcourse2), $this->equalTo($mockparent)]
         );
 
         // Run the execute method.
-        $installer->execute($extractpath, $mockParent);
+        $installer->execute($extractpath, $mockparent);
 
         // Clean up created directories and files after the test.
         @unlink($testcourse1);

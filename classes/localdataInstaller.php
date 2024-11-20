@@ -315,23 +315,23 @@ class localdataInstaller extends wbInstaller {
         preg_match_all('/course\/view\.php\?id=(\d+)/', $value, $matches);
         $ids = $matches[1];
         if (!empty($ids)) {
-            foreach ($ids as $currentId) {
-                $newid = $this->parent->matchingids['courses']['courses'][$currentId] ?? false;
+            foreach ($ids as $currentid) {
+                $newid = $this->parent->matchingids['courses']['courses'][$currentid] ?? false;
                 if ($newid) {
                     $value = preg_replace(
-                        '/id=' . $currentId . '/', // Match the specific ID
-                        'ID=' . $newid, // Replace with the new ID
+                        '/id=' . $currentid . '/',
+                        'ID=' . $newid,
                         $value
                     );
                     // Replace the old root with the new root in the value.
                     $value = preg_replace(
                         '/https?:\/\/[^\/]+\/(course\/view\.php\?ID=' . $newid . ')/',
-                        $CFG->wwwroot . '/$1', // Keep the course path and ID intact.
+                        $CFG->wwwroot . '/$1',
                         $value
                     );
                 } else {
                     $this->feedback['needed']['local_data']['error'][] =
-                        get_string('courseidmismatchlocaldatalink', 'tool_wbinstaller', $currentId);
+                        get_string('courseidmismatchlocaldatalink', 'tool_wbinstaller', $currentid);
                 }
             }
             $value = preg_replace(

@@ -308,7 +308,7 @@ class coursesInstaller extends wbInstaller {
      */
     protected function get_course_category($subcategoryname) {
         global $DB;
-        $timestamedsubcategoryname =  $this->timestamp . $subcategoryname;
+        $timestamedsubcategoryname = $this->timestamp . $subcategoryname;
         $parentcategoryname = 'WbInstall';
         $parentcategory = $DB->get_record(
           'course_categories',
@@ -317,7 +317,7 @@ class coursesInstaller extends wbInstaller {
         );
 
         if (!$parentcategory) {
-          $parentcategory = $this->set_course_category($parentcategoryname, $parentcategory);
+            $parentcategory = $this->set_course_category($parentcategoryname, $parentcategory);
         }
         $subcategory = $DB->get_record(
           'course_categories',
