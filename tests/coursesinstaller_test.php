@@ -42,12 +42,18 @@ class coursesinstaller_test extends advanced_testcase {
     public function test_execute_installs_courses() {
         global $CFG;
         $recipe = ['path' => '/testcourses'];
-
-        // Mock course files in the test directory.
         $extractpath = $CFG->tempdir . '/test_wbinstaller';
+        $testcourse1 = $extractpath . $recipe['path'] . '/course1';
+        $testcourse2 = $extractpath . $recipe['path'] . '/course2';
+
         @mkdir($extractpath . $recipe['path'], 0777, true);
-        file_put_contents($extractpath . $recipe['path'] . '/course1', 'Test Course 1');
-        file_put_contents($extractpath . $recipe['path'] . '/course2', 'Test Course 2');
+        file_put_contents($testcourse1, 'Test Course 1');
+        file_put_contents($testcourse2, 'Test Course 2');
+
+        // Verify test files are created successfully.
+        $this->assertFileExists($testcourse1, 'Test course file 1 was not created.');
+        $this->assertFileExists($testcourse2, 'Test course file 2 was not created.');
+
 
         // Create instance of coursesInstaller.
         $installer = $this->getMockBuilder(coursesInstaller::class)
@@ -55,16 +61,28 @@ class coursesinstaller_test extends advanced_testcase {
             ->onlyMethods(['install_course'])
             ->getMock();
 
-        // Expect install_course to be called exactly 2 times.
+        // Mock the parent parameter.
+        $mockParent = $this->createMock(\tool_wbinstaller\wbCheck::class);
+
+        //Expect install_course to be called exactly 2 times.
         $installer->expects($this->exactly(2))
             ->method('install_course')
             ->withConsecutive(
-                [$this->equalTo($extractpath . '/testcourses/course1')],
-                [$this->equalTo($extractpath . '/testcourses/course2')]
-            );
+              [$this->equalTo($testcourse1), $this->equalTo($mockParent)],
+              [$this->equalTo($testcourse2), $this->equalTo($mockParent)]
+        );
 
         // Run the execute method.
-        $installer->execute($extractpath);
+        $installer->execute($extractpath, $mockParent);
+
+        // Clean up created directories and files after the test.
+        @unlink($testcourse1);
+        @unlink($testcourse2);
+        @rmdir($extractpath . $recipe['path']);
+        @rmdir($extractpath);
+
+        // Ensure cleanup was successful.
+        $this->assertDirectoryDoesNotExist($extractpath, 'Test directory was not removed.');
     }
 
     /**
@@ -111,22 +129,35 @@ class coursesinstaller_test extends advanced_testcase {
 
         $coursefile = '/somepath/testcourse/course1';
         $recipe = ['path' => '/testcourses'];
-        $installer = $this->getMockBuilder(coursesInstaller::class)
-            ->setConstructorArgs([$recipe])
-            ->onlyMethods(['precheck', 'restore_course'])
-            ->getMock();
+        $mockparent = $this->createMock(\tool_wbinstaller\wbCheck::class);
 
         // Simulate valid precheck results.
-        $installer->method('precheck')
-            ->willReturn([
-                'courseshortname' => 'test_shortname',
-                'courseoriginalid' => 1234,
-            ]);
+        $precheckresult = [
+            'courseshortname' => 'test_shortname',
+            'courseoriginalid' => 1234,
+        ];
 
-        // Expect restore_course to be called once.
+        // Create a mock instance of coursesInstaller.
+        $installer = $this->getMockBuilder(coursesInstaller::class)
+            ->setConstructorArgs([$recipe])
+            ->onlyMethods(['precheck', 'restore_course', 'get_success_message'])
+            ->getMock();
+
+        $installer->method('precheck')->willReturn($precheckresult);
+        // Expect restore_course to be called once with the correct arguments.
         $installer->expects($this->once())
             ->method('restore_course')
-            ->with($this->equalTo($coursefile), $this->arrayHasKey('courseshortname'));
+            ->with(
+                $this->equalTo($coursefile),
+                $this->equalTo($precheckresult),
+                $this->equalTo($mockparent)
+            );
+
+        // Simulate success message generation.
+        $installer->expects($this->once())
+            ->method('get_success_message')
+            ->with($this->equalTo($precheckresult))
+            ->willReturn('Course restored successfully.');
 
         // Use reflection to invoke the protected method install_course.
         $reflection = new \ReflectionClass($installer);
@@ -134,7 +165,10 @@ class coursesinstaller_test extends advanced_testcase {
         $method->setAccessible(true); // Bypass the protected access level.
 
         // Call the method using reflection.
-        $method->invoke($installer, $coursefile);
+        $result = $method->invoke($installer, $coursefile, $mockparent);
+
+        // Assert the method returns the expected value.
+        $this->assertEquals(1, $result, 'The install_course method did not return the expected value.');
     }
 
     /**
@@ -171,29 +205,45 @@ class coursesinstaller_test extends advanced_testcase {
         global $DB;
         $DB = $this->createMock(\moodle_database::class);
 
-        // Define the expected result for the lowest category.
-        $expectedcategory = (object)[
+        // Mock timestamp property.
+        $installer = $this->getMockBuilder(\tool_wbinstaller\coursesInstaller::class)
+            ->setConstructorArgs([[]])
+            ->onlyMethods(['set_course_category'])
+            ->getMock();
+        $installer->timestamp = '2024-11-20_';
+
+        // Expected parent category and subcategory.
+        $expectedparentcategory = (object)[
             'id' => 1,
-            'name' => 'Miscellaneous',
+            'name' => 'WbInstall',
         ];
 
-        // Setup class and method
-        $installer = new coursesInstaller([]);
+        $expectedsubcategory = (object)[
+            'id' => 2,
+            'name' => '2024-11-20_SubCategory',
+        ];
+
+        // Test case: Both parent and subcategory do not exist.
+        $DB->expects($this->exactly(2))
+            ->method('get_record')
+            ->will($this->onConsecutiveCalls(null, null));
+
+        $installer->expects($this->exactly(2))
+            ->method('set_course_category')
+            ->withConsecutive(
+                ['WbInstall', null],
+                ['2024-11-20_SubCategory', $expectedparentcategory]
+            )
+            ->will($this->onConsecutiveCalls($expectedparentcategory, $expectedsubcategory));
+
         $reflection = new \ReflectionClass($installer);
         $method = $reflection->getMethod('get_course_category');
         $method->setAccessible(true);
 
-        //should return false as db empty
-        $result = $method->invoke($installer);
-        $this->assertEquals(null, $result, 'The returned value should be false.');
+        // Invoke the protected method.
+        $result = $method->invoke($installer, 'SubCategory');
 
-        // Mock the behavior of get_record_sql.
-        $DB->expects($this->once())
-            ->method('get_record_sql')
-            ->with('SELECT id, name FROM {course_categories} ORDER BY id ASC LIMIT 1')
-            ->willReturn($expectedcategory);
-
-        $result = $method->invoke($installer);
-        $this->assertEquals($expectedcategory, $result, 'The returned value does not match the expected.');
+        // Assert the returned subcategory.
+        $this->assertEquals($expectedsubcategory->name, $result->name, 'Expected subcategory was not returned.');
     }
 }

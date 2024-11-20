@@ -48,6 +48,9 @@ require_login();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class coursesInstaller extends wbInstaller {
+
+    /** @var string Timestamp for directory identification. */
+    public $timestamp;
     /**
      * Entities constructor.
      * @param mixed $recipe
@@ -55,6 +58,7 @@ class coursesInstaller extends wbInstaller {
     public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->timestamp = date('Y-m-d_H-i-s');
     }
 
     /**
@@ -66,7 +70,7 @@ class coursesInstaller extends wbInstaller {
     public function execute($extractpath, $parent = null) {
         $coursespath = $extractpath . $this->recipe['path'];
         foreach (glob("$coursespath/*") as $coursefile) {
-            $this->install_course($coursefile);
+            $this->install_course($coursefile, $parent);
         }
         return '1';
     }
@@ -92,12 +96,13 @@ class coursesInstaller extends wbInstaller {
     /**
      * Instal a single course.
      * @param string $coursefile
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return int
      */
-    protected function install_course($coursefile) {
+    protected function install_course($coursefile, $parent) {
         $precheck = $this->precheck($coursefile);
         if ($precheck) {
-            $this->restore_course($coursefile, $precheck);
+            $this->restore_course($coursefile, $precheck, $parent);
             $this->feedback['needed'][$precheck['courseshortname']]['success'][] = $this->get_success_message($precheck);
         }
         return 1;
@@ -204,9 +209,10 @@ class coursesInstaller extends wbInstaller {
      * Restore the course.
      * @param string $coursefile
      * @param string $precheck
+     * @param \tool_wbinstaller\wbCheck $parent
      * @return mixed
      */
-    protected function restore_course($coursefile, $precheck) {
+    protected function restore_course($coursefile, $precheck, $parent) {
         global $USER, $CFG, $DB;
         $destination = $CFG->tempdir . '/backup/' . basename($coursefile);
         if (!is_dir($destination)) {
@@ -217,7 +223,8 @@ class coursesInstaller extends wbInstaller {
               get_string('coursesfailextract', 'tool_wbinstaller');
             return;
         }
-        $category = $this->get_course_category();
+        $subcategoryname = preg_replace('/\.[^.]+$/', '', $parent->filename);
+        $category = $this->get_course_category($subcategoryname);
         if (!$category) {
             $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
               get_string('coursescategorynotfound', 'tool_wbinstaller');
@@ -296,12 +303,65 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Returns course category with lowest id or false to install courses.
-     *
+     * @param string $subcategoryname
      * @return mixed
      */
-    protected function get_course_category() {
+    protected function get_course_category($subcategoryname) {
         global $DB;
-        return $DB->get_record_sql('SELECT id, name FROM {course_categories} ORDER BY id ASC LIMIT 1');
+        $timestamedsubcategoryname =  $this->timestamp . $subcategoryname;
+        $parentcategoryname = 'WbInstall';
+        $parentcategory = $DB->get_record(
+          'course_categories',
+          ['name' => $parentcategoryname],
+          'id, name',
+        );
+
+        if (!$parentcategory) {
+          $parentcategory = $this->set_course_category($parentcategoryname, $parentcategory);
+        }
+        $subcategory = $DB->get_record(
+          'course_categories',
+          [
+            'name' => $timestamedsubcategoryname,
+            'parent' => $parentcategory->id,
+          ],
+          'id, name',
+        );
+        if (!$subcategory) {
+            $subcategory = $this->set_course_category($timestamedsubcategoryname, $parentcategory);
+        }
+        return $subcategory;
+    }
+
+    /**
+     * Returns course category with lowest id or false to install courses.
+     * @param string $parentcategoryname
+     * @param mixed $parentcategory
+     * @return mixed
+     */
+    protected function set_course_category($parentcategoryname, $parentcategory) {
+        global $DB;
+        $newcategory = new stdClass();
+        $newcategory->name = $parentcategoryname;
+        $newcategory->idnumber = null;
+        $newcategory->description = $parentcategoryname;
+        $newcategory->descriptionformat = FORMAT_HTML;
+        $newcategory->parent = $parentcategory->id ?? 0;
+        $newcategory->sortorder = 0;
+        $newcategory->visible = 1;
+        $newcategory->visibleold = 1;
+        $newcategory->timemodified = time();
+        $newcategory->depth = 1;
+        $newcategory->path = '';
+
+        // Insert the new category into the database.
+        $newcategory->id = $DB->insert_record('course_categories', $newcategory);
+
+        // Update the path and depth.
+        $newcategory->path = '/' . $newcategory->id;
+        $DB->update_record('course_categories', $newcategory);
+
+        return $newcategory;
     }
 
 
