@@ -21,7 +21,7 @@
               </button>
             </h4>
             <transition name="fold">
-              <ul v-show="!folded['plugin_mand']">
+              <ul v-show="!folded['plugin_mand'] && feedback.plugins">
                 <li v-for="(message, key) in feedback.plugins.needed" :key="key" style="margin-left: 20px; list-style-type: disc;">
                   <h4 style="text-decoration: underline;">
                     {{ key }}
@@ -81,7 +81,10 @@
         <h3>
           {{ store.state.strings['vue' + index + 'heading'] }}
         </h3>
-        <ul class="list-group">
+        <ul
+          v-if="feedbackparts"
+          class="list-group"
+        >
           <li class="list-group-item" v-for="(message, key) in feedbackparts.needed" :key="key">
             <h4
               style="text-decoration: underline;"

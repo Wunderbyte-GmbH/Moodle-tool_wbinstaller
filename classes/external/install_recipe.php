@@ -28,7 +28,6 @@ declare(strict_types=1);
 namespace tool_wbinstaller\external;
 
 use context;
-use core_external\external_multiple_structure;
 use external_api;
 use external_function_parameters;
 use external_value;

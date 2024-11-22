@@ -25,9 +25,6 @@
 
 namespace tool_wbinstaller;
 
-use moodle_exception;
-use ZipArchive;
-
 /**
  * Class tool_wbinstaller
  *
@@ -47,6 +44,8 @@ class wbCheck {
     public $matchingids;
     /** @var array Install errors. */
     public $finished;
+    /** @var wbHelper Install errors. */
+    public $wbhelper;
 
     /**
      * Entities constructor.
@@ -54,6 +53,7 @@ class wbCheck {
      * @param string $filename
      */
     public function __construct($recipe, $filename) {
+        $this->wbhelper = new wbHelper();
         $this->recipe = $recipe;
         $this->filename = $filename;
         $this->feedback = [];
@@ -66,8 +66,14 @@ class wbCheck {
      * @return array
      */
     public function execute() {
+        $this->wbhelper->clean_installment_directory();
         raise_memory_limit(MEMORY_EXTRA);
-        $extracted = $this->extract_save_zip_file();
+        $extracted = $this->wbhelper->extract_save_zip_file(
+            $this->recipe,
+            $this->feedback,
+            $this->filename,
+            'precheck/'
+        );
         if (!$extracted) {
             return [
                 'feedback' => $this->feedback,
@@ -79,34 +85,11 @@ class wbCheck {
             ];
         }
         $this->check_recipe($extracted);
-        $this->clean_after_installment();
+        $this->wbhelper->clean_installment_directory();
         return [
             'feedback' => $this->feedback,
             'finished' => $this->finished,
         ];
-    }
-
-    /**
-     * Extract and save the zipped file.
-     * @return int
-     *
-     */
-    public function clean_after_installment() {
-        global $CFG;
-        $pluginpath = $CFG->tempdir . '/zip/';
-        $items = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($pluginpath, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-        foreach ($items as $item) {
-            $path = $item->getRealPath();
-            if ($item->isDir()) {
-                rmdir($path);
-            } else {
-                unlink($path);
-            }
-        }
-        return rmdir($pluginpath);
     }
 
     /**
@@ -116,115 +99,30 @@ class wbCheck {
      *
      */
     public function check_recipe($extracted) {
-        global $CFG;
-        $directory = $CFG->tempdir . '/zip/precheck/';
-
-        // Scan the directory for folders.
-        $folders = scandir($directory);
-
-        foreach ($folders as $folder) {
-            // Skip current and parent directory pointers.
-            if ($folder === '.' || $folder === '..') {
-                continue;
-            }
-
-            $extractpath = $directory . $folder . DIRECTORY_SEPARATOR;
-            // Check if the current item is a directory.
-            if (is_dir($extractpath)) {
-                $extractpathrecipe = $extractpath . 'recipe.json';
-
-                // Check if recipe.json exists in the folder.
-                if (file_exists($extractpathrecipe)) {
-                    // Optionally read and process the JSON file.
-                    $jsonstring = file_get_contents($extractpathrecipe);
-                    $jsoncontent = json_decode($jsonstring, true);
-
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        throw new moodle_exception('norecipefound', 'tool_wbinstaller');
+        $directorydata = $this->wbhelper->get_directory_data('/zip/precheck/');
+        if ($directorydata['jsoncontent']) {
+            foreach ($directorydata['jsoncontent']['steps'] as $step) {
+                foreach ($step as $steptype) {
+                    $installerclass = __NAMESPACE__ . '\\' . $steptype . 'Installer';
+                    if (
+                        class_exists($installerclass) &&
+                        isset($directorydata['jsoncontent'][$steptype])
+                    ) {
+                        $instance = new $installerclass($directorydata['jsoncontent'][$steptype]);
+                        $instance->check($directorydata['extractpath'], $this);
+                        $this->feedback[$steptype] = $instance->get_feedback();
+                        $this->matchingids[$steptype] = $instance->get_matchingids();
+                    } else {
+                        $this->feedback[$steptype]['needed'][$steptype]['error'][] =
+                            get_string('classnotfound', 'tool_wbinstaller', $steptype);
                     }
                 }
             }
-        }
-
-        //$jsonarray = json_decode($jsonstring, true);
-        //$this->get_current_step($jsonstring, count($jsonarray['steps']));
-        foreach ($jsoncontent['steps'] as $step) {
-            foreach ($step as $steptype) {
-                $installerclass = __NAMESPACE__ . '\\' . $steptype . 'Installer';
-                if (
-                    class_exists($installerclass) &&
-                    isset($jsoncontent[$steptype])
-                ) {
-                    $instance = new $installerclass($jsoncontent[$steptype]);
-                    $instance->check($extractpath, $this);
-                    $this->feedback[$steptype] = $instance->get_feedback();
-                    $this->matchingids[$steptype] = $instance->get_matchingids();
-                } else {
-                    $this->feedback[$steptype]['needed'][$steptype]['error'][] =
-                        get_string('classnotfound', 'tool_wbinstaller', $steptype);
-                }
-            }
+        } else {
+            $this->feedback['wbinstaller']['error'][] =
+                get_string('installerfailopen', 'tool_wbinstaller');
         }
         return true;
-    }
-
-    /**
-     * Extract and save the zipped file.
-     * @return string
-     *
-     */
-    public function extract_save_zip_file() {
-        global $CFG;
-        $base64string = $this->recipe;
-        if (preg_match('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', $this->recipe)) {
-            $base64string = preg_replace('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', '', $this->recipe);
-        }
-
-        if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
-            $this->feedback['error'][] =
-              get_string('installervalidbase', 'tool_wbinstaller');
-            return false;
-        }
-        $filecontent = base64_decode($base64string, true);
-        if ($filecontent === false || empty($filecontent)) {
-            $this->feedback['error'][] =
-              get_string('installerdecodebase', 'tool_wbinstaller');
-            return false;
-        }
-        $pluginpath = $CFG->tempdir . '/zip/';
-        $zipfilepath = $pluginpath . 'precheck_zip';
-        if (!is_dir($pluginpath)) {
-            mkdir($pluginpath, 0777, true);
-        }
-        if (file_put_contents($zipfilepath, $filecontent) === false) {
-            $this->feedback['error'][] =
-              get_string('installerwritezip', 'tool_wbinstaller');
-            return false;
-        }
-        unset($filecontent);
-        if (!file_exists($zipfilepath)) {
-            $this->feedback['error'][] =
-              get_string('installerwritezip', 'tool_wbinstaller', $zipfilepath);
-            return false;
-        }
-        if (!is_readable($zipfilepath)) {
-            $this->feedback['error'][] =
-              get_string('installerfilenotreadable', 'tool_wbinstaller', $zipfilepath);
-            return false;
-        }
-        $zip = new ZipArchive();
-        if ($zip->open($zipfilepath) === true) {
-            $extractpath = $pluginpath . 'precheck/';
-            if (!is_dir($extractpath)) {
-                mkdir($extractpath, 0777, true);
-            }
-            $zip->extractTo($extractpath);
-            $zip->close();
-        } else {
-            $this->feedback['error'][] =
-              get_string('installerfailopen', 'tool_wbinstaller');
-        }
-        return $extractpath;
     }
 
     /**

@@ -58,6 +58,8 @@ class wbInstaller {
     public $matchingids;
     /** @var mixed Parent data */
     public $parent;
+    /** @var wbHelper Install errors. */
+    public $wbhelper;
 
     /**
      * Entities constructor.
@@ -66,6 +68,7 @@ class wbInstaller {
      * @param string $optionalplugins
      */
     public function __construct($recipe, $filename = null, $optionalplugins = null) {
+        $this->wbhelper = new wbHelper();
         $this->filename = $filename;
         $this->recipe = $recipe;
         $this->progress = 0;
@@ -91,8 +94,17 @@ class wbInstaller {
      * @return array
      */
     public function execute($extractpath, $parent = null) {
+        $this->wbhelper->clean_installment_directory();
         raise_memory_limit(MEMORY_EXTRA);
-        $extracted = $this->extract_save_zip_file();
+        $extracted = $this->wbhelper->extract_save_zip_file(
+            $this->recipe,
+            $this->feedback,
+            $this->filename,
+            'extracted/'
+        );
+        if (isset($this->feedback['wbinstaller']['error'])) {
+            $this->set_status(2);
+        }
         if (!$extracted) {
             return [
                 'feedback' => $this->feedback,
@@ -104,7 +116,7 @@ class wbInstaller {
             ];
         }
         $response = $this->execute_recipe($extracted);
-        $this->clean_after_installment();
+        $this->wbhelper->clean_installment_directory();
         return $response;
     }
 
@@ -115,18 +127,18 @@ class wbInstaller {
      *
      */
     public function execute_recipe($extracted) {
-        $recipefolder = $extracted . str_replace('.zip', '', $this->filename) . '/';
-        $jsonstring = file_get_contents($recipefolder . 'recipe.json');
-        $jsonarray = json_decode($jsonstring, true);
-        $currentstep = $this->get_current_step($jsonstring, count($jsonarray['steps']));
-        foreach ($jsonarray['steps'][$currentstep] as $steptype) {
+        $directorydata = $this->wbhelper->get_directory_data('/zip/extracted/');
+        $currentstep = $this->get_current_step(
+            $directorydata['jsonstring'],
+            count($directorydata['jsoncontent']['steps']));
+        foreach ($directorydata['jsoncontent']['steps'][$currentstep] as $steptype) {
             $installerclass = __NAMESPACE__ . '\\' . $steptype . 'Installer';
             if (
                 class_exists($installerclass) &&
-                isset($jsonarray[$steptype])
+                isset($directorydata['jsoncontent'][$steptype])
             ) {
-                $instance = new $installerclass($jsonarray[$steptype]);
-                $instance->execute($recipefolder, $this);
+                $instance = new $installerclass($directorydata['jsoncontent'][$steptype]);
+                $instance->execute($directorydata['extractpath'], $this);
                 if ($instance->upgraderunning != 0) {
                     $this->upgraderunning = $instance->upgraderunning;
                 }
@@ -138,7 +150,7 @@ class wbInstaller {
                     get_string('classnotfound', 'tool_wbinstaller', $steptype);
             }
         }
-        $finished = $this->set_current_step($jsonstring);
+        $finished = $this->set_current_step($directorydata['jsonstring']);
 
         return [
             'feedback' => $this->feedback,
@@ -202,90 +214,6 @@ class wbInstaller {
 
         $DB->insert_record('tool_wbinstaller_install', $newrecord);
         return 0;
-    }
-
-
-    /**
-     * Extract and save the zipped file.
-     * @return int
-     *
-     */
-    public function clean_after_installment() {
-        global $CFG;
-        $pluginpath = $CFG->tempdir . '/zip/';
-        $items = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($pluginpath, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-        foreach ($items as $item) {
-            $path = $item->getRealPath();
-            if ($item->isDir()) {
-                rmdir($path);
-            } else {
-                unlink($path);
-            }
-        }
-        return rmdir($pluginpath);
-    }
-
-    /**
-     * Extract and save the zipped file.
-     * @return string
-     *
-     */
-    public function extract_save_zip_file() {
-        global $CFG;
-        $extractpath = null;
-        $base64string = $this->recipe;
-        if (preg_match('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', $this->recipe)) {
-            $base64string = preg_replace('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', '', $this->recipe);
-        }
-
-        $filecontent = base64_decode($base64string, true);
-
-        if ($filecontent === false || empty($filecontent)) {
-            $this->feedback['wbinstaller']['error'][] =
-              get_string('installervalidbase', 'tool_wbinstaller');
-            $this->set_status(2);
-            return false;
-        }
-        $pluginpath = $CFG->tempdir . '/zip/';
-        $zipfilepath = $pluginpath . $this->filename;
-        if (!is_dir($pluginpath)) {
-            mkdir($pluginpath, 0777, true);
-        }
-        if (file_put_contents($zipfilepath, $filecontent) === false) {
-            $this->feedback['wbinstaller']['error'][] =
-              get_string('installerwritezip', 'tool_wbinstaller');
-            $this->set_status(2);
-            return false;
-        }
-        unset($filecontent);
-        if (!file_exists($zipfilepath)) {
-            $this->feedback['wbinstaller']['error'][] =
-              get_string('installerfilenotfound', 'tool_wbinstaller', $zipfilepath);
-            $this->set_status(2);
-            return false;
-        }
-        if (!is_readable($zipfilepath)) {
-            $this->feedback['wbinstaller']['error'][] =
-              get_string('installerfilenotreadable', 'tool_wbinstaller', $zipfilepath);
-            $this->set_status(2);
-            return false;
-        }
-        $zip = new ZipArchive;
-        if ($zip->open($zipfilepath) === true) {
-            $extractpath = $pluginpath . 'extracted/';
-
-            if (!is_dir($extractpath)) {
-                mkdir($extractpath, 0777, true);
-            }
-            $zip->extractTo($extractpath);
-            $zip->close();
-        } else {
-            return get_string('installerfailopen', 'tool_wbinstaller');
-        }
-        return $extractpath;
     }
 
     /**

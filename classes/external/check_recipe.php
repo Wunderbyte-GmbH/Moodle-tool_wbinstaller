@@ -28,13 +28,11 @@ declare(strict_types=1);
 namespace tool_wbinstaller\external;
 
 use context;
-use core_external\external_multiple_structure;
 use external_api;
 use external_function_parameters;
 use external_value;
 use external_single_structure;
 use tool_wbinstaller\wbCheck;
-use tool_wbinstaller\wbInstaller;
 
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
