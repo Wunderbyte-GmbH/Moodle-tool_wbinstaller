@@ -117,7 +117,6 @@ class wbCheck {
      */
     public function check_recipe($extracted) {
         global $CFG;
-
         $directory = $CFG->tempdir . '/zip/precheck/';
 
         // Scan the directory for folders.
@@ -129,15 +128,15 @@ class wbCheck {
                 continue;
             }
 
-            $folderpath = $directory . DIRECTORY_SEPARATOR . $folder;
+            $extractpath = $directory . $folder . DIRECTORY_SEPARATOR;
             // Check if the current item is a directory.
-            if (is_dir($folderpath)) {
-                $extractpath = $folderpath . DIRECTORY_SEPARATOR . 'recipe.json';
+            if (is_dir($extractpath)) {
+                $extractpathrecipe = $extractpath . 'recipe.json';
 
                 // Check if recipe.json exists in the folder.
-                if (file_exists($extractpath)) {
+                if (file_exists($extractpathrecipe)) {
                     // Optionally read and process the JSON file.
-                    $jsonstring = file_get_contents($extractpath);
+                    $jsonstring = file_get_contents($extractpathrecipe);
                     $jsoncontent = json_decode($jsonstring, true);
 
                     if (json_last_error() !== JSON_ERROR_NONE) {
@@ -147,16 +146,16 @@ class wbCheck {
             }
         }
 
-        $jsonarray = json_decode($jsonstring, true);
-        $this->get_current_step($jsonstring, count($jsonarray['steps']));
-        foreach ($jsonarray['steps'] as $step) {
+        //$jsonarray = json_decode($jsonstring, true);
+        //$this->get_current_step($jsonstring, count($jsonarray['steps']));
+        foreach ($jsoncontent['steps'] as $step) {
             foreach ($step as $steptype) {
                 $installerclass = __NAMESPACE__ . '\\' . $steptype . 'Installer';
                 if (
                     class_exists($installerclass) &&
-                    isset($jsonarray[$steptype])
+                    isset($jsoncontent[$steptype])
                 ) {
-                    $instance = new $installerclass($jsonarray[$steptype]);
+                    $instance = new $installerclass($jsoncontent[$steptype]);
                     $instance->check($extractpath, $this);
                     $this->feedback[$steptype] = $instance->get_feedback();
                     $this->matchingids[$steptype] = $instance->get_matchingids();

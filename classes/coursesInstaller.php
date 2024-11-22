@@ -153,6 +153,8 @@ class coursesInstaller extends wbInstaller {
             $this->feedback['needed'][$courseshortname]['warning'][] =
               get_string('coursesduplicateshortname', 'tool_wbinstaller', $courseshortname);
             return 0;
+        } else {
+            $this->matchingids['courses'][$courseoriginalid] = $courseoriginalid;
         }
         return [
             "courseshortname" => $courseshortname,
@@ -311,21 +313,21 @@ class coursesInstaller extends wbInstaller {
         $timestamedsubcategoryname = $this->timestamp . $subcategoryname;
         $parentcategoryname = 'WbInstall';
         $parentcategory = $DB->get_record(
-          'course_categories',
-          ['name' => $parentcategoryname],
-          'id, name',
+            'course_categories',
+            ['name' => $parentcategoryname],
+            'id, name',
         );
 
         if (!$parentcategory) {
             $parentcategory = $this->set_course_category($parentcategoryname, $parentcategory);
         }
         $subcategory = $DB->get_record(
-          'course_categories',
-          [
-            'name' => $timestamedsubcategoryname,
-            'parent' => $parentcategory->id,
-          ],
-          'id, name',
+            'course_categories',
+            [
+              'name' => $timestamedsubcategoryname,
+              'parent' => $parentcategory->id,
+            ],
+            'id, name',
         );
         if (!$subcategory) {
             $subcategory = $this->set_course_category($timestamedsubcategoryname, $parentcategory);

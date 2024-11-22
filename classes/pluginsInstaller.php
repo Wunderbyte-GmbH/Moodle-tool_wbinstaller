@@ -177,7 +177,9 @@ class pluginsInstaller extends wbInstaller {
      * @return int
      */
     public function check_plugin_compability($gitzipurl, $type, $execute = false) {
+        global $CFG;
         $this->plugincontent = $this->get_github_file_content($gitzipurl);
+        $settingsurl = new moodle_url('/admin/settings.php', ['section' => 'tool_wbinstaller']);
         if ($this->plugincontent) {
             $plugin = $this->parse_version_file($this->plugincontent);
             if (isset($plugin['component'])) {
@@ -197,6 +199,8 @@ class pluginsInstaller extends wbInstaller {
                     }
                     $this->feedback[$type][$plugin['component']]['warning'][] =
                         get_string('targetdirnotwritable', 'tool_wbinstaller', $feedbacktarget);
+                    $this->feedback[$type][$plugin['component']]['warning'][] =
+                        get_string('targetdirwritablecommand', 'tool_wbinstaller', $targetdir);
                     $this->set_status(2);
                     if ($execute) {
                         return 2;
@@ -215,7 +219,13 @@ class pluginsInstaller extends wbInstaller {
                     if ($execute) {
                         return $plugin['component'];
                     }
-                } else if ($a->installedversion <= $a->componentversion) {
+                } else if ($a->installedversion == $a->componentversion) {
+                    $this->feedback[$type][$plugin['component']]['warning'][] =
+                      get_string('pluginsame', 'tool_wbinstaller', $a);
+                    if ($execute) {
+                        return 2;
+                    }
+                } else if ($a->installedversion < $a->componentversion) {
                     $this->feedback[$type][$plugin['component']]['warning'][] =
                       get_string('pluginolder', 'tool_wbinstaller', $a);
                     if ($execute) {
@@ -224,7 +234,7 @@ class pluginsInstaller extends wbInstaller {
                 }
             } else {
                 $this->feedback[$type][$plugin['component']]['error'][] =
-                  get_string('pluginfailedinformation', 'tool_wbinstaller');
+                  get_string('pluginfailedinformation', 'tool_wbinstaller', $settingsurl->out());
                 $this->set_status(2);
                 if ($execute) {
                     return 2;
@@ -232,7 +242,7 @@ class pluginsInstaller extends wbInstaller {
             }
         } else {
             $this->feedback[$type][$gitzipurl]['error'][] =
-              get_string('pluginfailedinformation', 'tool_wbinstaller');
+              get_string('pluginfailedinformation', 'tool_wbinstaller', $settingsurl->out());
             $this->set_status(2);
             if ($execute) {
                 return 2;

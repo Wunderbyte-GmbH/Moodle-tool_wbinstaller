@@ -25,6 +25,8 @@
 
 namespace tool_wbinstaller;
 
+use stdClass;
+
 /**
  * Class tool_wbinstaller
  *
@@ -100,12 +102,35 @@ class learningpathsInstaller extends wbInstaller {
                         unset($learningpath['id']);
                     }
                     $learningpath['json'] = json_encode($learningpath['json']);
-                    $DB->insert_record($this->fileinfo, $learningpath);
+                    $learningpathid = $DB->insert_record($this->fileinfo, $learningpath); // TODO: update m_adele id
+                    $this->update_adele_activity_id($learningpath, $learningpathid);
                 }
                 $this->feedback['needed'][$learningpath['name']]['success'][] =
                     get_string('newlocaldatafilefound', 'tool_wbinstaller', $learningpath['name']);
             }
         }
+    }
+
+    /**
+     * Exceute the installer.
+     * @param array $learningpath
+     * @param string $learningpathid
+     */
+    public function update_adele_activity_id($learningpath, $learningpathid) {
+        global $DB;
+        $record = $DB->get_record('adele',
+            [
+                'name' => $learningpath['name'],
+            ]
+        );
+        if ($record) {
+            $record->learningpathid = $learningpathid;
+            $DB->update_record('adele', $record);
+        } else {
+            $this->feedback['needed'][$learningpath['name']]['error'][] =
+                get_string('nomoddatafilefound', 'tool_wbinstaller', $learningpath['name']);
+        }
+        return;
     }
 
     /**

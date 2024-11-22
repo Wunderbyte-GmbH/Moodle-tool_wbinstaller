@@ -11,9 +11,7 @@
       <div v-else>
         <ul>
           <li v-for="error in message.error" :key="error" class="error-text">
-            <span>
-              {{ isFolded(error) ? error.slice(0, maxLength) + '...' : error }}
-            </span>
+            <span v-html="isFolded(error) ? error.slice(0, maxLength) + '...' : error"></span>
             <button
               v-if="error.length > maxLength"
               @click="toggleFolded(error)"
