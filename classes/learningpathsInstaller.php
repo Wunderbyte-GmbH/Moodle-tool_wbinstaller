@@ -102,7 +102,7 @@ class learningpathsInstaller extends wbInstaller {
                         unset($learningpath['id']);
                     }
                     $learningpath['json'] = json_encode($learningpath['json']);
-                    $learningpathid = $DB->insert_record($this->fileinfo, $learningpath); // TODO: update m_adele id
+                    $learningpathid = $DB->insert_record($this->fileinfo, $learningpath);
                     $this->update_adele_activity_id($learningpath, $learningpathid);
                 }
                 $this->feedback['needed'][$learningpath['name']]['success'][] =

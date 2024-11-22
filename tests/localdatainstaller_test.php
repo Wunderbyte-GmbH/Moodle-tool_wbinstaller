@@ -214,9 +214,4 @@ class localdatainstaller_test extends advanced_testcase {
             2 => 20,
         ], $matcher);
     }
-
-    /**
-     * Tests function that translate the links inside feedbacks strings that ref to courses.
-     * @covers ::translate_string_links
-     */
 }

@@ -130,7 +130,8 @@ class wbInstaller {
         $directorydata = $this->wbhelper->get_directory_data('/zip/extracted/');
         $currentstep = $this->get_current_step(
             $directorydata['jsonstring'],
-            count($directorydata['jsoncontent']['steps']));
+            count($directorydata['jsoncontent']['steps'])
+        );
         foreach ($directorydata['jsoncontent']['steps'][$currentstep] as $steptype) {
             $installerclass = __NAMESPACE__ . '\\' . $steptype . 'Installer';
             if (
