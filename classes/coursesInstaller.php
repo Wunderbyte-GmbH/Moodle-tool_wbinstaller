@@ -408,15 +408,31 @@ class coursesInstaller extends wbInstaller {
             backup::TARGET_NEW_COURSE
         );
 
-        if (!$rc->execute_precheck()) {
-            $rc->destroy();
-        }
         try {
+            if (!$rc->execute_precheck()) {
+                $results = $rc->get_precheck_results();
+
+                foreach ($results['warnings'] as $warning) {
+                    $this->feedback['needed'][$newcourse->shortname]['warning'][] = $warning->message;
+                }
+
+                foreach ($results['errors'] as $error) {
+                    $this->feedback['needed'][$newcourse->shortname]['error'][] = $error->message;
+                }
+                $rc->destroy();
+                fulldelete($destination);
+                return;
+            }
+
+            // Execute the restore plan.
             $rc->execute_plan();
-            $rc->destroy();
-            fulldelete($destination);
         } catch (\Exception $e) {
-            rebuild_course_cache($newcourse->id, true);
+            // Capture any exceptions during the restore process.
+            $this->feedback['needed'][$newcourse->shortname]['error'][] =
+                get_string('restoreerror', 'tool_wbinstaller', $e->getMessage());
+        } finally {
+            // Always clean up resources.
+            $rc->destroy();
             fulldelete($destination);
         }
     }

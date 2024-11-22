@@ -118,7 +118,8 @@ class learningpathsInstaller extends wbInstaller {
      */
     public function update_adele_activity_id($learningpath, $learningpathid) {
         global $DB;
-        $record = $DB->get_record('adele',
+        $record = $DB->get_record(
+            'adele',
             [
                 'name' => $learningpath['name'],
             ]
