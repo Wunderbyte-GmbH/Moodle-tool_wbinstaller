@@ -139,13 +139,18 @@ class wbInstaller {
                 isset($directorydata['jsoncontent'][$steptype])
             ) {
                 $instance = new $installerclass($directorydata['jsoncontent'][$steptype]);
-                $instance->execute($directorydata['extractpath'], $this);
-                if ($instance->upgraderunning != 0) {
-                    $this->upgraderunning = $instance->upgraderunning;
+                if ($instance !== null) {
+                    $instance->execute($directorydata['extractpath'], $this);
+                    if ($instance->upgraderunning != 0) {
+                        $this->upgraderunning = $instance->upgraderunning;
+                    }
+                    $this->feedback[$steptype] = $instance->get_feedback();
+                    $this->matchingids[$steptype] = $instance->get_matchingids();
+                    $this->set_status($instance->get_status());
+                } else {
+                    $this->feedback[$steptype]['needed'][$steptype]['error'][] =
+                        get_string('classnotfound', 'tool_wbinstaller', 'TESTING');
                 }
-                $this->feedback[$steptype] = $instance->get_feedback();
-                $this->matchingids[$steptype] = $instance->get_matchingids();
-                $this->set_status($instance->get_status());
             } else {
                 $this->feedback[$steptype]['needed'][$steptype]['error'][] =
                     get_string('classnotfound', 'tool_wbinstaller', $steptype);
