@@ -25,6 +25,7 @@
 
 namespace tool_wbinstaller;
 
+use moodle_exception;
 use ZipArchive;
 
 /**
@@ -116,13 +117,36 @@ class wbCheck {
      */
     public function check_recipe($extracted) {
         global $CFG;
-        $extractpath = $CFG->tempdir . '/zip/precheck/' . str_replace('.zip', '', $this->filename) . '/';
-        $jsonstring =
-          file_get_contents(
-            $extracted .
-            str_replace('.zip', '', $this->filename) .
-            '/recipe.json'
-        );
+
+        $directory = $CFG->tempdir . '/zip/precheck/';
+
+        // Scan the directory for folders.
+        $folders = scandir($directory);
+
+        foreach ($folders as $folder) {
+            // Skip current and parent directory pointers.
+            if ($folder === '.' || $folder === '..') {
+                continue;
+            }
+
+            $folderpath = $directory . DIRECTORY_SEPARATOR . $folder;
+            // Check if the current item is a directory.
+            if (is_dir($folderpath)) {
+                $extractpath = $folderpath . DIRECTORY_SEPARATOR . 'recipe.json';
+
+                // Check if recipe.json exists in the folder.
+                if (file_exists($extractpath)) {
+                    // Optionally read and process the JSON file.
+                    $jsonstring = file_get_contents($extractpath);
+                    $jsoncontent = json_decode($jsonstring, true);
+
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new moodle_exception('norecipefound', 'tool_wbinstaller');
+                    }
+                }
+            }
+        }
+
         $jsonarray = json_decode($jsonstring, true);
         $this->get_current_step($jsonstring, count($jsonarray['steps']));
         foreach ($jsonarray['steps'] as $step) {
