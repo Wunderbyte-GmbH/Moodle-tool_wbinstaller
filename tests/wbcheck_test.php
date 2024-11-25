@@ -52,7 +52,9 @@ class wbcheck_test extends advanced_testcase {
         // Mock check_recipe to simulate checking the extracted content.
         $check->expects($this->once())
             ->method('check_recipe')
-            ->with('/var/www/phpunitdata/temp/zip/precheck/')
+            ->with($this->callback(function ($path) {
+                return strpos($path, '/temp/zip/precheck/') !== false;
+            }))
             ->willReturn(true);
 
         // Call the execute method and check the result.
