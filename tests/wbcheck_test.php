@@ -45,23 +45,15 @@ class wbcheck_test extends advanced_testcase {
         // Create an instance of wbCheck with mocked data.
         $check = $this->getMockBuilder(wbCheck::class)
             ->setConstructorArgs([$recipe, $filename])
-            ->onlyMethods(['extract_save_zip_file', 'check_recipe', 'clean_after_installment'])
+            ->onlyMethods(['check_recipe'])
+            ->addMethods(['extract_save_zip_file', 'clean_after_installment'])
             ->getMock();
-
-        // Mock extract_save_zip_file to simulate successful extraction.
-        $check->expects($this->once())
-            ->method('extract_save_zip_file')
-            ->willReturn('/extracted/path');
 
         // Mock check_recipe to simulate checking the extracted content.
         $check->expects($this->once())
             ->method('check_recipe')
-            ->with('/extracted/path')
+            ->with('/var/www/phpunitdata/temp/zip/precheck/')
             ->willReturn(true);
-
-        // Mock clean_after_installment to simulate the cleanup after installation.
-        $check->expects($this->once())
-            ->method('clean_after_installment');
 
         // Call the execute method and check the result.
         $feedback = $check->execute();

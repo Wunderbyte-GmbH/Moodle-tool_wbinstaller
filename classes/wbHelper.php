@@ -103,7 +103,7 @@ class wbHelper {
 
     /**
      * Extract and save the zipped file.
-     * @param string $recipe
+     * @param mixed $recipe
      * @param array $feedback
      * @param string $filename
      * @param string $extractdirectory
@@ -150,8 +150,8 @@ class wbHelper {
             return false;
         }
         $zip = new ZipArchive();
+        $extractpath = $pluginpath . $extractdirectory;
         if ($zip->open($zipfilepath) === true) {
-            $extractpath = $pluginpath . $extractdirectory;
             if (!is_dir($extractpath)) {
                 mkdir($extractpath, 0777, true);
             }
