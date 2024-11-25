@@ -65,6 +65,7 @@ class wbHelper {
 
     /**
      * Extract and save the zipped file.
+     * @param string $directorysubfolder
      * @return array
      *
      */
@@ -102,6 +103,10 @@ class wbHelper {
 
     /**
      * Extract and save the zipped file.
+     * @param string $recipe
+     * @param array $feedback
+     * @param string $filename
+     * @param string $extractdirectory
      * @return string
      *
      */

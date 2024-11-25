@@ -120,7 +120,6 @@ class pluginsInstaller extends wbInstaller {
             if (!empty($installables)) {
                 $this->trigger_upgrade_after_plugin_install($installables);
             }
-
         }
         return 1;
     }
@@ -393,26 +392,26 @@ class pluginsInstaller extends wbInstaller {
             }
             $zip = new \ZipArchive();
             if ($zip->open($zipfile) === true) {
-                $tempdir = $targetdir . '/temp_extract_' . $pluginname;
-                if (!is_dir($tempdir)) {
-                    $result = mkdir($tempdir, 0777, true);
+                $tempdirplugin = str_replace('.zip', '', $zipfile);
+                if (!is_dir($tempdirplugin)) {
+                    $result = mkdir($tempdirplugin, 0777, true);
                     if (!$result) {
                         // Similar check for temporary directory creation.
-                        if (is_dir($tempdir)) {
+                        if (is_dir($tempdirplugin)) {
                             $this->feedback[$installable->type][$component]['error'][] =
-                              get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdir);
+                              get_string('jsonfailalreadyexist', 'tool_wbinstaller', $tempdirplugin);
                         } else {
                             $this->feedback[$installable->type][$component]['error'][] =
-                              get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $tempdir);
+                              get_string('jsonfailinsufficientpermission', 'tool_wbinstaller', $tempdirplugin);
                         }
                     }
                 }
-                $zip->extractTo($tempdir);
+                $zip->extractTo($tempdirplugin);
                 $zip->close();
                 $extracteddirname = null;
-                $handle = opendir($tempdir);
+                $handle = opendir($tempdirplugin);
                 while (($entry = readdir($handle)) !== false) {
-                    if ($entry != '.' && $entry != '..' && is_dir($tempdir . '/' . $entry)) {
+                    if ($entry != '.' && $entry != '..' && is_dir($tempdirplugin . '/' . $entry)) {
                         $extracteddirname = $entry;
                         break;
                     }
@@ -420,8 +419,8 @@ class pluginsInstaller extends wbInstaller {
                 closedir($handle);
                 if ($extracteddirname) {
                     $finaldir = $targetdir . '/' . $pluginname;
-                    rename($tempdir . '/' . $extracteddirname, $finaldir);
-                    rmdir($tempdir);
+                    rename($tempdirplugin . '/' . $extracteddirname, $finaldir);
+                    rmdir($tempdirplugin);
                     $this->feedback[$installable->type][$installable->component] = [
                         'success' => [
                           get_string('upgradeplugincompleted', 'tool_wbinstaller', $installable->component),
