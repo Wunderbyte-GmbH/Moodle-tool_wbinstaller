@@ -245,7 +245,11 @@ class coursesInstaller extends wbInstaller {
         $newcourse->newsitems = 0;
         $newcourse = create_course($newcourse);
         $this->matchingids['courses'][$precheck['courseoriginalid']] = $newcourse->id;
-        $this->restore_with_controller($coursefile, $newcourse);
+        $this->restore_with_controller(
+            $coursefile,
+            $newcourse,
+            $precheck['courseshortname']
+        );
         $this->force_course_visibility($newcourse->id);
         $this->update_matching_componentids(
             $coursefile,
@@ -261,7 +265,27 @@ class coursesInstaller extends wbInstaller {
             'quiz',
             'quizid'
         );
+        $this->delete_temporary_courses_categories($newcourse->shortname);
         return;
+    }
+
+    /**
+     * Recursively copies a directory.
+     * @param string $tempcourseshortname
+     *
+     */
+    protected function delete_temporary_courses_categories($tempcourseshortname) {
+        global $DB;
+        $course = $DB->get_record('course', ['shortname' => $tempcourseshortname]);
+        if ($course) {
+            $DB->delete_records('course', ['id' => $course->id]);
+            $category = \core_course_category::get($course->category);
+            // Check if there are courses in the category.
+            $categorycourses = $category->get_courses();
+            if (!$categorycourses) {
+                $category->delete_full();
+            }
+        }
     }
 
     /**
@@ -384,7 +408,11 @@ class coursesInstaller extends wbInstaller {
      * @param string $coursefile
      * @param object $newcourse
      */
-    protected function restore_with_controller($coursefile, $newcourse) {
+    protected function restore_with_controller(
+        $coursefile,
+        $newcourse,
+        $courseshortname
+    ) {
         global $USER, $CFG;
 
         // Path to the backup files (uncompressed course backup folder).
@@ -411,13 +439,11 @@ class coursesInstaller extends wbInstaller {
         try {
             if (!$rc->execute_precheck()) {
                 $results = $rc->get_precheck_results();
-
                 foreach ($results['warnings'] as $warning) {
-                    $this->feedback['needed'][$newcourse->shortname]['warning'][] = $warning;
+                    $this->feedback['needed'][$courseshortname]['warning'][] = $warning;
                 }
-
                 foreach ($results['errors'] as $error) {
-                    $this->feedback['needed'][$newcourse->shortname]['error'][] = $error;
+                    $this->feedback['needed'][$courseshortname]['error'][] = $error;
                 }
                 $rc->destroy();
                 fulldelete($destination);

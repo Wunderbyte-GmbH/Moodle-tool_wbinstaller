@@ -385,12 +385,13 @@ class localdataInstaller extends wbInstaller {
         foreach ($oldscales as $oldscale) {
             if (in_array($oldscale + $scaledifference, $newscales)) {
                 $matcher[$oldscale] = $oldscale + $scaledifference;
-            } else {
-                $this->uploaddata = false;
-                $this->feedback['needed']['local_data']['error'][] =
-                    get_string('scalemismatchlocaldata', 'tool_wbinstaller');
-                return 0;
             }
+        }
+        if (count($matcher) != count($newscales)) {
+            $this->uploaddata = false;
+            $this->feedback['needed']['local_data']['error'][] =
+                get_string('scalemismatchlocaldata', 'tool_wbinstaller');
+            return 0;
         }
         $this->matchingids['catscales'] = $matcher;
         return $matcher;

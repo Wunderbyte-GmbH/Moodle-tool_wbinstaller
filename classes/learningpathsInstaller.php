@@ -128,7 +128,7 @@ class learningpathsInstaller extends wbInstaller {
             $record->learningpathid = $learningpathid;
             $DB->update_record('adele', $record);
         } else {
-            $this->feedback['needed'][$learningpath['name']]['error'][] =
+            $this->feedback['needed'][$learningpath['name']]['warning'][] =
                 get_string('nomoddatafilefound', 'tool_wbinstaller', $learningpath['name']);
         }
         return;

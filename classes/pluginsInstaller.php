@@ -178,7 +178,7 @@ class pluginsInstaller extends wbInstaller {
     public function check_plugin_compability($gitzipurl, $type, $execute = false) {
         global $CFG;
         $this->plugincontent = $this->get_github_file_content($gitzipurl);
-        $settingsurl = new moodle_url('/admin/settings.php', ['section' => 'tool_wbinstaller']);
+        $settingsurl = new moodle_url('/admin/settings.php', ['section' => 'tool_wbinstaller_settings']);
         if ($this->plugincontent) {
             $plugin = $this->parse_version_file($this->plugincontent);
             if (isset($plugin['component'])) {
