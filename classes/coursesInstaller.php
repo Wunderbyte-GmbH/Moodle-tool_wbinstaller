@@ -265,8 +265,34 @@ class coursesInstaller extends wbInstaller {
             'quiz',
             'quizid'
         );
+        $this->change_courses_mod_urls($newcourse);
         $this->delete_temporary_courses_categories($newcourse->shortname);
         return;
+    }
+
+    /**
+     * Recursively copies a directory.
+     * @param object $course
+     *
+     */
+    protected function change_courses_mod_urls($course) {
+        global $DB, $CFG;
+        $courseurls = $DB->get_record('url', ['course' => $course->id]);
+        foreach ($courseurls as $courseurl) {
+            if (str_contains($courseurl->externalurl, 'course/view.php?id=')) {
+                $parsedurl = parse_url($courseurl->externalurl);
+                $query = $parsedurl['query'];
+                parse_str($query, $params);
+                $oldid = $params['id'] ?? null;
+                $newid = $this->matchingids['courses'][$oldid];
+                if ($newid) {
+                    $courseurl->externalurl = $CFG->wwwroot . 'course/view.php?id=' . $newid;
+                } else {
+                    $this->feedback['needed'][$course->shortname]['warning'][] =
+                        get_string('invalidmodurl', 'tool_wbinstaller', $courseurl->externalurl);
+                }
+            }
+        }
     }
 
     /**
