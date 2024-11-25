@@ -57,7 +57,7 @@ class coursesinstaller_test extends advanced_testcase {
         // Create instance of coursesInstaller.
         $installer = $this->getMockBuilder(coursesInstaller::class)
             ->setConstructorArgs([$recipe])
-            ->onlyMethods(['install_course'])
+            ->onlyMethods(['change_courses_mod_urls', 'install_course'])
             ->getMock();
 
         // Mock the parent parameter.
@@ -70,6 +70,9 @@ class coursesinstaller_test extends advanced_testcase {
               [$this->equalTo($testcourse1), $this->equalTo($mockparent)],
               [$this->equalTo($testcourse2), $this->equalTo($mockparent)]
         );
+
+        $installer->expects($this->once())
+            ->method('change_courses_mod_urls');
 
         // Run the execute method.
         $installer->execute($extractpath, $mockparent);
@@ -244,5 +247,44 @@ class coursesinstaller_test extends advanced_testcase {
 
         // Assert the returned subcategory.
         $this->assertEquals($expectedsubcategory->name, $result->name, 'Expected subcategory was not returned.');
+    }
+
+    /**
+     * Test the change_courses_mod_urls method to ensure URLs are updated correctly.
+     * @covers ::change_courses_mod_urls
+     */
+    public function test_change_courses_mod_urls() {
+        global $DB, $CFG;
+
+        // Mock the database records for URL activities and matching course IDs.
+        $CFG->wwwroot = 'http://example.com';
+
+        $DB->insert_record('url', (object)[
+            'course' => 2,
+            'externalurl' => 'http://example.com/course/view.php?id=1',
+        ]);
+
+        // Create an instance of the installer with mock matching IDs.
+        $recipe = ['path' => '/testcourses']; // Provide a valid $recipe array.
+        // Create an instance of the installer.
+        $installer = new coursesInstaller($recipe);
+        $installer->matchingids = [
+            'courses' => [
+                3 => 2,
+                1 => 200,
+            ],
+        ];
+
+        // Use reflection to invoke the protected method change_courses_mod_urls.
+        $reflection = new \ReflectionClass($installer);
+        $method = $reflection->getMethod('change_courses_mod_urls');
+        $method->setAccessible(true);
+
+        // Call the method to perform the update.
+        $method->invoke($installer);
+
+        // Verify that the URL was updated in the database.
+        $updatedurl = $DB->get_record('url', ['course' => 2]);
+        $this->assertStringContainsString('/course/view.php?id=200', $updatedurl->externalurl, 'ID 23 should be transformed to 550.');
     }
 }
