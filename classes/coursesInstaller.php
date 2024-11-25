@@ -413,11 +413,11 @@ class coursesInstaller extends wbInstaller {
                 $results = $rc->get_precheck_results();
 
                 foreach ($results['warnings'] as $warning) {
-                    $this->feedback['needed'][$newcourse->shortname]['warning'][] = $warning->message;
+                    $this->feedback['needed'][$newcourse->shortname]['warning'][] = $warning;
                 }
 
                 foreach ($results['errors'] as $error) {
-                    $this->feedback['needed'][$newcourse->shortname]['error'][] = $error->message;
+                    $this->feedback['needed'][$newcourse->shortname]['error'][] = $error;
                 }
                 $rc->destroy();
                 fulldelete($destination);
