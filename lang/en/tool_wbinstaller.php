@@ -60,6 +60,7 @@ $string['coursessuccess'] = 'Successfully installed the course: {$a->courseshort
 $string['coursesfailextract'] = 'Failed to copy extracted files to the Moodle backup directory.';
 $string['coursescategorynotfound'] = 'Failed to find a suited course category for the courses to be installed.';
 $string['coursescategoryfound'] = 'Found the course category {$a} for the courses to be installed.';
+$string['invalidmodurl'] = 'The url could not be translated: {$a}';
 $string['coursesfailprecheck'] = 'Precheck failed for course restore: {$a}.';
 $string['customfieldfailupload'] = 'Category could not be uploaded!';
 $string['customfieldduplicate'] = 'Customfield {$a} shortname already exists!';

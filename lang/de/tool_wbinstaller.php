@@ -60,6 +60,7 @@ $string['coursessuccess'] = 'Der Kurs {$a->courseshortname} wurde erfolgreich au
 $string['coursesfailextract'] = 'Fehler beim Kopieren der extrahierten Dateien in das Moodle-Backup-Verzeichnis.';
 $string['coursescategorynotfound'] = 'Es wurde keine geeignete Kurskategory gefunden um die Kurse zu installieren.';
 $string['coursescategoryfound'] = 'Die Kurskategory {$a} wurde gefunden um die Kurse zu installieren.';
+$string['invalidmodurl'] = 'Die Url konnte nicht aktualisiert werden: {$a}';
 $string['coursesfailprecheck'] = 'Precheck für die Kurswiederherstellung fehlgeschlagen: {$a}.';
 $string['customfieldfailupload'] = 'Kategorie konnte nicht hochgeladen werden!';
 $string['customfieldduplicate'] = 'Customfield-Kurzname {$a} existiert bereits!';
