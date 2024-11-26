@@ -432,6 +432,7 @@ class coursesInstaller extends wbInstaller {
      *
      * @param string $coursefile
      * @param object $newcourse
+     * @param string $courseshortname
      */
     protected function restore_with_controller(
         $coursefile,

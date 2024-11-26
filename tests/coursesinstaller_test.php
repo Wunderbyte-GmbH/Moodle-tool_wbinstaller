@@ -67,9 +67,9 @@ class coursesinstaller_test extends advanced_testcase {
         $installer->expects($this->exactly(2))
             ->method('install_course')
             ->withConsecutive(
-              [$this->equalTo($testcourse1), $this->equalTo($mockparent)],
-              [$this->equalTo($testcourse2), $this->equalTo($mockparent)]
-        );
+                [$this->equalTo($testcourse1), $this->equalTo($mockparent)],
+                [$this->equalTo($testcourse2), $this->equalTo($mockparent)]
+            );
 
         $installer->expects($this->once())
             ->method('change_courses_mod_urls');
@@ -285,6 +285,10 @@ class coursesinstaller_test extends advanced_testcase {
 
         // Verify that the URL was updated in the database.
         $updatedurl = $DB->get_record('url', ['course' => 2]);
-        $this->assertStringContainsString('/course/view.php?id=200', $updatedurl->externalurl, 'ID 23 should be transformed to 550.');
+        $this->assertStringContainsString(
+            '/course/view.php?id=200',
+            $updatedurl->externalurl,
+            'ID 23 should be transformed to 550.'
+        );
     }
 }
