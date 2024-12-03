@@ -111,7 +111,7 @@ class pluginsInstaller extends wbInstaller {
                                 if (isset($installable->component)) {
                                     $installables[] = $installable->component;
                                 }
-                                $this->manual_install_plugins($installable);
+                                $this->manual_install_plugins($installable, $gitzipurl);
                             }
                         }
                     }
@@ -364,7 +364,7 @@ class pluginsInstaller extends wbInstaller {
      * Manual plugin installation.
      * @param stdClass $installable
      */
-    public function manual_install_plugins($installable) {
+    public function manual_install_plugins($installable, $giturl) {
         global $CFG, $DB;
         if (!empty($installable)) {
             $zipfile = $installable->zipfilepath;
@@ -416,11 +416,12 @@ class pluginsInstaller extends wbInstaller {
                         break;
                     }
                 }
-                closedir($handle);
+                closedir(dir_handle: $handle);
                 if ($extracteddirname) {
                     $finaldir = $targetdir . '/' . $pluginname;
                     rename($tempdirplugin . '/' . $extracteddirname, $finaldir);
                     rmdir($tempdirplugin);
+                    self::connect_to_github_repository($finaldir, $giturl);
                     $this->feedback[$installable->type][$installable->component] = [
                         'success' => [
                           get_string('upgradeplugincompleted', 'tool_wbinstaller', $installable->component),
@@ -438,6 +439,57 @@ class pluginsInstaller extends wbInstaller {
                 $this->set_status(2);
             }
         }
+    }
+
+    /**
+     * Function to trigger Moodle's upgrade.php script.
+     * @param string $directorypath
+     * @param string $gitzipurl
+     */
+    private static function connect_to_github_repository($directorypath, $gitzipurl) {
+        if (!is_dir($directorypath)) {
+            return;
+        }
+        self::initialize_git_drectory($directorypath);
+        self::set_remote_repository($directorypath, $gitzipurl);
+        return;
+    }
+
+    /**
+     * Initialize the git repo
+     * @param string $directorypath
+     * @param string $gitzipurl
+     */
+    private static function set_remote_repository($directorypath, $gitzipurl) {
+        $gitrepositoryurl = self::get_git_url_from_zip_url($gitzipurl);
+        $cmd = sprintf('cd %s && git remote add origin %s 2>&1', escapeshellarg($directorypath), escapeshellarg($gitrepositoryurl));
+        exec($cmd, $output, $retval);
+        return;
+    }
+
+    /**
+     * Initialize the git repo
+     * @param string $directorypath
+     */
+    private static function initialize_git_drectory($directorypath) {
+        $cmd = sprintf('cd %s && git init 2>&1', escapeshellarg($directorypath));
+        $output = [];
+        $retval = null;
+        exec($cmd, $output, $retval);
+        if ($retval !== 0) {
+            return;
+        }
+    }
+
+    /**
+     * Extract the git url from the zip url.
+     * @param string $zipurl
+     */
+    private static function get_git_url_from_zip_url($zipurl) {
+        $parsedurl = parse_url($zipurl);
+        $path = $parsedurl['path'];
+        $gitpath = preg_replace('#/archive/refs/(heads|tags)/.*$#', '.git', $path);
+        return $parsedurl['scheme'] . '://' . $parsedurl['host'] . $gitpath;
     }
 
     /**
