@@ -363,6 +363,7 @@ class pluginsInstaller extends wbInstaller {
     /**
      * Manual plugin installation.
      * @param stdClass $installable
+     * @param string $giturl
      */
     public function manual_install_plugins($installable, $giturl) {
         global $CFG, $DB;
@@ -471,7 +472,6 @@ class pluginsInstaller extends wbInstaller {
     /**
      * Initialize the git repo
      * @param string $directorypath
-     * @param string $gitzipurl
      */
     private static function mark_directory_as_save($directorypath) {
         $cmd = sprintf('git config --system --add safe.directory %s 2>&1', escapeshellarg($directorypath));
