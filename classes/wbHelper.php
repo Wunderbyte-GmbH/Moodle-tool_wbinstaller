@@ -77,7 +77,11 @@ class wbHelper {
 
         foreach ($folders as $folder) {
             // Skip current and parent directory pointers.
-            if ($folder === '.' || $folder === '..') {
+            $firstfolderchar = basename($folder)[0];
+            if (
+                $firstfolderchar === '.' ||
+                $firstfolderchar === '_'
+            ) {
                 continue;
             }
 

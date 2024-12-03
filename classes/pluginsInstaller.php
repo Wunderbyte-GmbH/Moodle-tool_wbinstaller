@@ -450,6 +450,7 @@ class pluginsInstaller extends wbInstaller {
         if (!is_dir($directorypath)) {
             return;
         }
+        self::mark_directory_as_save($directorypath);
         self::initialize_git_drectory($directorypath);
         self::set_remote_repository($directorypath, $gitzipurl);
         return;
@@ -463,6 +464,19 @@ class pluginsInstaller extends wbInstaller {
     private static function set_remote_repository($directorypath, $gitzipurl) {
         $gitrepositoryurl = self::get_git_url_from_zip_url($gitzipurl);
         $cmd = sprintf('cd %s && git remote add origin %s 2>&1', escapeshellarg($directorypath), escapeshellarg($gitrepositoryurl));
+        exec($cmd, $output, $retval);
+        return;
+    }
+
+    /**
+     * Initialize the git repo
+     * @param string $directorypath
+     * @param string $gitzipurl
+     */
+    private static function mark_directory_as_save($directorypath) {
+        $cmd = sprintf('git config --system --add safe.directory %s 2>&1', escapeshellarg($directorypath));
+        $output = [];
+        $retval = null;
         exec($cmd, $output, $retval);
         return;
     }
