@@ -417,7 +417,7 @@ class pluginsInstaller extends wbInstaller {
                         break;
                     }
                 }
-                closedir(dir_handle: $handle);
+                closedir($handle);
                 if ($extracteddirname) {
                     $finaldir = $targetdir . '/' . $pluginname;
                     rename($tempdirplugin . '/' . $extracteddirname, $finaldir);
