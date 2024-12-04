@@ -451,8 +451,8 @@ class pluginsInstaller extends wbInstaller {
         if (!is_dir($directorypath)) {
             return;
         }
-        self::mark_directory_as_save($directorypath);
         self::initialize_git_drectory($directorypath);
+        self::mark_directory_as_save($directorypath);
         self::set_remote_repository($directorypath, $gitzipurl);
         return;
     }
@@ -490,9 +490,7 @@ class pluginsInstaller extends wbInstaller {
         $output = [];
         $retval = null;
         exec($cmd, $output, $retval);
-        if ($retval !== 0) {
-            return;
-        }
+        return;
     }
 
     /**
