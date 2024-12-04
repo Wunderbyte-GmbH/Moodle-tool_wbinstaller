@@ -274,8 +274,8 @@ class localdataInstaller extends wbInstaller {
                     $matches = explode('_', $postfix);
                     $oldid = (int)$matches[0];
                     if (
-                      isset($translationsclaeids[$oldid]) &&
-                      count($matches) > 1
+                        isset($translationsclaeids[$oldid]) &&
+                        count($matches) > 1
                     ) {
                         $newid = $translationsclaeids[$oldid];
                         $newkey = $changingkey . "_{$newid}";
@@ -387,7 +387,10 @@ class localdataInstaller extends wbInstaller {
                 $matcher[$oldscale] = $oldscale + $scaledifference;
             }
         }
-        if (count($matcher) != count($oldscales)) {
+        if (
+            count($matcher) != count($oldscales) &&
+            count($matcher) != count($newscales)
+        ) {
             $this->uploaddata = false;
             $this->feedback['needed']['local_data']['error'][] =
                 get_string('scalemismatchlocaldata', 'tool_wbinstaller');

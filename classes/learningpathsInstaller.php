@@ -98,12 +98,18 @@ class learningpathsInstaller extends wbInstaller {
                     empty($this->feedback['needed'][$learningpath['name']]['warning']) &&
                     empty($this->feedback['needed'][$learningpath['name']]['error'])
                 ) {
+                    $oldlearningpathid = 0;
                     if (isset($learningpath['id'])) {
+                        $oldlearningpathid = $learningpath['id'];
                         unset($learningpath['id']);
                     }
                     $learningpath['json'] = json_encode($learningpath['json']);
-                    $learningpathid = $DB->insert_record($this->fileinfo, $learningpath);
-                    $this->update_adele_activity_id($learningpath, $learningpathid);
+                    $newearningpathid = $DB->insert_record($this->fileinfo, $learningpath);
+                    $this->update_adele_activity_id(
+                        $oldlearningpathid,
+                        $newearningpathid,
+                        $learningpath['name']
+                    );
                 }
                 $this->feedback['needed'][$learningpath['name']]['success'][] =
                     get_string('newlocaldatafilefound', 'tool_wbinstaller', $learningpath['name']);
@@ -113,23 +119,26 @@ class learningpathsInstaller extends wbInstaller {
 
     /**
      * Exceute the installer.
-     * @param array $learningpath
-     * @param string $learningpathid
+     * @param string $oldlearningpathid
+     * @param string $newlearningpathid
+     * @param string $learningpathname
      */
-    public function update_adele_activity_id($learningpath, $learningpathid) {
+    public function update_adele_activity_id($oldlearningpathid, $newlearningpathid, $learningpathname) {
         global $DB;
-        $record = $DB->get_record(
+        $records = $DB->get_records(
             'adele',
             [
-                'name' => $learningpath['name'],
+                'learningpathid' => $oldlearningpathid,
             ]
         );
-        if ($record) {
-            $record->learningpathid = $learningpathid;
-            $DB->update_record('adele', $record);
+        if ($records) {
+            foreach ($records as $record) {
+                $record->learningpathid = $newlearningpathid;
+                $DB->update_record('adele', $record);
+            }
         } else {
-            $this->feedback['needed'][$learningpath['name']]['warning'][] =
-                get_string('nomoddatafilefound', 'tool_wbinstaller', $learningpath['name']);
+            $this->feedback['needed'][$learningpathname]['warning'][] =
+                get_string('nomoddatafilefound', 'tool_wbinstaller', $learningpathname);
         }
         return;
     }

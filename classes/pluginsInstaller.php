@@ -474,7 +474,11 @@ class pluginsInstaller extends wbInstaller {
      * @param string $directorypath
      */
     private static function mark_directory_as_save($directorypath) {
-        $cmd = sprintf('git config --system --add safe.directory %s 2>&1', escapeshellarg($directorypath));
+        $cmd = sprintf(
+            "git -C %s config --add safe.directory %s 2>&1",
+            escapeshellarg($directorypath),
+            escapeshellarg($directorypath)
+        );
         $output = [];
         $retval = null;
         exec($cmd, $output, $retval);
