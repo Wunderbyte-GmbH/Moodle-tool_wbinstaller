@@ -89,6 +89,9 @@ class coursesInstaller extends wbInstaller {
             if ($precheck) {
                 $this->feedback['needed'][$precheck['courseshortname']]['success'][] =
                     get_string('newcoursefound', 'tool_wbinstaller', $precheck['courseshortname']);
+            } else {
+                $this->feedback['needed'][pathinfo($coursefile)['basename']]['error'][] =
+                    get_string('errorextractingmbz', 'tool_wbinstaller', pathinfo($coursefile)['basename']);
             }
         }
         return '1';
@@ -103,7 +106,7 @@ class coursesInstaller extends wbInstaller {
     protected function install_course($coursefile, $parent) {
         $precheck = $this->precheck($coursefile);
         if ($precheck) {
-            $this->restore_course($coursefile, $precheck, $parent);
+            $this->restore_course($precheck, $parent);
             $this->feedback['needed'][$precheck['courseshortname']]['success'][] = $this->get_success_message($precheck);
         }
         return 1;
@@ -129,38 +132,78 @@ class coursesInstaller extends wbInstaller {
      * @return mixed
      */
     protected function precheck($coursefile) {
-        $xml = simplexml_load_file($coursefile . '/moodle_backup.xml');
-        $courseshortname = $this->get_course_short_name($xml);
-        $courseoriginalid = $this->get_course_og_id($xml);
-        foreach (glob($coursefile . "/activities/adaptivequiz_*") as $activityfolder) {
-            $activityid = $this->extract_activity_id($activityfolder, 'adaptivequiz');
-            if ($activityid) {
-                $this->matchingids['components'][$activityid] = $activityid;
+        $tempdir = $this->extract_mbz_file($coursefile);
+        if ($tempdir) {
+            $xml = simplexml_load_file($tempdir . '/moodle_backup.xml');
+            $courseshortname = $this->get_course_short_name($xml);
+            $courseoriginalid = $this->get_course_og_id($xml);
+            foreach (glob($coursefile . "/activities/adaptivequiz_*") as $activityfolder) {
+                $activityid = $this->extract_activity_id($activityfolder, 'adaptivequiz');
+                if ($activityid) {
+                    $this->matchingids['components'][$activityid] = $activityid;
+                }
             }
+            foreach (glob($coursefile . "/activities/quiz_*") as $activityfolder) {
+                $activityid = $this->extract_activity_id($activityfolder, 'quiz');
+                if ($activityid) {
+                    $this->matchingids['quizid'][$activityid] = $activityid;
+                }
+            }
+
+            if (!$courseshortname || !$courseoriginalid) {
+                $this->feedback['needed'][$coursefile]['error'][] =
+                  get_string('coursesnoshortname', 'tool_wbinstaller', $coursefile);
+                return 0;
+            } else if ($course = $this->course_exists($courseshortname)) {
+                $this->matchingids['courses'][$courseoriginalid] = $course->id;
+                $this->feedback['needed'][$courseshortname]['warning'][] =
+                  get_string('coursesduplicateshortname', 'tool_wbinstaller', $courseshortname);
+                return 0;
+            } else {
+                $this->matchingids['courses'][$courseoriginalid] = $courseoriginalid;
+            }
+            return [
+                "courseshortname" => $courseshortname,
+                "courseoriginalid" => $courseoriginalid,
+                "tempdir" => $tempdir,
+            ];
         }
-        foreach (glob($coursefile . "/activities/quiz_*") as $activityfolder) {
-            $activityid = $this->extract_activity_id($activityfolder, 'quiz');
-            if ($activityid) {
-                $this->matchingids['quizid'][$activityid] = $activityid;
-            }
+        return null;
+    }
+
+    /**
+     * Instal a single course.
+     * @param string $mbzfile
+     * @return mixed
+     */
+    private function extract_mbz_file($mbzfile) {
+        if (!file_exists($mbzfile)) {
+            return null;
         }
 
-        if (!$courseshortname || !$courseoriginalid) {
-            $this->feedback['needed'][$coursefile]['error'][] =
-              get_string('coursesnoshortname', 'tool_wbinstaller', $coursefile);
-            return 0;
-        } else if ($course = $this->course_exists($courseshortname)) {
-            $this->matchingids['courses'][$courseoriginalid] = $course->id;
-            $this->feedback['needed'][$courseshortname]['warning'][] =
-              get_string('coursesduplicateshortname', 'tool_wbinstaller', $courseshortname);
-            return 0;
-        } else {
-            $this->matchingids['courses'][$courseoriginalid] = $courseoriginalid;
+        $destination = str_replace('.mbz', '', $mbzfile);
+        if (!is_dir($destination) && !mkdir($destination, 0777, true)) {
+            return null;
         }
-        return [
-            "courseshortname" => $courseshortname,
-            "courseoriginalid" => $courseoriginalid,
-        ];
+
+        $tarfile = str_replace('.mbz', '.tar', $mbzfile);
+        $gz = gzopen($mbzfile, 'rb');
+        $outfile = fopen($tarfile, 'wb');
+
+        if (!$gz || !$outfile) {
+            return null;
+        }
+
+        while (!gzeof($gz)) {
+            fwrite($outfile, gzread($gz, 4096));
+        }
+
+        gzclose($gz);
+        fclose($outfile);
+        $phar = new \PharData($tarfile);
+        $phar->extractTo($destination, null, true);
+        unlink($tarfile);
+        return $destination;
     }
 
     /**
@@ -210,18 +253,17 @@ class coursesInstaller extends wbInstaller {
 
     /**
      * Restore the course.
-     * @param string $coursefile
-     * @param string $precheck
+     * @param array $precheck
      * @param \tool_wbinstaller\wbCheck $parent
      * @return mixed
      */
-    protected function restore_course($coursefile, $precheck, $parent) {
+    protected function restore_course($precheck, $parent) {
         global $USER, $CFG, $DB;
-        $destination = $CFG->tempdir . '/backup/' . basename($coursefile);
+        $destination = $CFG->tempdir . '/backup/' . basename($precheck['tempdir']);
         if (!is_dir($destination)) {
             mkdir($destination, 0777, true);
         }
-        if (!$this->copy_directory($coursefile, $destination)) {
+        if (!$this->copy_directory($precheck['tempdir'], $destination)) {
             $this->feedback['needed'][$precheck['courseshortname']]['error'][] =
               get_string('coursesfailextract', 'tool_wbinstaller');
             return;
@@ -247,20 +289,20 @@ class coursesInstaller extends wbInstaller {
         $newcourse = create_course($newcourse);
         $this->matchingids['courses'][$precheck['courseoriginalid']] = $newcourse->id;
         $this->restore_with_controller(
-            $coursefile,
+            $precheck['tempdir'],
             $newcourse,
             $precheck['courseshortname']
         );
         $this->force_course_visibility($newcourse->id);
         $this->update_matching_componentids(
-            $coursefile,
+            $precheck['tempdir'],
             $newcourse->id,
             '/activities/adaptivequiz_*',
             'adaptivequiz',
             'components'
         );
         $this->update_matching_componentids(
-            $coursefile,
+            $precheck['tempdir'],
             $newcourse->id,
             '/activities/quiz_*',
             'quiz',

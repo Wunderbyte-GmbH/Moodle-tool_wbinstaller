@@ -120,6 +120,7 @@ $string['missingcomponents'] = 'Folgende Komponentenids sind notwendig für den 
 $string['coursetypenotfound'] = 'Der Datentyp der Kursid wurde nicht erkannt';
 $string['learningpathalreadyexistis'] = 'Learnpfad mit dem selben Namen existiert bereits';
 $string['execdisabled'] = 'Die exec Funktion ist nicht verfügbar.';
+$string['errorextractingmbz'] = 'Fehler beim extrahieren der Kurs mbz Daten: {$a}';
 
 // Vue Strings.
 $string['vueexportselect'] = 'Ausgewählte exportieren';

@@ -306,7 +306,6 @@ class learningpathsInstaller extends wbInstaller {
                 return;
             }
         }
-
         if (is_array($data)) {
             $data[$lastpart] = $value;
         } else if (is_object($data)) {

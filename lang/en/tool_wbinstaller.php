@@ -120,6 +120,7 @@ $string['missingcomponents'] = 'Follwoing component ids are required for the lea
 $string['coursetypenotfound'] = 'The course id type inside the learning path is unknown';
 $string['learningpathalreadyexistis'] = 'Learning path with the same name already exists';
 $string['execdisabled'] = 'The exec function is disabled on this server.';
+$string['errorextractingmbz'] = 'Error extracting the course mbz file: {$a}';
 
 // Vue strings.
 $string['vueexportselect'] = 'Export Selected';
