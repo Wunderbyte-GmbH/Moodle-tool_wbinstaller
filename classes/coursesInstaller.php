@@ -48,7 +48,6 @@ require_login();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class coursesInstaller extends wbInstaller {
-
     /** @var string Timestamp for directory identification. */
     public $timestamp;
     /**
