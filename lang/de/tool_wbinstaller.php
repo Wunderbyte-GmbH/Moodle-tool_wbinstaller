@@ -137,3 +137,5 @@ $string['vuewaitingtext'] = 'Bitte warten Sie, während die Installation läuft.
 $string['vuewarining'] = 'Warnung: ';
 $string['warning'] = 'Mit Fehlern abgeschlossen.';
 $string['warning_description'] = 'Während der Installation sind einige Fehler aufgetreten. Weitere Informationen im Installations-Feedback.';
+$string['wbinstaller:canexport'] = 'WB Installer: Benutzer/in darf exportieren';
+$string['wbinstaller:caninstall'] = 'WB Installer: Benutzer/in darf installieren';
