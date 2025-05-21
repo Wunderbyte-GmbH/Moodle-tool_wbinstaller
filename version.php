@@ -25,6 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_wbinstaller';
+$plugin->supported = [401, 405];
 $plugin->release = '0.1.4';
 $plugin->version = 2024112200;
 $plugin->requires = 2022112800;
