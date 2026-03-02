@@ -194,6 +194,6 @@ class profilefieldsInstaller extends wbInstaller {
             'all' => PROFILE_VISIBLE_ALL,
         ];
         $key = strtolower((string)$visible);
-        return (int) $map[$key] ?? PROFILE_VISIBLE_ALL;
+        return (int)($map[$key] ?? PROFILE_VISIBLE_ALL);
     }
 }
