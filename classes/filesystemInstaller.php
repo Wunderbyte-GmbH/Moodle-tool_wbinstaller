@@ -71,14 +71,56 @@ class filesystemInstaller extends wbInstaller {
             if (!$from || !$to) {
                 continue;
             }
-            if (!is_dir($from)) {
+            if (!$this->path_exists($from)) {
                 $this->feedback['needed']['filesystem']['warning'][] =
                     get_string('filesystemcopyskip', 'tool_wbinstaller', $from);
                 continue;
             }
-            $this->copy_recursive($from, $to);
-            $this->feedback['needed']['filesystem']['success'][] =
-                get_string('filesystemcopyok', 'tool_wbinstaller', (object)['from' => $from, 'to' => $to]);
+            if ($this->copy_path($from, $to)) {
+                $this->feedback['needed']['filesystem']['success'][] =
+                    get_string('filesystemcopyok', 'tool_wbinstaller', (object)['from' => $from, 'to' => $to]);
+            } else {
+                $this->feedback['needed']['filesystem']['error'][] =
+                    get_string('filesystemcopyfailed', 'tool_wbinstaller', (object)['from' => $from, 'to' => $to]);
+            }
+        }
+
+        foreach (($this->recipe['move'] ?? []) as $move) {
+            $from = $move['from'] ?? '';
+            $to = $move['to'] ?? '';
+            if (!$from || !$to) {
+                continue;
+            }
+            if (!$this->path_exists($from)) {
+                $this->feedback['needed']['filesystem']['warning'][] =
+                    get_string('filesystemmoveskip', 'tool_wbinstaller', $from);
+                continue;
+            }
+            if ($this->move_path($from, $to)) {
+                $this->feedback['needed']['filesystem']['success'][] =
+                    get_string('filesystemmoveok', 'tool_wbinstaller', (object)['from' => $from, 'to' => $to]);
+            } else {
+                $this->feedback['needed']['filesystem']['error'][] =
+                    get_string('filesystemmovefailed', 'tool_wbinstaller', (object)['from' => $from, 'to' => $to]);
+            }
+        }
+
+        foreach (($this->recipe['delete'] ?? []) as $path) {
+            if (empty($path)) {
+                continue;
+            }
+            if (!$this->path_exists($path)) {
+                $this->feedback['needed']['filesystem']['warning'][] =
+                    get_string('filesystemdeleteskip', 'tool_wbinstaller', $path);
+                continue;
+            }
+            if ($this->delete_path($path)) {
+                $this->feedback['needed']['filesystem']['success'][] =
+                    get_string('filesystemdeleteok', 'tool_wbinstaller', $path);
+            } else {
+                $this->feedback['needed']['filesystem']['error'][] =
+                    get_string('filesystemdeletefailed', 'tool_wbinstaller', $path);
+            }
         }
 
         return 1;
@@ -139,5 +181,83 @@ class filesystemInstaller extends wbInstaller {
                 copy($item->getPathname(), $target);
             }
         }
+    }
+
+    /**
+     * Check if a filesystem path exists, including broken links.
+     * @param string $path
+     * @return bool
+     */
+    protected function path_exists(string $path): bool {
+        return file_exists($path) || is_link($path);
+    }
+
+    /**
+     * Copy a file or directory.
+     * @param string $from
+     * @param string $to
+     * @return bool
+     */
+    protected function copy_path(string $from, string $to): bool {
+        if (is_dir($from)) {
+            $this->copy_recursive($from, $to);
+            return is_dir($to);
+        }
+        $parent = dirname($to);
+        if (!is_dir($parent) && !mkdir($parent, 0770, true) && !is_dir($parent)) {
+            return false;
+        }
+        return copy($from, $to);
+    }
+
+    /**
+     * Move a file or directory.
+     * @param string $from
+     * @param string $to
+     * @return bool
+     */
+    protected function move_path(string $from, string $to): bool {
+        $parent = dirname($to);
+        if (!is_dir($parent) && !mkdir($parent, 0770, true) && !is_dir($parent)) {
+            return false;
+        }
+        if (@rename($from, $to)) {
+            return true;
+        }
+        if (!$this->copy_path($from, $to)) {
+            return false;
+        }
+        return $this->delete_path($from);
+    }
+
+    /**
+     * Delete file or directory recursively.
+     * @param string $path
+     * @return bool
+     */
+    protected function delete_path(string $path): bool {
+        if (is_link($path) || is_file($path)) {
+            return @unlink($path);
+        }
+        if (is_dir($path)) {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($iterator as $item) {
+                $itempath = $item->getPathname();
+                if ($item->isDir()) {
+                    if (!@rmdir($itempath)) {
+                        return false;
+                    }
+                } else {
+                    if (!@unlink($itempath)) {
+                        return false;
+                    }
+                }
+            }
+            return @rmdir($path);
+        }
+        return false;
     }
 }
