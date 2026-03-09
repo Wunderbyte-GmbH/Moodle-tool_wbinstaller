@@ -405,10 +405,18 @@ class catquizTestsettingsInstaller extends wbInstaller {
         return $DB->record_exists($fileinfo, $conditions);
     }
 
+    /**
+     * Get the catcontext for translation.
+     *
+     * @param int $catscale The database global catscale.
+     * @param object $record The record object to check for duplicates.
+     * @return bool Returns true if a duplicate record exists, false otherwise.
+     */
     public function getcatcontext($catscale) {
         global $DB;
         
-        return $DB->get_record("local_catquiz_catsacles", ["id" => $catscale], "contextid", MUST_EXIST);
+        $result = $DB->get_record("local_catquiz_catsacles", ["id" => $catscale], "contextid", MUST_EXIST);
+        return $result->contextid;
     }
     /**
      * Translate and update a nested JSON structure with new IDs.
