@@ -418,8 +418,7 @@ class catquizTestsettingsInstaller extends wbInstaller {
      * Get the catcontext for translation.
      *
      * @param int $catscale The database global catscale.
-     * @param object $record The record object to check for duplicates.
-     * @return bool Returns true if a duplicate record exists, false otherwise.
+     * @return int Returns contextid.
      */
     public function getcatcontext($catscale) {
         global $DB;
