@@ -63,6 +63,12 @@ class catquizTestsettingsInstaller extends wbInstaller {
     /** @var \tool_wbinstaller\wbCheck Reference to the parent installer holding shared matching IDs. */
     public $parent;
 
+    /** @var array Stores all sql patterns that might be referenced in recipe.json. */
+    private $sqlpatterns = [
+        "mod_adaptive" => "SELECT aq.id as componentid, aq.course as courseid, aq.name as name
+        FROM {adaptivequiz} aq WHERE aq.id = :componentid",
+    ];
+      
     /**
      * Constructor for the localdataInstaller.
      *
@@ -218,7 +224,7 @@ class catquizTestsettingsInstaller extends wbInstaller {
                 // Resolve the new component data using matched course and component IDs.
                 if (isset($this->parent->matchingids['courses']['courses'][$row['courseid']])) {
                     $newdata = $DB->get_record_sql(
-                        $this->recipe['translator']['sql'],
+                        $this->sqlpatterns[$this->recipe['translator']['sqlpattern']],
                         [
                             'componentid' => $this->parent->matchingids['courses']['components'][$row['componentid']],
                         ]
@@ -415,7 +421,7 @@ class catquizTestsettingsInstaller extends wbInstaller {
     public function getcatcontext($catscale) {
         global $DB;
         
-        $result = $DB->get_record("local_catquiz_catsacles", ["id" => $catscale], "contextid", MUST_EXIST);
+        $result = $DB->get_record("local_catquiz_catscales", ["id" => $catscale], "contextid", MUST_EXIST);
         return $result->contextid;
     }
     /**
@@ -445,7 +451,7 @@ class catquizTestsettingsInstaller extends wbInstaller {
                     // Replace the top-level catscale reference with the new scale ID.
                     $json[$key] = $scaleid;
                 } else if ($key == 'contextid') {
-                    // Replace the module reference with the new module ID.
+                    // Replace the module reference with the new context ID.
                     $json[$key] = $contextid;
                 } else if ($key == 'module') {
                     // Replace the module reference with the new module ID.
