@@ -35,7 +35,7 @@ use stdClass;
  * @copyright  2023 Wunderbyte GmbH
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class learningpathsInstaller extends wbInstaller {
+class adeleLearningpathsInstaller extends wbInstaller {
     /** @var \core_customfield\handler Matching the course ids from the old => new. */
     public $handler;
     /** @var string DB table name. */

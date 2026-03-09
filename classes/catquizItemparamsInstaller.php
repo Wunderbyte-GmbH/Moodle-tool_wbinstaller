@@ -43,7 +43,7 @@ use Exception;
  * @copyright   2024 Wunderbyte GmbH
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class itemparamsInstaller extends wbInstaller {
+class catquizItemparamsInstaller extends wbInstaller {
     /**
      * Constructor for the itemparamsInstaller.
      *

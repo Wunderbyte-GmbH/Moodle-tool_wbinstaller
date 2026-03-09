@@ -56,7 +56,7 @@ require_login();
  * @copyright   2024 Wunderbyte GmbH
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class localdataInstaller extends wbInstaller {
+class catquizTestsettingsInstaller extends wbInstaller {
     /** @var bool Flag indicating whether the current data row should be uploaded. */
     public $uploaddata;
 
