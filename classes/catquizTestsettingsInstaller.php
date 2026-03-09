@@ -405,6 +405,11 @@ class catquizTestsettingsInstaller extends wbInstaller {
         return $DB->record_exists($fileinfo, $conditions);
     }
 
+    public function getcatcontext($catscale) {
+        global $DB;
+        
+        return $DB->get_record("local_catquiz_catsacles", ["id" => $catscale], "contextid", MUST_EXIST);
+    }
     /**
      * Translate and update a nested JSON structure with new IDs.
      *
@@ -423,6 +428,7 @@ class catquizTestsettingsInstaller extends wbInstaller {
     public function update_nested_json($json, $scaleid, $keys, $moduleid, $coursemoduleid) {
         $json = json_decode($json, true);
         $translationscaleids = $this->get_scale_matcher($json, $scaleid);
+        $contextid = $this->getcatcontext($scaleid);
         $newdata = [];
 
         foreach ($keys as $changingkey) {
@@ -430,6 +436,9 @@ class catquizTestsettingsInstaller extends wbInstaller {
                 if ($key == 'catquiz_catscales') {
                     // Replace the top-level catscale reference with the new scale ID.
                     $json[$key] = $scaleid;
+                } else if ($key == 'contextid') {
+                    // Replace the module reference with the new module ID.
+                    $json[$key] = $contextid;
                 } else if ($key == 'module') {
                     // Replace the module reference with the new module ID.
                     $json[$key] = $moduleid;
