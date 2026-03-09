@@ -240,6 +240,9 @@ class catquizTestsettingsInstaller extends wbInstaller {
                 $newdata->catscaleid =
                     $this->parent->matchingids['catscales'][$row['catscaleid']];
 
+                // Map the old catscale ID to the newly resolved catscale ID.
+                $newdata->contextid = $this->getcatcontext($row->contextid);
+                    
                 // Determine the module ID and course module ID for the component.
                 $modulename = substr($row['component'], strpos($row['component'], '_') + 1);
                 $moduleid = $DB->get_field('modules', 'id', ['name' => $modulename]);
