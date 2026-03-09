@@ -68,7 +68,7 @@ class catquizTestsettingsInstaller extends wbInstaller {
         "mod_adaptive" => "SELECT aq.id as componentid, aq.course as courseid, aq.name as name
         FROM {adaptivequiz} aq WHERE aq.id = :componentid",
     ];
-      
+
     /**
      * Constructor for the localdataInstaller.
      *
@@ -241,8 +241,8 @@ class catquizTestsettingsInstaller extends wbInstaller {
                     $this->parent->matchingids['catscales'][$row['catscaleid']];
 
                 // Map the old catscale ID to the newly resolved catscale ID.
-                $newdata->contextid = $this->getcatcontext($row->contextid);
-                    
+                $newdata->contextid = $this->getcatcontext($newdata->catscaleid);
+
                 // Determine the module ID and course module ID for the component.
                 $modulename = substr($row['component'], strpos($row['component'], '_') + 1);
                 $moduleid = $DB->get_field('modules', 'id', ['name' => $modulename]);
@@ -423,8 +423,8 @@ class catquizTestsettingsInstaller extends wbInstaller {
      */
     public function getcatcontext($catscale) {
         global $DB;
-        
-        $result = $DB->get_record("local_catquiz_catscales", ["id" => $catscale], "contextid", MUST_EXIST);
+
+        $result = $DB->get_record('local_catquiz_catscales', ['id' => $catscale, 'parentid' => 0], 'contextid', MUST_EXIST);
         return $result->contextid;
     }
     /**
@@ -453,9 +453,6 @@ class catquizTestsettingsInstaller extends wbInstaller {
                 if ($key == 'catquiz_catscales') {
                     // Replace the top-level catscale reference with the new scale ID.
                     $json[$key] = $scaleid;
-                } else if ($key == 'contextid') {
-                    // Replace the module reference with the new context ID.
-                    $json[$key] = $contextid;
                 } else if ($key == 'module') {
                     // Replace the module reference with the new module ID.
                     $json[$key] = $moduleid;

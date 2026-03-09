@@ -29,7 +29,7 @@ use moodle_database;
  *
  * @covers \tool_wbinstaller
  */
-final class learningpathsinstaller_test extends advanced_testcase {
+final class adelelearningpathsinstaller_test extends advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
@@ -44,8 +44,8 @@ final class learningpathsinstaller_test extends advanced_testcase {
         $recipe = ['path' => '/testlearningpaths'];
         $extractpath = sys_get_temp_dir() . '/test_wbinstaller';
 
-        // Create an instance of learningpathsInstaller.
-        $installer = $this->getMockBuilder(learningpathsInstaller::class)
+        // Create an instance of adeleLearningpathsInstaller.
+        $installer = $this->getMockBuilder(adeleLearningpathsInstaller::class)
             ->setConstructorArgs([$recipe])
             ->onlyMethods(['run_recipe'])
             ->getMock();
@@ -82,7 +82,7 @@ final class learningpathsinstaller_test extends advanced_testcase {
             json_encode($learningpathdata)
         );
 
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
         $installer->run_recipe($extractpath);
 
         // Check that feedback was set correctly.
@@ -100,7 +100,7 @@ final class learningpathsinstaller_test extends advanced_testcase {
 
         $recipe = [];
         $learningpath = ['name' => 'Test Learning Path'];
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
 
         $installer->fileinfo = 'non_existing_table';
         $installer->check_table_exists([], $learningpath);
@@ -144,7 +144,7 @@ final class learningpathsinstaller_test extends advanced_testcase {
 
         $recipe = [];
         $learningpath = ['name' => 'Test Learning Path'];
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
         $installer->fileinfo = 'test_table';
 
         $installer->check_path_exists([], $learningpath);
@@ -166,7 +166,7 @@ final class learningpathsinstaller_test extends advanced_testcase {
      */
     public function test_check_component_exists_unvalid_valid(): void {
         $recipe = [];
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
 
         $missingentities = [];
         $data = 9999;  // Simulate a missing entity ID.
@@ -190,7 +190,7 @@ final class learningpathsinstaller_test extends advanced_testcase {
      * @covers ::get_value_by_path
      */
     public function test_get_value_by_path_retrieves_nested_values(): void {
-        $installer = new learningpathsInstaller([]);
+        $installer = new adeleLearningpathsInstaller([]);
 
         $data = [
             'level1' => [
@@ -216,7 +216,7 @@ final class learningpathsinstaller_test extends advanced_testcase {
      * @covers ::set_value_by_path
      */
     public function test_set_value_by_path_sets_value_correctly(): void {
-        $installer = new learningpathsInstaller([]);
+        $installer = new adeleLearningpathsInstaller([]);
 
         $data = [
             'level1' => [

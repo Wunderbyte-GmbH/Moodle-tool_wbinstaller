@@ -28,8 +28,8 @@ use stdClass;
  *
  * @covers \tool_wbinstaller
  */
-final class localdatainstaller_test extends advanced_testcase {
-    /** @var localdataInstaller An instance of the localdataInstaller class being tested. */
+final class catquiztestsettingsinstaller_test extends advanced_testcase {
+    /** @var catquizTestsettingsInstaller An instance of the catquizTestsettingsInstaller class being tested. */
     protected $installer;
     protected function setUp(): void {
         parent::setUp();
@@ -43,7 +43,7 @@ final class localdatainstaller_test extends advanced_testcase {
             ],
             'path' => '/testdata/',
         ];
-        $this->installer = new localdataInstaller($recipe);
+        $this->installer = new catquizTestsettingsInstaller($recipe);
     }
 
     /**
@@ -98,7 +98,7 @@ final class localdatainstaller_test extends advanced_testcase {
         ];
 
         // Create an instance of the actual class.
-        $instance = new \tool_wbinstaller\localdataInstaller([]);
+        $instance = new \tool_wbinstaller\catquizTestsettingsInstaller([]);
         $instance->parent = $mockparent;
 
         // Mock feedback.
@@ -193,7 +193,7 @@ final class localdatainstaller_test extends advanced_testcase {
         $sacleid = 1;
 
         // Mock dataapi function.
-        $this->installer = $this->getMockBuilder(localdataInstaller::class)
+        $this->installer = $this->getMockBuilder(catquizTestsettingsInstaller::class)
             ->onlyMethods(['get_scale_matcher'])
             ->setConstructorArgs([$this->installer->recipe])
             ->getMock();
