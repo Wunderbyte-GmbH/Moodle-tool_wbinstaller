@@ -31,7 +31,6 @@ namespace tool_wbinstaller;
 
 use moodle_exception;
 use stdClass;
-use ZipArchive;
 
 /**
  * Main installer class that manages recipe-based installation workflows.

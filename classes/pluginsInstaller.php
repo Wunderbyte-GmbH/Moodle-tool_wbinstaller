@@ -155,6 +155,7 @@ class pluginsInstaller extends wbInstaller {
      */
     public function download_install_plugins_testing($gitzipurl, $type, $installer, $install) {
         global $CFG;
+
         $zipfile = $CFG->dataroot . '/wbinstaller/' . $install . '.zip';
 
         // Ensure the wbinstaller directory exists.
@@ -176,7 +177,23 @@ class pluginsInstaller extends wbInstaller {
             $this->feedback[$type][$gitzipurl]['error'][] =
                 get_string('filedownloadfailed', 'tool_wbinstaller', $gitzipurl);
             $this->set_status(2);
+            return null;
         }
+
+        file_put_contents($zipfile, $zipdata);
+
+        // Detect plugin component.
+        $component = $installer->detect_plugin_component($zipfile);
+
+        $plugin = $this->parse_version_file($this->plugincontent);
+
+        return (object)[
+            'component' => $component,
+            'zipfilepath' => $zipfile,
+            'url' => $gitzipurl,
+            'type' => $type,
+            'version' => $plugin['version'] ?? null,
+        ];
     }
 
     /**
@@ -212,7 +229,6 @@ class pluginsInstaller extends wbInstaller {
      * @return int|string Returns the component name if installable, or 2 if skipped (during execute); 1 on check-only.
      */
     public function check_plugin_compability($gitzipurl, $type, $execute = false) {
-        global $CFG;
         $this->plugincontent = $this->get_github_file_content($gitzipurl);
         $settingsurl = new moodle_url('/admin/settings.php', ['section' => 'tool_wbinstaller_settings']);
 
@@ -326,26 +342,34 @@ class pluginsInstaller extends wbInstaller {
         // Retrieve optional GitHub API token from plugin configuration.
         $token = null;
         $apitoken = get_config('tool_wbinstaller', 'apitoken');
-        if ($apitoken) {
-            $token = 'token ' . $apitoken;
+
+        $headers = [
+            'User-Agent: Moodle-tool_wbinstaller',
+            'Accept: application/vnd.github+json',
+        ];
+
+        if (!empty($apitoken)) {
+            // Works for classic + fine-grained PATs.
+            $headers[] = 'Authorization: Bearer ' . $apitoken;
         }
 
         // Execute the API request via cURL.
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $apiurl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'User-Agent: PHP-cURL-Request',
-            'Authorization: ' . $token,
-        ]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
         $response = curl_exec($ch);
+        $httpcode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlerr  = curl_error($ch);
         curl_close($ch);
 
         // Decode the API response and extract the base64-encoded file content.
         $data = json_decode($response, true);
-        if (isset($data['content'])) {
+        if (!empty($data['content']) && ($data['encoding'] ?? '') === 'base64') {
             return base64_decode($data['content']);
         }
+
         return null;
     }
 
