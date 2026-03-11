@@ -17,6 +17,10 @@
 /**
  * Plugin administration pages are defined here.
  *
+ * Registers the settings page for tool_wbinstaller under the site administration
+ * tools section and adds the main installer page as an external page under
+ * the development category. Provides an API token configuration setting.
+ *
  * @package     tool_wbinstaller
  * @category    admin
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
@@ -31,20 +35,25 @@ if ($hassiteconfig) {
 
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ADMIN->fulltree) {
+        // Add the API token text input for external service authentication.
         $settings->add(new admin_setting_configtext(
-              $componentname . '/apitoken',
-              get_string('apitoken', $componentname),
-              get_string('apitokendesc', $componentname),
-              '',
-              PARAM_RAW
+            $componentname . '/apitoken',
+            get_string('apitoken', $componentname),
+            get_string('apitokendesc', $componentname),
+            '',
+            PARAM_RAW
         ));
     }
 
+    // Register the settings page under the tools admin category.
     $ADMIN->add('tools', $settings);
+
+    // Register the main installer page under the development admin category.
     $ADMIN->add(
         'development',
         new admin_externalpage(
-            'tool_wbinstaller', get_string('pluginname', 'tool_wbinstaller'),
+            'tool_wbinstaller',
+            get_string('pluginname', 'tool_wbinstaller'),
             new moodle_url('/admin/tool/wbinstaller/index.php')
         )
     );

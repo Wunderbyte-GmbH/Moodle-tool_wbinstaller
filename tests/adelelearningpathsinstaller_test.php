@@ -29,8 +29,9 @@ use moodle_database;
  *
  * @covers \tool_wbinstaller
  */
-class learningpathsinstaller_test extends advanced_testcase {
+final class adelelearningpathsinstaller_test extends advanced_testcase {
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
         $this->setAdminUser();
     }
@@ -39,12 +40,12 @@ class learningpathsinstaller_test extends advanced_testcase {
      * Test execute method to ensure it runs the recipe with the update flag.
      * @covers ::execute
      */
-    public function test_execute_runs_recipe() {
+    public function test_execute_runs_recipe(): void {
         $recipe = ['path' => '/testlearningpaths'];
         $extractpath = sys_get_temp_dir() . '/test_wbinstaller';
 
-        // Create an instance of learningpathsInstaller.
-        $installer = $this->getMockBuilder(learningpathsInstaller::class)
+        // Create an instance of adeleLearningpathsInstaller.
+        $installer = $this->getMockBuilder(adeleLearningpathsInstaller::class)
             ->setConstructorArgs([$recipe])
             ->onlyMethods(['run_recipe'])
             ->getMock();
@@ -62,7 +63,7 @@ class learningpathsinstaller_test extends advanced_testcase {
      * Test run_recipe method to ensure it reads JSON data and stores feedback.
      * @covers ::run_recipe
      */
-    public function test_run_recipe_stores_feedback() {
+    public function test_run_recipe_stores_feedback(): void {
         global $DB;
 
         $recipe = ['path' => '/testlearningpaths'];
@@ -81,7 +82,7 @@ class learningpathsinstaller_test extends advanced_testcase {
             json_encode($learningpathdata)
         );
 
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
         $installer->run_recipe($extractpath);
 
         // Check that feedback was set correctly.
@@ -94,12 +95,12 @@ class learningpathsinstaller_test extends advanced_testcase {
      * Test check_table_exists method to ensure it flags missing tables.
      * @covers ::check_table_exists
      */
-    public function test_check_table_exists_unvalid_valid() {
+    public function test_check_table_exists_unvalid_valid(): void {
         global $DB;
 
         $recipe = [];
         $learningpath = ['name' => 'Test Learning Path'];
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
 
         $installer->fileinfo = 'non_existing_table';
         $installer->check_table_exists([], $learningpath);
@@ -128,7 +129,7 @@ class learningpathsinstaller_test extends advanced_testcase {
      * Test check_path_exists method to ensure it flags missing tables.
      * @covers ::check_path_exists
      */
-    public function test_check_path_exists_unvalid_valid() {
+    public function test_check_path_exists_unvalid_valid(): void {
         global $DB;
         $dbman = $DB->get_manager();
         $table = new \xmldb_table('test_table');
@@ -143,7 +144,7 @@ class learningpathsinstaller_test extends advanced_testcase {
 
         $recipe = [];
         $learningpath = ['name' => 'Test Learning Path'];
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
         $installer->fileinfo = 'test_table';
 
         $installer->check_path_exists([], $learningpath);
@@ -163,9 +164,9 @@ class learningpathsinstaller_test extends advanced_testcase {
      * Test check_path_exists method to ensure it flags missing tables.
      * @covers ::check_entity_id_exists
      */
-    public function test_check_component_exists_unvalid_valid() {
+    public function test_check_component_exists_unvalid_valid(): void {
         $recipe = [];
-        $installer = new learningpathsInstaller($recipe);
+        $installer = new adeleLearningpathsInstaller($recipe);
 
         $missingentities = [];
         $data = 9999;  // Simulate a missing entity ID.
@@ -188,8 +189,8 @@ class learningpathsinstaller_test extends advanced_testcase {
      * Test check_path_exists method to ensure it flags missing tables.
      * @covers ::get_value_by_path
      */
-    public function test_get_value_by_path_retrieves_nested_values() {
-        $installer = new learningpathsInstaller([]);
+    public function test_get_value_by_path_retrieves_nested_values(): void {
+        $installer = new adeleLearningpathsInstaller([]);
 
         $data = [
             'level1' => [
@@ -214,8 +215,8 @@ class learningpathsinstaller_test extends advanced_testcase {
      * Test check_path_exists method to ensure it flags missing tables.
      * @covers ::set_value_by_path
      */
-    public function test_set_value_by_path_sets_value_correctly() {
-        $installer = new learningpathsInstaller([]);
+    public function test_set_value_by_path_sets_value_correctly(): void {
+        $installer = new adeleLearningpathsInstaller([]);
 
         $data = [
             'level1' => [

@@ -28,11 +28,11 @@ use stdClass;
  *
  * @covers \tool_wbinstaller
  */
-class localdatainstaller_test extends advanced_testcase {
-
-    /** @var localdataInstaller An instance of the localdataInstaller class being tested. */
+final class catquiztestsettingsinstaller_test extends advanced_testcase {
+    /** @var catquizTestsettingsInstaller An instance of the catquizTestsettingsInstaller class being tested. */
     protected $installer;
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
         $this->setAdminUser();
         $recipe = [
@@ -43,14 +43,14 @@ class localdatainstaller_test extends advanced_testcase {
             ],
             'path' => '/testdata/',
         ];
-        $this->installer = new localdataInstaller($recipe);
+        $this->installer = new catquizTestsettingsInstaller($recipe);
     }
 
     /**
      * Test duplicatecheck function.
      * @covers ::duplicatecheck
      */
-    public function test_duplicatecheck() {
+    public function test_duplicatecheck(): void {
         global $DB;
 
         // Create a mock course record.
@@ -78,7 +78,7 @@ class localdatainstaller_test extends advanced_testcase {
      * Test update_nested_json function.
      * @covers ::translate_string_links
      */
-    public function test_translate_string_links() {
+    public function test_translate_string_links(): void {
         global $CFG;
 
         // Set up test environment.
@@ -91,14 +91,14 @@ class localdatainstaller_test extends advanced_testcase {
                     'courses' => [
                         123 => 456, // Old ID 123 maps to new ID 456.
                         456 => 23, // Old ID 123 maps to new ID 456.
-                        23 => 550,  // Old ID 23 maps to new ID 550.
+                        23 => 550, // Old ID 23 maps to new ID 550.
                     ],
                 ],
             ],
         ];
 
         // Create an instance of the actual class.
-        $instance = new \tool_wbinstaller\localdataInstaller([]);
+        $instance = new \tool_wbinstaller\catquizTestsettingsInstaller([]);
         $instance->parent = $mockparent;
 
         // Mock feedback.
@@ -160,7 +160,7 @@ class localdatainstaller_test extends advanced_testcase {
      * Test course_matching function.
      * @covers ::course_matching
      */
-    public function test_course_matching() {
+    public function test_course_matching(): void {
         // Mock matching IDs.
         $this->installer->parent = (object) [
             'matchingids' => [
@@ -184,7 +184,7 @@ class localdatainstaller_test extends advanced_testcase {
     /**
      * Test get_scale_matcher function.
      */
-    public function test_get_scale_matcher() {
+    public function test_get_scale_matcher(): void {
         // Mock data API return.
         $json = [
             'catquiz_courses_1_0' => 'testvalue1',
@@ -193,7 +193,7 @@ class localdatainstaller_test extends advanced_testcase {
         $sacleid = 1;
 
         // Mock dataapi function.
-        $this->installer = $this->getMockBuilder(localdataInstaller::class)
+        $this->installer = $this->getMockBuilder(catquizTestsettingsInstaller::class)
             ->onlyMethods(['get_scale_matcher'])
             ->setConstructorArgs([$this->installer->recipe])
             ->getMock();

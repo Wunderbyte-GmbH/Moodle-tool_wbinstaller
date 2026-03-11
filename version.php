@@ -17,6 +17,10 @@
 /**
  * Plugin version and other meta-data are defined here.
  *
+ * This file defines the version number, required Moodle version,
+ * supported version range, release identifier, and maturity level
+ * for the tool_wbinstaller plugin.
+ *
  * @package     tool_wbinstaller
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_wbinstaller';
 $plugin->supported = [401, 405];
-$plugin->release = '0.1.4';
-$plugin->version = 2024112200;
+$plugin->release = '0.9';
+$plugin->version = 2026021700;
 $plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->maturity = MATURITY_BETA;

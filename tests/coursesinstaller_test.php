@@ -29,9 +29,9 @@ use stdClass;
  *
  * @covers \tool_wbinstaller
  */
-class coursesinstaller_test extends advanced_testcase {
-
+final class coursesinstaller_test extends advanced_testcase {
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
         $this->setAdminUser();
     }
@@ -39,7 +39,7 @@ class coursesinstaller_test extends advanced_testcase {
     /**
      * Test the execute method to ensure courses are installed.
      */
-    public function test_execute_installs_courses() {
+    public function test_execute_installs_courses(): void {
         global $CFG;
         $recipe = ['path' => '/testcourses'];
         $extractpath = $CFG->tempdir . '/test_wbinstaller';
@@ -90,7 +90,7 @@ class coursesinstaller_test extends advanced_testcase {
     /**
      * Test precheck method to check if courses are detected.
      */
-    public function test_precheck_detects_courses() {
+    public function test_precheck_detects_courses(): void {
         global $CFG;
 
         // Mock a recipe.
@@ -126,7 +126,7 @@ class coursesinstaller_test extends advanced_testcase {
     /**
      * Test install_course method to ensure it restores the course properly.
      */
-    public function test_install_course_restores_correctly() {
+    public function test_install_course_restores_correctly(): void {
         global $DB;
 
         $coursefile = '/somepath/testcourse/course1';
@@ -150,7 +150,6 @@ class coursesinstaller_test extends advanced_testcase {
         $installer->expects($this->once())
             ->method('restore_course')
             ->with(
-                $this->equalTo($coursefile),
                 $this->equalTo($precheckresult),
                 $this->equalTo($mockparent)
             );
@@ -176,7 +175,7 @@ class coursesinstaller_test extends advanced_testcase {
     /**
      * Test course_exists method to check if a course already exists.
      */
-    public function test_course_exists() {
+    public function test_course_exists(): void {
         global $DB;
 
         // Create a mock course in the database.
@@ -203,7 +202,7 @@ class coursesinstaller_test extends advanced_testcase {
      * Test course_exists method to check if a course already exists.
      * @covers ::get_course_category
      */
-    public function test_get_course_category() {
+    public function test_get_course_category(): void {
         global $DB;
         $DB = $this->createMock(\moodle_database::class);
 
@@ -253,7 +252,7 @@ class coursesinstaller_test extends advanced_testcase {
      * Test the change_courses_mod_urls method to ensure URLs are updated correctly.
      * @covers ::change_courses_mod_urls
      */
-    public function test_change_courses_mod_urls() {
+    public function test_change_courses_mod_urls(): void {
         global $DB, $CFG;
 
         // Mock the database records for URL activities and matching course IDs.

@@ -27,16 +27,16 @@ use advanced_testcase;
  *
  * @covers \tool_wbinstaller
  */
-class customfieldsinstaller_test extends advanced_testcase {
-
+final class customfieldsinstaller_test extends advanced_testcase {
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
     }
 
     /**
      * Test the execute method to ensure custom fields are processed correctly.
      */
-    public function test_execute_processes_customfields() {
+    public function test_execute_processes_customfields(): void {
         global $DB;
 
         // Mock a custom field recipe.
@@ -82,5 +82,4 @@ class customfieldsinstaller_test extends advanced_testcase {
         // Execute the installer.
         $installer->execute('/somepath/');
     }
-
 }
