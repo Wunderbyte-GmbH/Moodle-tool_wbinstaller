@@ -140,7 +140,13 @@ class wbCheck {
                     ) {
                         $instance = new $installerclass($directorydata['jsoncontent'][$steptype]);
                         $instance->check($directorydata['extractpath'], $this);
-                        $this->feedback[$steptype] = $instance->get_feedback();
+                        $feedbackresult = $instance->get_feedback();
+                        if ($feedbackresult === null) {
+                            $this->feedback[$steptype]['needed'][$steptype]['warning'][] =
+                                get_string('checkreturnednull', 'tool_wbinstaller', $steptype);
+                        } else {
+                            $this->feedback[$steptype] = $feedbackresult;
+                        }
                         $this->matchingids[$steptype] = $instance->get_matchingids();
                     } else {
                         $this->feedback[$steptype]['needed'][$steptype]['error'][] =
