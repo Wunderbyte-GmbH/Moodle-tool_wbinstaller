@@ -14,27 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Entities Class to display list of entity records.
- *
- * @package     tool_wbinstaller
- * @author      Jacob Viertel
- * @copyright  2023 Wunderbyte GmbH
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace tool_wbinstaller;
 
 use stdClass;
 
-/**
- * Class tool_wbinstaller
- *
- * @package     tool_wbinstaller
- * @author      Jacob Viertel
- * @copyright  2023 Wunderbyte GmbH
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 class adeleLearningpathsInstaller extends wbInstaller {
     /** @var \core_customfield\handler Matching the course ids from the old => new. */
     public $handler;
@@ -46,6 +29,8 @@ class adeleLearningpathsInstaller extends wbInstaller {
     public $parent;
     /** @var bool Update or check values. */
     public $update;
+    /** @var bool Flag indicating whether the target table exists. */
+    private $tableexists;
 
     /**
      * Entities constructor.
@@ -54,13 +39,15 @@ class adeleLearningpathsInstaller extends wbInstaller {
     public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->feedback = [];       // FIX 1: Feedback-Array initialisieren.
         $this->handler = null;
         $this->fileinfo = null;
         $this->parent = null;
+        $this->tableexists = true;   // Assume true until checked.
     }
 
     /**
-     * Exceute the installer.
+     * Execute the installer.
      * @param string $extractpath
      * @param \tool_wbinstaller\wbCheck $parent
      * @return int
@@ -68,12 +55,14 @@ class adeleLearningpathsInstaller extends wbInstaller {
     public function execute($extractpath, $parent = null) {
         $this->parent = $parent;
         $this->update = true;
+        $this->feedback = [];       // FIX 2: Feedback vor execute zurücksetzen.
+        $this->tableexists = true;
         $this->run_recipe($extractpath);
         return '1';
     }
 
     /**
-     * Exceute the installer.
+     * Execute the installer.
      * @param string $extractpath
      */
     public function run_recipe($extractpath) {
@@ -84,6 +73,10 @@ class adeleLearningpathsInstaller extends wbInstaller {
             $this->jsondata = json_decode($filecontents, true);
             $filenameproperties = basename($coursefile);
             $this->fileinfo = pathinfo($filenameproperties, PATHINFO_FILENAME);
+
+            // FIX 3: Reset table-exists flag for each file/table.
+            $this->tableexists = true;
+
             foreach ($this->jsondata as &$learningpath) {
                 $learningpath['json'] = json_decode($learningpath['json']);
                 if (isset($this->recipe['checks'])) {
@@ -93,8 +86,11 @@ class adeleLearningpathsInstaller extends wbInstaller {
                         }
                     }
                 }
+
+                // FIX 4: Nur einfügen wenn keine Warnings/Errors für DIESEN Lernpfad.
                 if (
                     $this->update &&
+                    $this->tableexists &&
                     empty($this->feedback['needed'][$learningpath['name']]['warning']) &&
                     empty($this->feedback['needed'][$learningpath['name']]['error'])
                 ) {
@@ -104,10 +100,10 @@ class adeleLearningpathsInstaller extends wbInstaller {
                         unset($learningpath['id']);
                     }
                     $learningpath['json'] = json_encode($learningpath['json']);
-                    $newearningpathid = $DB->insert_record($this->fileinfo, $learningpath);
+                    $newlearningpathid = $DB->insert_record($this->fileinfo, $learningpath);
                     $this->update_adele_activity_id(
                         $oldlearningpathid,
-                        $newearningpathid,
+                        $newlearningpathid,
                         $learningpath['name']
                     );
                 }
@@ -118,13 +114,22 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Exceute the installer.
+     * Update adele activity records with the new learning path ID.
      * @param string $oldlearningpathid
      * @param string $newlearningpathid
      * @param string $learningpathname
      */
     public function update_adele_activity_id($oldlearningpathid, $newlearningpathid, $learningpathname) {
         global $DB;
+
+        // FIX 5: Prüfen ob die adele-Tabelle überhaupt existiert, bevor darauf zugegriffen wird.
+        $manager = $DB->get_manager();
+        if (!$manager->table_exists('adele')) {
+            $this->feedback['needed'][$learningpathname]['warning'][] =
+                get_string('nomoddatafilefound', 'tool_wbinstaller', $learningpathname);
+            return;
+        }
+
         $records = $DB->get_records(
             'adele',
             [
@@ -144,7 +149,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Exceute the installer.
+     * Run pre-checks.
      * @param string $extractpath
      * @param \tool_wbinstaller\wbCheck $parent
      * @return string
@@ -152,6 +157,8 @@ class adeleLearningpathsInstaller extends wbInstaller {
     public function check($extractpath, $parent) {
         $this->parent = $parent;
         $this->update = false;
+        $this->feedback = [];       // FIX 6: Feedback vor check zurücksetzen.
+        $this->tableexists = true;
         $this->run_recipe($extractpath);
         return '1';
     }
@@ -165,9 +172,16 @@ class adeleLearningpathsInstaller extends wbInstaller {
         $missingcomponents = [];
         foreach ($properties as $property => $options) {
             $nodes = self::get_value_by_path($learningpath, $property);
+            if ($nodes === null) {
+                continue;
+            }
             foreach ($nodes as $node) {
-                foreach ($options as $property => $dataoptions) {
-                    $completionnodes = self::get_value_by_path($node, $property);
+                // FIX 7: Variable-Shadowing behoben ($property -> $optionkey).
+                foreach ($options as $optionkey => $dataoptions) {
+                    $completionnodes = self::get_value_by_path($node, $optionkey);
+                    if ($completionnodes === null) {
+                        continue;
+                    }
                     foreach ($completionnodes as &$completionnode) {
                         $componentvalue = self::get_value_by_path($completionnode, $dataoptions);
                         if ($componentvalue) {
@@ -183,7 +197,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
                             }
                         }
                         if ($this->update) {
-                            self::set_value_by_path($completionnode, $property, $componentvalue);
+                            self::set_value_by_path($completionnode, $optionkey, $componentvalue);
                         }
                     }
                 }
@@ -196,7 +210,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Exceute the installer.
+     * Check if courses exist.
      * @param array $properties
      * @param object $learningpath
      */
@@ -204,9 +218,13 @@ class adeleLearningpathsInstaller extends wbInstaller {
         $missingcourses = [];
         foreach ($properties as $property => $options) {
             $nodes = self::get_value_by_path($learningpath, $property);
+            if ($nodes === null) {
+                continue;
+            }
             foreach ($nodes as &$node) {
-                foreach ($options as $property => $dataoptions) {
-                    $nodesdata = self::get_value_by_path($node, $property);
+                // FIX 8: Variable-Shadowing behoben ($property -> $optionkey).
+                foreach ($options as $optionkey => $dataoptions) {
+                    $nodesdata = self::get_value_by_path($node, $optionkey);
                     self::check_entity_id_exists(
                         $nodesdata,
                         $learningpath['name'],
@@ -215,7 +233,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
                         'courses'
                     );
                     if ($this->update) {
-                        self::set_value_by_path($node, $property, $nodesdata);
+                        self::set_value_by_path($node, $optionkey, $nodesdata);
                     }
                 }
             }
@@ -227,7 +245,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Exceute the installer.
+     * Check if entity ID exists in matching IDs.
      * @param mixed $data
      * @param string $name
      * @param array $missingentities
@@ -248,7 +266,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
                 if (!isset($this->parent->matchingids[$matchingtype][$checkname][$data])) {
                     $missingentities[] = $data;
                 } else if ($this->update) {
-                    $data = (string) $this->parent->matchingids[$matchingtype][$checkname][$data] ?? $data;
+                    $data = (string) ($this->parent->matchingids[$matchingtype][$checkname][$data] ?? $data);
                 }
             } else if (
                 is_object($data) &&
@@ -269,9 +287,10 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Exceute the installer.
+     * Get value by path in a multi-dimensional array or object.
      * @param mixed $data
      * @param string $path
+     * @return mixed
      */
     public function get_value_by_path($data, $path) {
         $parts = explode('->', $path);
@@ -290,7 +309,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
     /**
      * Set the value by path in a multi-dimensional array or object.
      * @param mixed $data The original array or object
-     * @param string $path The path where to set the value (e.g., "key1->key2")
+     * @param string $path The path where to set the value
      * @param mixed $value The value to set
      */
     public function set_value_by_path(&$data, $path, $value) {
@@ -315,6 +334,8 @@ class adeleLearningpathsInstaller extends wbInstaller {
 
     /**
      * Checks if the table exists.
+     * FIX 9: Setzt $this->tableexists Flag, damit nachfolgende Checks und
+     * der Insert-Block nicht auf eine nicht-existente Tabelle zugreifen.
      * @param string $properties
      * @param array $learningpath
      */
@@ -322,6 +343,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
         global $DB;
         $manager = $DB->get_manager();
         if (!$manager->table_exists($this->fileinfo)) {
+            $this->tableexists = false;
             $this->feedback['needed'][$learningpath['name']]['warning'][] =
               get_string('dbtablenotfound', 'tool_wbinstaller', $this->fileinfo);
         }
@@ -329,11 +351,18 @@ class adeleLearningpathsInstaller extends wbInstaller {
 
     /**
      * Checks if the path exists.
+     * FIX 10: Prüft zuerst ob die Tabelle existiert, bevor ein DB-Zugriff erfolgt.
      * @param string $properties
      * @param object $learningpath
      */
     public function check_path_exists($properties, $learningpath) {
         global $DB;
+
+        // Nicht auf eine nicht-existente Tabelle zugreifen.
+        if (!$this->tableexists) {
+            return;
+        }
+
         $path = $DB->get_record(
             $this->fileinfo,
             ['name' => $learningpath['name']]
