@@ -117,7 +117,7 @@ import ErrorMsg from '../feedback/ErrorMsg.vue'
 
 // Reactive state for the list of links and courses
 const store = useStore();
-const feedback = ref([]);
+const feedback = ref({});
 const status = ref(null);
 const finished = ref({ status: false });
 const checkedOptionalPlugins = ref([]);
@@ -148,7 +148,7 @@ const handleDrop = (event) => {
 };
 
 const processFile = async (file) => {
-  feedback.value = [];
+  feedback.value = {};
   isInstalling.value = true;
   uploadedFile.value = file;
   uploadedFileName.value = file.name;
@@ -165,7 +165,11 @@ const checkRecipe = async (file) => {
       filename: uploadedFileName.value,
     });
     const responseparsed = JSON.parse(response.feedback)
-    feedback.value = responseparsed.feedback
+    // Remove Null values from feedback.
+    const rawFeedback = responseparsed.feedback || {};
+    feedback.value = Object.fromEntries(
+       Object.entries(rawFeedback).filter(([_, value]) => value !== null)
+    );
     finished.value = responseparsed.finished
   } catch (error) {
     console.log('error')
@@ -189,7 +193,7 @@ const updateMoodle = () => {
 
 const installRecipe = async () => {
   if (uploadedFile.value) {
-    feedback.value = []
+    feedback.value = {}
     isInstalling.value = true;
     totalProgress.value = 0;
     taskProgress.value = 0;
@@ -204,7 +208,10 @@ const installRecipe = async () => {
           selectedOptionalPlugins: selectedPlugins
         }
       );
-      feedback.value = JSON.parse(response.feedback) || []
+      const rawInstallFeedback = JSON.parse(response.feedback) || {};
+      feedback.value = Object.fromEntries(
+        Object.entries(rawInstallFeedback).filter(([_, value]) => value !== null)
+      );
       finished.value = JSON.parse(response.finished) || { status: false }
       status.value = response.status
       if (status.value < 2) {
@@ -263,7 +270,7 @@ const convertFileToBase64 = (file) => {
 
 // Function to handle file upload
 const handleFileUpload = async (event) => {
-  feedback.value = []
+  feedback.value = {}
   isInstalling.value = true;
   uploadedFile.value = event.target.files[0];
   if (uploadedFile.value && uploadedFile.value.name.endsWith('.zip')) {

@@ -77,15 +77,12 @@
       </div>
     </div>
     <div v-for="(feedbackparts, index) in feedback" :key="index">
-      <div v-if="index!='plugins'">
+      <div v-if="index !== 'plugins' && feedbackparts">
         <h3>
           {{ store.state.strings['vue' + index + 'heading'] }}
         </h3>
-        <ul
-          v-if="feedbackparts"
-          class="list-group"
-        >
-          <li class="list-group-item" v-for="(message, key) in feedbackparts.needed" :key="key">
+        <ul class="list-group">
+          <li class="list-group-item" v-for="(message, key) in feedbackparts?.needed" :key="key">
             <h4
               style="text-decoration: underline;"
             >
