@@ -147,10 +147,11 @@ final class adelelearningpathsinstaller_test extends advanced_testcase {
         $installer = new adeleLearningpathsInstaller($recipe);
         $installer->fileinfo = 'test_table';
 
+        // No duplicate exists yet, so feedback should remain empty.
         $installer->check_path_exists([], $learningpath);
-        $this->assertNull($installer->feedback);
+        $this->assertEmpty($installer->feedback);
 
-        // Insert a valid path.
+        // Insert a valid path to create a duplicate.
         $DB->insert_record('test_table', (object)['name' => $learningpath['name']]);
         $installer->check_path_exists([], $learningpath);
         $this->assertArrayHasKey('error', $installer->feedback['needed'][$learningpath['name']]);
