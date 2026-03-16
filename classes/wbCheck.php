@@ -24,7 +24,7 @@
  *
  * @package     tool_wbinstaller
  * @author      Jacob Viertel
- * @copyright   2024 Wunderbyte GmbH
+ * @copyright   2026 Wunderbyte GmbH
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -40,21 +40,26 @@ namespace tool_wbinstaller;
  *
  * @package     tool_wbinstaller
  * @author      Jacob Viertel
- * @copyright   2024 Wunderbyte GmbH
+ * @copyright   2026 Wunderbyte GmbH
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class wbCheck {
-    /** @var array The recipe content (base64-encoded ZIP data). */
+    /** @var array $recipe Base64-encoded ZIP data of the recipe. */
     public $recipe;
-    /** @var string The original filename of the uploaded archive. */
+
+    /** @var string $filename Original filename of the uploaded archive. */
     public $filename;
-    /** @var array Accumulated feedback messages from all installer checks. */
+
+    /** @var array $feedback Accumulated feedback messages from all installer checks. */
     public $feedback;
-    /** @var array Accumulated matching ID maps from all installer checks. */
+
+    /** @var array $matchingids Accumulated matching ID maps from all installer checks. */
     public $matchingids;
-    /** @var array Installation progress and status information. */
+
+    /** @var array $finished Installation progress and status information. */
     public $finished;
-    /** @var wbHelper Helper instance for directory and ZIP operations. */
+
+    /** @var wbHelper $wbhelper Helper instance for directory and ZIP operations. */
     public $wbhelper;
 
     /**
@@ -63,8 +68,8 @@ class wbCheck {
      * Initializes the pre-check with the given recipe data and filename,
      * and creates a helper instance for file operations.
      *
-     * @param array $recipe The recipe content (base64-encoded ZIP data).
-     * @param string $filename The original filename of the uploaded archive.
+     * @param array $recipe Base64-encoded ZIP data of the recipe.
+     * @param string $filename Original filename of the uploaded archive.
      */
     public function __construct($recipe, $filename) {
         $this->wbhelper = new wbHelper();
@@ -88,25 +93,28 @@ class wbCheck {
         $this->wbhelper->clean_installment_directory();
         raise_memory_limit(MEMORY_EXTRA);
 
-        $extracted = $this->wbhelper->extract_save_zip_file(
+        // Extract the uploaded ZIP archive into the precheck subdirectory.
+        $extractedpath = $this->wbhelper->extract_save_zip_file(
             $this->recipe,
             $this->feedback,
             $this->filename,
             'precheck/'
         );
 
-        if (!$extracted) {
+        // Return early with error feedback if extraction failed.
+        if (!$extractedpath) {
             return [
                 'feedback' => $this->feedback,
                 'finished' => [
-                  'status' => false,
-                  'currentstep' => 0,
-                  'maxstep' => 0,
+                    'status' => false,
+                    'currentstep' => 0,
+                    'maxstep' => 0,
                 ],
             ];
         }
 
-        $this->check_recipe($extracted);
+        // Validate all recipe steps and clean up temporary files.
+        $this->check_recipe($extractedpath);
         $this->wbhelper->clean_installment_directory();
 
         return [
@@ -123,10 +131,10 @@ class wbCheck {
      * invokes its check() method. Collects feedback and matching IDs from
      * each installer.
      *
-     * @param string $extracted The extraction path (unused directly, path is resolved via helper).
+     * @param string $extractedpath Path to the extracted ZIP archive.
      * @return bool Returns true on completion.
      */
-    public function check_recipe($extracted) {
+    public function check_recipe($extractedpath) {
         $directorydata = $this->wbhelper->get_directory_data('/zip/precheck/');
 
         if ($directorydata['jsoncontent']) {
@@ -138,16 +146,21 @@ class wbCheck {
                         class_exists($installerclass) &&
                         isset($directorydata['jsoncontent'][$steptype])
                     ) {
-                        $instance = new $installerclass($directorydata['jsoncontent'][$steptype]);
-                        $instance->check($directorydata['extractpath'], $this);
-                        $feedbackresult = $instance->get_feedback();
+                        // Instantiate the step-specific installer and run its check.
+                        $installerinstance = new $installerclass($directorydata['jsoncontent'][$steptype]);
+                        $installerinstance->check($directorydata['extractpath'], $this);
+
+                        // Collect feedback from the installer check.
+                        $feedbackresult = $installerinstance->get_feedback();
                         if ($feedbackresult === null) {
                             $this->feedback[$steptype]['needed'][$steptype]['warning'][] =
                                 get_string('checkreturnednull', 'tool_wbinstaller', $steptype);
                         } else {
                             $this->feedback[$steptype] = $feedbackresult;
                         }
-                        $this->matchingids[$steptype] = $instance->get_matchingids();
+
+                        // Collect matching IDs from the installer check.
+                        $this->matchingids[$steptype] = $installerinstance->get_matchingids();
                     } else {
                         $this->feedback[$steptype]['needed'][$steptype]['error'][] =
                             get_string('classnotfound', 'tool_wbinstaller', $steptype);
@@ -175,6 +188,7 @@ class wbCheck {
      */
     public function get_current_step($jsonstring, $maxstep) {
         global $DB, $USER;
+
         $sql = "SELECT id, currentstep
             FROM {tool_wbinstaller_install}
             WHERE " . $DB->sql_compare_text('content') . " = " . $DB->sql_compare_text(':content');

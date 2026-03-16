@@ -22,7 +22,7 @@
  *
  * @package     tool_wbinstaller
  * @author      Jacob Viertel
- * @copyright   2024 Wunderbyte GmbH
+ * @copyright   2026 Wunderbyte GmbH
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -39,7 +39,7 @@ use ZipArchive;
  *
  * @package     tool_wbinstaller
  * @author      Jacob Viertel
- * @copyright   2024 Wunderbyte GmbH
+ * @copyright   2026 Wunderbyte GmbH
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class wbHelper {
@@ -54,28 +54,32 @@ class wbHelper {
      */
     public function clean_installment_directory() {
         global $CFG;
-        $pluginpath = $CFG->tempdir . '/zip/';
+        $tempzippath = $CFG->tempdir . '/zip/';
 
-        if (!is_dir($pluginpath)) {
+        if (!is_dir($tempzippath)) {
             return false;
         }
 
         // Traverse all files and directories in depth-first order for safe deletion.
-        $items = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($pluginpath, \RecursiveDirectoryIterator::SKIP_DOTS),
+        $directoryiterator = new \RecursiveDirectoryIterator(
+            $tempzippath,
+            \RecursiveDirectoryIterator::SKIP_DOTS
+        );
+        $recursiveiterator = new \RecursiveIteratorIterator(
+            $directoryiterator,
             \RecursiveIteratorIterator::CHILD_FIRST
         );
 
-        foreach ($items as $item) {
-            $path = $item->getRealPath();
-            if ($item->isDir()) {
-                rmdir($path);
+        foreach ($recursiveiterator as $filesystemitem) {
+            $itemrealpath = $filesystemitem->getRealPath();
+            if ($filesystemitem->isDir()) {
+                rmdir($itemrealpath);
             } else {
-                unlink($path);
+                unlink($itemrealpath);
             }
         }
 
-        return rmdir($pluginpath);
+        return rmdir($tempzippath);
     }
 
     /**
@@ -91,27 +95,27 @@ class wbHelper {
      */
     public function get_directory_data($directorysubfolder) {
         global $CFG;
-        $directory = $CFG->tempdir . $directorysubfolder;
+        $directorypath = $CFG->tempdir . $directorysubfolder;
         $directorydata = [];
-        $folders = scandir($directory);
+        $folderlist = scandir($directorypath);
 
-        foreach ($folders as $folder) {
+        foreach ($folderlist as $foldername) {
             // Skip hidden files/folders (starting with '.') and internal folders (starting with '_').
-            $firstfolderchar = basename($folder)[0];
+            $firstcharacter = basename($foldername)[0];
             if (
-                $firstfolderchar === '.' ||
-                $firstfolderchar === '_'
+                $firstcharacter === '.' ||
+                $firstcharacter === '_'
             ) {
                 continue;
             }
 
-            $directorydata['extractpath'] = $directory . $folder . DIRECTORY_SEPARATOR;
+            $directorydata['extractpath'] = $directorypath . $foldername . DIRECTORY_SEPARATOR;
 
             // Only process actual directories containing a recipe.json file.
             if (is_dir($directorydata['extractpath'])) {
-                $extractpathrecipe = $directorydata['extractpath'] . 'recipe.json';
-                if (file_exists($extractpathrecipe)) {
-                    $directorydata['jsonstring'] = file_get_contents($extractpathrecipe);
+                $recipejsonpath = $directorydata['extractpath'] . 'recipe.json';
+                if (file_exists($recipejsonpath)) {
+                    $directorydata['jsonstring'] = file_get_contents($recipejsonpath);
                     $directorydata['jsoncontent'] = json_decode($directorydata['jsonstring'], true);
                     if (json_last_error() !== JSON_ERROR_NONE) {
                         throw new moodle_exception('norecipefound', 'tool_wbinstaller');
@@ -138,42 +142,42 @@ class wbHelper {
      */
     public function extract_save_zip_file($recipe, &$feedback, $filename, $extractdirectory) {
         global $CFG;
-        $base64string = $recipe;
+        $base64content = $recipe;
 
         // Strip optional data URI prefix (e.g., "data:application/zip;base64,").
         if (preg_match('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', $recipe)) {
-            $base64string = preg_replace('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', '', $recipe);
+            $base64content = preg_replace('/^data:application\/[a-zA-Z0-9\-+.]+;base64,/', '', $recipe);
         }
 
         // Validate that the string is valid base64.
-        if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64string) === 0) {
+        if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64content) === 0) {
             $feedback['wbinstaller']['error'][] =
                 get_string('installervalidbase', 'tool_wbinstaller');
             return false;
         }
 
         // Decode the base64 string and validate the result.
-        $filecontent = base64_decode($base64string, true);
-        if ($filecontent === false || empty($filecontent)) {
+        $decodedfilecontent = base64_decode($base64content, true);
+        if ($decodedfilecontent === false || empty($decodedfilecontent)) {
             $feedback['wbinstaller']['error'][] =
                 get_string('installerdecodebase', 'tool_wbinstaller');
             return false;
         }
 
         // Ensure the target directory exists and write the ZIP file.
-        $pluginpath = $CFG->tempdir . '/zip/';
-        $zipfilepath = $pluginpath . $filename;
-        if (!is_dir($pluginpath)) {
-            mkdir($pluginpath, 0777, true);
+        $tempzippath = $CFG->tempdir . '/zip/';
+        $zipfilepath = $tempzippath . $filename;
+        if (!is_dir($tempzippath)) {
+            mkdir($tempzippath, 0777, true);
         }
-        if (file_put_contents($zipfilepath, $filecontent) === false) {
+        if (file_put_contents($zipfilepath, $decodedfilecontent) === false) {
             $feedback['wbinstaller']['error'][] =
                 get_string('installerwritezip', 'tool_wbinstaller');
             return false;
         }
 
-        // Free memory after writing the file.
-        unset($filecontent);
+        // Free memory after writing the file to disk.
+        unset($decodedfilecontent);
 
         // Verify the written file exists and is readable.
         if (!file_exists($zipfilepath)) {
@@ -188,18 +192,18 @@ class wbHelper {
         }
 
         // Extract the ZIP archive to the target subdirectory.
-        $zip = new ZipArchive();
-        $extractpath = $pluginpath . $extractdirectory;
-        if ($zip->open($zipfilepath) === true) {
-            if (!is_dir($extractpath)) {
-                mkdir($extractpath, 0777, true);
+        $ziparchive = new ZipArchive();
+        $extractionpath = $tempzippath . $extractdirectory;
+        if ($ziparchive->open($zipfilepath) === true) {
+            if (!is_dir($extractionpath)) {
+                mkdir($extractionpath, 0777, true);
             }
-            $zip->extractTo($extractpath);
-            $zip->close();
+            $ziparchive->extractTo($extractionpath);
+            $ziparchive->close();
         } else {
             $feedback['wbinstaller']['error'][] =
                 get_string('installerfailopen', 'tool_wbinstaller');
         }
-        return $extractpath;
+        return $extractionpath;
     }
 }

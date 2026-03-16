@@ -14,71 +14,118 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Adele learning paths installer for the Wunderbyte installer tool.
+ *
+ * Handles the import and validation of Adele learning path records,
+ * including course and component existence checks, entity ID remapping,
+ * and updating related activity records.
+ *
+ * @package     tool_wbinstaller
+ * @author      Jacob Viertel
+ * @copyright   2026 Wunderbyte GmbH
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace tool_wbinstaller;
 
 use stdClass;
 
+/**
+ * Installer class for Adele learning paths.
+ *
+ * Extends the base wbInstaller to provide specialised logic for importing
+ * Adele learning path JSON data, validating referenced courses and components,
+ * remapping entity IDs, and persisting records to the database.
+ *
+ * @package     tool_wbinstaller
+ * @author      Jacob Viertel
+ * @copyright   2026 Wunderbyte GmbH
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class adeleLearningpathsInstaller extends wbInstaller {
-    /** @var \core_customfield\handler Matching the course ids from the old => new. */
+    /** @var \core_customfield\handler|null Custom field handler for course ID matching. */
     public $handler;
-    /** @var string DB table name. */
+
+    /** @var string|null Database table name derived from the JSON filename. */
     public $fileinfo;
-    /** @var object Local learning pathdata. */
+
+    /** @var array|null Decoded learning path data from the JSON file. */
     public $jsondata;
-    /** @var \tool_wbinstaller\wbCheck Parent matching ids. */
+
+    /** @var \tool_wbinstaller\wbCheck|null Parent instance providing shared matching IDs. */
     public $parent;
-    /** @var bool Update or check values. */
+
+    /** @var bool Whether to perform actual database updates (true) or only validation (false). */
     public $update;
-    /** @var bool Flag indicating whether the target table exists. */
+
+    /** @var bool Flag indicating whether the target database table exists. */
     private $tableexists;
 
     /**
-     * Entities constructor.
-     * @param array $recipe
+     * Constructor for the Adele learning paths installer.
+     *
+     * Initialises the installer with the given recipe configuration and sets
+     * all state properties to their default values.
+     *
+     * @param array $recipe The recipe configuration for learning path installation.
      */
     public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
-        $this->feedback = [];       // FIX 1: Feedback-Array initialisieren.
         $this->handler = null;
         $this->fileinfo = null;
         $this->parent = null;
-        $this->tableexists = true;   // Assume true until checked.
+        $this->tableexists = true;
     }
 
     /**
-     * Execute the installer.
-     * @param string $extractpath
-     * @param \tool_wbinstaller\wbCheck $parent
-     * @return int
+     * Execute the learning path installation.
+     *
+     * Sets the installer to update mode and delegates to run_recipe()
+     * to process all learning path JSON files found in the recipe path.
+     *
+     * @param string $extractpath The path to the extracted recipe directory.
+     * @param \tool_wbinstaller\wbCheck|null $parent The parent installer for shared state access.
+     * @return string Returns '1' on completion.
      */
     public function execute($extractpath, $parent = null) {
         $this->parent = $parent;
         $this->update = true;
-        $this->feedback = [];       // FIX 2: Feedback vor execute zurücksetzen.
+        $this->feedback = [];
         $this->tableexists = true;
         $this->run_recipe($extractpath);
         return '1';
     }
 
     /**
-     * Execute the installer.
-     * @param string $extractpath
+     * Process all learning path JSON files defined in the recipe.
+     *
+     * Iterates over all JSON files in the recipe path, decodes each file,
+     * runs configured checks against each learning path record, and inserts
+     * valid records into the database when in update mode. Collects feedback
+     * for each learning path.
+     *
+     * @param string $extractpath The path to the extracted recipe directory.
+     * @return void
      */
     public function run_recipe($extractpath) {
         global $DB;
-        $coursespath = $extractpath . $this->recipe['path'];
-        foreach (glob("$coursespath/*") as $coursefile) {
-            $filecontents = file_get_contents($coursefile);
-            $this->jsondata = json_decode($filecontents, true);
-            $filenameproperties = basename($coursefile);
-            $this->fileinfo = pathinfo($filenameproperties, PATHINFO_FILENAME);
+        $path = $extractpath . $this->recipe['path'];
 
-            // FIX 3: Reset table-exists flag for each file/table.
+        foreach (glob("$path/*.json") as $file) {
+            $filecontent = file_get_contents($file);
+            $this->jsondata = json_decode($filecontent, true);
+            $filename = basename($file);
+            $this->fileinfo = pathinfo($filename, PATHINFO_FILENAME);
+
+            // Reset the table-exists flag for each file since each file may target a different table.
             $this->tableexists = true;
 
             foreach ($this->jsondata as &$learningpath) {
                 $learningpath['json'] = json_decode($learningpath['json']);
+
+                // Run all configured checks against this learning path record.
                 if (isset($this->recipe['checks'])) {
                     foreach ($this->recipe['checks'] as $checktype => $checkproperties) {
                         if (method_exists($this, $checktype)) {
@@ -87,7 +134,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
                     }
                 }
 
-                // FIX 4: Nur einfügen wenn keine Warnings/Errors für DIESEN Lernpfad.
+                // Only insert the record if in update mode, the table exists, and no issues were found.
                 if (
                     $this->update &&
                     $this->tableexists &&
@@ -107,6 +154,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
                         $learningpath['name']
                     );
                 }
+
                 $this->feedback['needed'][$learningpath['name']]['success'][] =
                     get_string('newlocaldatafilefound', 'tool_wbinstaller', $learningpath['name']);
             }
@@ -114,85 +162,101 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Update adele activity records with the new learning path ID.
-     * @param string $oldlearningpathid
-     * @param string $newlearningpathid
-     * @param string $learningpathname
+     * Update Adele activity records with the new learning path ID.
+     *
+     * Looks up all Adele activity records referencing the old learning path ID
+     * and updates them to point to the new ID. If the Adele table does not exist
+     * or no matching records are found, a warning is added to the feedback.
+     *
+     * @param int $oldlearningpathid The original learning path ID from the imported data.
+     * @param int $newlearningpathid The newly assigned learning path ID after database insertion.
+     * @param string $learningpathname The name of the learning path for feedback reporting.
+     * @return void
      */
     public function update_adele_activity_id($oldlearningpathid, $newlearningpathid, $learningpathname) {
         global $DB;
 
-        // FIX 5: Prüfen ob die adele-Tabelle überhaupt existiert, bevor darauf zugegriffen wird.
-        $manager = $DB->get_manager();
-        if (!$manager->table_exists('adele')) {
+        // Verify the Adele table exists before attempting any database operations.
+        $dbmanager = $DB->get_manager();
+        if (!$dbmanager->table_exists('adele')) {
             $this->feedback['needed'][$learningpathname]['warning'][] =
                 get_string('nomoddatafilefound', 'tool_wbinstaller', $learningpathname);
             return;
         }
 
-        $records = $DB->get_records(
+        $activityrecords = $DB->get_records(
             'adele',
-            [
-                'learningpathid' => $oldlearningpathid,
-            ]
+            ['learningpathid' => $oldlearningpathid]
         );
-        if ($records) {
-            foreach ($records as $record) {
-                $record->learningpathid = $newlearningpathid;
-                $DB->update_record('adele', $record);
+
+        if ($activityrecords) {
+            foreach ($activityrecords as $activityrecord) {
+                $activityrecord->learningpathid = $newlearningpathid;
+                $DB->update_record('adele', $activityrecord);
             }
         } else {
             $this->feedback['needed'][$learningpathname]['warning'][] =
                 get_string('nomoddatafilefound', 'tool_wbinstaller', $learningpathname);
         }
-        return;
     }
 
     /**
-     * Run pre-checks.
-     * @param string $extractpath
-     * @param \tool_wbinstaller\wbCheck $parent
-     * @return string
+     * Run pre-checks without performing any database modifications.
+     *
+     * Sets the installer to check-only mode and delegates to run_recipe()
+     * to validate all learning path JSON files without inserting records.
+     *
+     * @param string $extractpath The path to the extracted recipe directory.
+     * @param \tool_wbinstaller\wbCheck $parent The parent installer for shared state access.
+     * @return string Returns '1' on completion.
      */
     public function check($extractpath, $parent) {
         $this->parent = $parent;
         $this->update = false;
-        $this->feedback = [];       // FIX 6: Feedback vor check zurücksetzen.
         $this->tableexists = true;
         $this->run_recipe($extractpath);
         return '1';
     }
 
     /**
-     * Check if the local data exists.
-     * @param array $properties
-     * @param array $learningpath
+     * Validate that referenced components exist in the matching ID maps.
+     *
+     * Traverses the learning path structure along the paths defined in the
+     * properties configuration, checks each referenced component ID against
+     * the parent's matching ID maps, and collects missing components. When
+     * in update mode, remaps component IDs to their new values.
+     *
+     * @param array $properties Configuration defining the paths to component references.
+     * @param array $learningpath Reference to the learning path record being validated.
+     * @return void
      */
     public function check_component_exists($properties, &$learningpath) {
         $missingcomponents = [];
-        foreach ($properties as $property => $options) {
-            $nodes = self::get_value_by_path($learningpath, $property);
+
+        foreach ($properties as $propertypath => $options) {
+            $nodes = self::get_value_by_path($learningpath, $propertypath);
             if ($nodes === null) {
                 continue;
             }
+
             foreach ($nodes as $node) {
-                // FIX 7: Variable-Shadowing behoben ($property -> $optionkey).
                 foreach ($options as $optionkey => $dataoptions) {
                     $completionnodes = self::get_value_by_path($node, $optionkey);
                     if ($completionnodes === null) {
                         continue;
                     }
+
                     foreach ($completionnodes as &$completionnode) {
                         $componentvalue = self::get_value_by_path($completionnode, $dataoptions);
                         if ($componentvalue) {
-                            foreach ($componentvalue as $testkey => &$testvalue) {
-                                $table = $testkey == 'quizid' ? 'courses' : 'localdata';
+                            foreach ($componentvalue as $entitykey => &$entityvalue) {
+                                $matchingtable = ($entitykey == 'quizid') ? 'courses' : 'localdata';
                                 self::check_entity_id_exists(
-                                    $testvalue,
+                                    $entityvalue,
                                     $learningpath['name'],
                                     $missingcomponents,
-                                    $table,
-                                    $testkey
+                                    $matchingtable,
+                                    $entitykey
                                 );
                             }
                         }
@@ -203,54 +267,78 @@ class adeleLearningpathsInstaller extends wbInstaller {
                 }
             }
         }
+
         if (!empty($missingcomponents)) {
             $this->feedback['needed'][$learningpath['name']]['error'][] =
-              get_string('missingcomponents', 'tool_wbinstaller', implode(', ', array_unique($missingcomponents)));
+                get_string(
+                    'missingcomponents',
+                    'tool_wbinstaller',
+                    implode(', ', array_unique($missingcomponents))
+                );
         }
     }
 
     /**
-     * Check if courses exist.
-     * @param array $properties
-     * @param object $learningpath
+     * Validate that referenced courses exist in the matching ID maps.
+     *
+     * Traverses the learning path structure along the paths defined in the
+     * properties configuration, checks each referenced course ID against
+     * the parent's matching ID maps, and collects missing courses. When
+     * in update mode, remaps course IDs to their new values.
+     *
+     * @param array $properties Configuration defining the paths to course references.
+     * @param array $learningpath Reference to the learning path record being validated.
+     * @return void
      */
     public function check_courses_exists($properties, &$learningpath) {
         $missingcourses = [];
-        foreach ($properties as $property => $options) {
-            $nodes = self::get_value_by_path($learningpath, $property);
+
+        foreach ($properties as $propertypath => $options) {
+            $nodes = self::get_value_by_path($learningpath, $propertypath);
             if ($nodes === null) {
                 continue;
             }
+
             foreach ($nodes as &$node) {
-                // FIX 8: Variable-Shadowing behoben ($property -> $optionkey).
                 foreach ($options as $optionkey => $dataoptions) {
-                    $nodesdata = self::get_value_by_path($node, $optionkey);
+                    $coursedata = self::get_value_by_path($node, $optionkey);
                     self::check_entity_id_exists(
-                        $nodesdata,
+                        $coursedata,
                         $learningpath['name'],
                         $missingcourses,
                         'courses',
                         'courses'
                     );
                     if ($this->update) {
-                        self::set_value_by_path($node, $optionkey, $nodesdata);
+                        self::set_value_by_path($node, $optionkey, $coursedata);
                     }
                 }
             }
         }
+
         if (!empty($missingcourses)) {
             $this->feedback['needed'][$learningpath['name']]['error'][] =
-              get_string('missingcourses', 'tool_wbinstaller', implode(', ', array_unique($missingcourses)));
+                get_string(
+                    'missingcourses',
+                    'tool_wbinstaller',
+                    implode(', ', array_unique($missingcourses))
+                );
         }
     }
 
     /**
-     * Check if entity ID exists in matching IDs.
-     * @param mixed $data
-     * @param string $name
-     * @param array $missingentities
-     * @param string $matchingtype
-     * @param string $checkname
+     * Check whether an entity ID exists in the parent's matching ID map.
+     *
+     * Supports arrays, strings, and objects with a parent->id property.
+     * When in update mode and the ID is found, remaps it to the new value.
+     * When the ID is not found, adds it to the missing entities list.
+     *
+     * @param mixed $data Reference to the entity ID data to validate and potentially remap.
+     * @param string $learningpathname The learning path name for feedback reporting.
+     * @param array $missingentities Reference to the list collecting missing entity IDs.
+     * @param string $matchingtype The entity type key in the matching IDs map (e.g., 'courses').
+     * @param string $checkname The sub-key within the matching type (e.g., 'courses', 'quizid').
+     * @return void
      */
     public function check_entity_id_exists(&$data, $name, &$missingentities, $matchingtype, $checkname) {
         if (isset($this->parent->matchingids[$matchingtype][$checkname])) {
@@ -287,18 +375,23 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Get value by path in a multi-dimensional array or object.
-     * @param mixed $data
-     * @param string $path
-     * @return mixed
+     * Retrieve a value from a nested array or object using a path string.
+     *
+     * The path uses '->' as a separator to traverse nested levels.
+     * Returns null if any segment of the path does not exist.
+     *
+     * @param mixed $data The source array or object to traverse.
+     * @param string $path The '->' separated path to the desired value.
+     * @return mixed|null The value at the given path, or null if not found.
      */
     public function get_value_by_path($data, $path) {
-        $parts = explode('->', $path);
-        foreach ($parts as $part) {
-            if (is_array($data) && isset($data[$part])) {
-                $data = $data[$part];
-            } else if (is_object($data) && isset($data->$part)) {
-                $data = $data->$part;
+        $pathsegments = explode('->', $path);
+
+        foreach ($pathsegments as $segment) {
+            if (is_array($data) && isset($data[$segment])) {
+                $data = $data[$segment];
+            } else if (is_object($data) && isset($data->$segment)) {
+                $data = $data->$segment;
             } else {
                 return null;
             }
@@ -307,69 +400,84 @@ class adeleLearningpathsInstaller extends wbInstaller {
     }
 
     /**
-     * Set the value by path in a multi-dimensional array or object.
-     * @param mixed $data The original array or object
-     * @param string $path The path where to set the value
-     * @param mixed $value The value to set
+     * Set a value in a nested array or object using a path string.
+     *
+     * The path uses '->' as a separator to traverse nested levels.
+     * Does nothing if any intermediate segment of the path does not exist.
+     *
+     * @param mixed $data Reference to the source array or object to modify.
+     * @param string $path The '->' separated path to the target location.
+     * @param mixed $value The value to set at the given path.
+     * @return void
      */
     public function set_value_by_path(&$data, $path, $value) {
-        $parts = explode('->', $path);
-        $lastpart = array_pop($parts);
+        $pathsegments = explode('->', $path);
+        $lastsegment = array_pop($pathsegments);
 
-        foreach ($parts as $part) {
-            if (is_array($data) && isset($data[$part])) {
-                $data = &$data[$part];
-            } else if (is_object($data) && isset($data->$part)) {
-                $data = &$data->$part;
+        foreach ($pathsegments as $segment) {
+            if (is_array($data) && isset($data[$segment])) {
+                $data = &$data[$segment];
+            } else if (is_object($data) && isset($data->$segment)) {
+                $data = &$data->$segment;
             } else {
                 return;
             }
         }
+
         if (is_array($data)) {
-            $data[$lastpart] = $value;
+            $data[$lastsegment] = $value;
         } else if (is_object($data)) {
-            $data->$lastpart = $value;
+            $data->$lastsegment = $value;
         }
     }
 
     /**
-     * Checks if the table exists.
-     * FIX 9: Setzt $this->tableexists Flag, damit nachfolgende Checks und
-     * der Insert-Block nicht auf eine nicht-existente Tabelle zugreifen.
-     * @param string $properties
-     * @param array $learningpath
+     * Check whether the target database table exists.
+     *
+     * Sets the tableexists flag to false if the table derived from the
+     * current JSON filename does not exist, preventing subsequent database
+     * operations from failing.
+     *
+     * @param string $properties The check properties (unused, required by interface).
+     * @param array $learningpath The learning path record for feedback reporting.
+     * @return void
      */
     public function check_table_exists($properties, $learningpath) {
         global $DB;
-        $manager = $DB->get_manager();
-        if (!$manager->table_exists($this->fileinfo)) {
+        $dbmanager = $DB->get_manager();
+        if (!$dbmanager->table_exists($this->fileinfo)) {
             $this->tableexists = false;
             $this->feedback['needed'][$learningpath['name']]['warning'][] =
-              get_string('dbtablenotfound', 'tool_wbinstaller', $this->fileinfo);
+                get_string('dbtablenotfound', 'tool_wbinstaller', $this->fileinfo);
         }
     }
 
     /**
-     * Checks if the path exists.
-     * FIX 10: Prüft zuerst ob die Tabelle existiert, bevor ein DB-Zugriff erfolgt.
-     * @param string $properties
-     * @param object $learningpath
+     * Check whether a learning path with the same name already exists in the database.
+     *
+     * Skips the check if the target table does not exist. If a duplicate is found,
+     * adds an error to the feedback for the affected learning path.
+     *
+     * @param string $properties The check properties (unused, required by interface).
+     * @param array $learningpath The learning path record to check for duplicates.
+     * @return void
      */
     public function check_path_exists($properties, $learningpath) {
         global $DB;
 
-        // Nicht auf eine nicht-existente Tabelle zugreifen.
+        // Do not query a non-existent table.
         if (!$this->tableexists) {
             return;
         }
 
-        $path = $DB->get_record(
+        $existingrecord = $DB->get_record(
             $this->fileinfo,
             ['name' => $learningpath['name']]
         );
-        if ($path) {
+
+        if ($existingrecord) {
             $this->feedback['needed'][$learningpath['name']]['error'][] =
-              get_string('learningpathalreadyexistis', 'tool_wbinstaller', $this->fileinfo);
+                get_string('learningpathalreadyexistis', 'tool_wbinstaller', $this->fileinfo);
         }
     }
 }
