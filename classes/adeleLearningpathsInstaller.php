@@ -73,6 +73,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
     public function __construct($recipe) {
         $this->recipe = $recipe;
         $this->progress = 0;
+        $this->feedback = [];
         $this->handler = null;
         $this->fileinfo = null;
         $this->parent = null;
@@ -213,6 +214,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
     public function check($extractpath, $parent) {
         $this->parent = $parent;
         $this->update = false;
+        $this->feedback = [];
         $this->tableexists = true;
         $this->run_recipe($extractpath);
         return '1';
@@ -340,37 +342,39 @@ class adeleLearningpathsInstaller extends wbInstaller {
      * @param string $checkname The sub-key within the matching type (e.g., 'courses', 'quizid').
      * @return void
      */
-    public function check_entity_id_exists(&$data, $name, &$missingentities, $matchingtype, $checkname) {
-        if (isset($this->parent->matchingids[$matchingtype][$checkname])) {
-            if (is_array($data)) {
-                foreach ($data as &$courseid) {
-                    if (!isset($this->parent->matchingids[$matchingtype][$checkname][$courseid])) {
-                        $missingentities[] = $courseid;
-                    } else if ($this->update) {
-                        $courseid = $this->parent->matchingids[$matchingtype][$checkname][$courseid] ?? $courseid;
-                    }
-                }
-            } else if (is_string($data)) {
-                if (!isset($this->parent->matchingids[$matchingtype][$checkname][$data])) {
-                    $missingentities[] = $data;
+    public function check_entity_id_exists(&$data, $learningpathname, &$missingentities, $matchingtype, $checkname) {
+        if (!isset($this->parent->matchingids[$matchingtype][$checkname])) {
+            return;
+        }
+
+        $matchingmap = $this->parent->matchingids[$matchingtype][$checkname];
+
+        if (is_array($data)) {
+            foreach ($data as &$entityid) {
+                if (!isset($matchingmap[$entityid])) {
+                    $missingentities[] = $entityid;
                 } else if ($this->update) {
-                    $data = (string) ($this->parent->matchingids[$matchingtype][$checkname][$data] ?? $data);
+                    $entityid = $matchingmap[$entityid] ?? $entityid;
                 }
-            } else if (
-                is_object($data) &&
-                isset($data->parent->id)
-            ) {
-                if (!in_array($data->parent->id, $this->parent->matchingids[$matchingtype][$checkname])) {
-                    $missingentities[] = $data;
-                } else if ($this->update) {
-                    $data->parent->id =
-                        $this->parent->matchingids[$matchingtype][$checkname][$data->parent->id] ??
-                        $data->parent->id;
-                }
-            } else {
-                $this->feedback['needed'][$name]['error'][] =
-                    get_string('coursetypenotfound', 'tool_wbinstaller');
             }
+        } else if (is_string($data)) {
+            if (!isset($matchingmap[$data])) {
+                $missingentities[] = $data;
+            } else if ($this->update) {
+                $data = (string) ($matchingmap[$data] ?? $data);
+            }
+        } else if (
+            is_object($data) &&
+            isset($data->parent->id)
+        ) {
+            if (!in_array($data->parent->id, $matchingmap)) {
+                $missingentities[] = $data;
+            } else if ($this->update) {
+                $data->parent->id = $matchingmap[$data->parent->id] ?? $data->parent->id;
+            }
+        } else {
+            $this->feedback['needed'][$learningpathname]['error'][] =
+                get_string('coursetypenotfound', 'tool_wbinstaller');
         }
     }
 
@@ -445,6 +449,7 @@ class adeleLearningpathsInstaller extends wbInstaller {
     public function check_table_exists($properties, $learningpath) {
         global $DB;
         $dbmanager = $DB->get_manager();
+
         if (!$dbmanager->table_exists($this->fileinfo)) {
             $this->tableexists = false;
             $this->feedback['needed'][$learningpath['name']]['warning'][] =
