@@ -23,7 +23,7 @@
  *
  * @package     tool_wbinstaller
  * @author      Jacob Viertel
- * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Wunderbyte GmbH <info@wunderbyte.at>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -43,7 +43,7 @@ use stdClass;
  *
  * @package     tool_wbinstaller
  * @author      Jacob Viertel
- * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Wunderbyte GmbH <info@wunderbyte.at>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class wbInstaller {
@@ -129,7 +129,7 @@ class wbInstaller {
         raise_memory_limit(MEMORY_EXTRA);
 
         // Extract the uploaded ZIP file to the temporary extraction directory.
-        $extracted = $this->wbhelper->extract_save_zip_file(
+        $extractedpath = $this->wbhelper->extract_save_zip_file(
             $this->recipe,
             $this->feedback,
             $this->filename,
@@ -142,7 +142,7 @@ class wbInstaller {
         }
 
         // Return early if extraction failed entirely.
-        if (!$extracted) {
+        if (!$extractedpath) {
             return [
                 'feedback' => $this->feedback,
                 'finished' => [
@@ -154,7 +154,7 @@ class wbInstaller {
         }
 
         // Execute the recipe steps and clean up afterwards.
-        $response = $this->execute_recipe($extracted);
+        $response = $this->execute_recipe($extractedpath);
         $this->wbhelper->clean_installment_directory();
         return $response;
     }
@@ -168,10 +168,10 @@ class wbInstaller {
      * delegates execution, collects feedback and matching IDs, and updates the
      * overall status. After processing, advances the step counter.
      *
-     * @param string $extracted The path to the extracted recipe directory.
+     * @param string $extractedpath The path to the extracted recipe directory.
      * @return array Associative array with 'feedback', 'status', and 'finished' keys.
      */
-    public function execute_recipe($extracted) {
+    public function execute_recipe($extractedpath) {
         $directorydata = $this->wbhelper->get_directory_data('/zip/extracted/');
 
         // Determine which step to execute based on the persisted progress.
@@ -188,19 +188,19 @@ class wbInstaller {
                 isset($directorydata['jsoncontent'][$steptype])
             ) {
                 // Instantiate the specialised installer and execute it.
-                $instance = new $installerclass($directorydata['jsoncontent'][$steptype]);
-                if ($instance !== null) {
-                    $instance->execute($directorydata['extractpath'], $this);
+                $installerinstance = new $installerclass($directorydata['jsoncontent'][$steptype]);
+                if ($installerinstance !== null) {
+                    $installerinstance->execute($directorydata['extractpath'], $this);
 
                     // Propagate upgrade-running flag if any sub-installer triggers an upgrade.
-                    if ($instance->upgraderunning != 0) {
-                        $this->upgraderunning = $instance->upgraderunning;
+                    if ($installerinstance->upgraderunning != 0) {
+                        $this->upgraderunning = $installerinstance->upgraderunning;
                     }
 
                     // Collect feedback and matching IDs from the sub-installer.
-                    $this->feedback[$steptype] = $instance->get_feedback();
-                    $this->matchingids[$steptype] = $instance->get_matchingids();
-                    $this->set_status($instance->get_status());
+                    $this->feedback[$steptype] = $installerinstance->get_feedback();
+                    $this->matchingids[$steptype] = $installerinstance->get_matchingids();
+                    $this->set_status($installerinstance->get_status());
                 } else {
                     $this->feedback[$steptype]['needed'][$steptype]['error'][] =
                         get_string('classnotfound', 'tool_wbinstaller', 'TESTING');
@@ -342,7 +342,8 @@ class wbInstaller {
             $this->add_step();
         }
 
-        if ($record = $DB->get_record('tool_wbinstaller_install', ['id' => $this->dbid])) {
+        $record = $DB->get_record('tool_wbinstaller_install', ['id' => $this->dbid]);
+        if ($record) {
             $record->$progresstype = $this->progress;
             $record->timemodified = time();
             $record->status = $status;

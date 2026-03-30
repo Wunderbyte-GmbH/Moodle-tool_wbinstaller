@@ -31,6 +31,9 @@ $string['categoriescreated'] = 'Kategorie erstellt: {$a}.';
 $string['categoriesexists'] = 'Kategorie existiert bereits: {$a}.';
 $string['categoriesfound'] = 'Kategoriepfad gefunden: {$a}.';
 $string['categoriesmissing'] = 'Kategoriepfad fehlt bei: {$a}.';
+$string['checkreturnednull'] = 'Fehler beim Install-Schritt {$a}.
+    Dies liegt Möglicherweise daran, dass die json- oder csv-Dateien im entsprechenden Verzeichnis
+    nicht gelesen oder verarbeitet werden konnten.';
 $string['classnotfound'] = 'Klasse für {$a} wurde nicht gefunden.';
 $string['componentdetectfailed'] = 'Komponentenerkennung fehlgeschlagen.';
 $string['confignotfound'] = 'Die Konfigurationseinstellung {$a} wurde nicht gefunden.';
