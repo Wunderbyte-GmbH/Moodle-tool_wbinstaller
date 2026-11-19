@@ -10,8 +10,8 @@ jobs:
 
       disable_release: true  # Use true if using the tag-based release workflow
 
-      moodle_branches: "MOODLE_404_STABLE MOODLE_405_STABLE"  # Optional: Only test specific Moodle versions
-      min_php: "7.4"  # Optional: Set minimum PHP version
+      moodle_branches: "MOODLE_405_STABLE MOODLE_500_STABLE MOODLE_501_STABLE MOODLE_502_STABLE MOODLE_503_STABLE"  # Optional: Only test specific Moodle versions
+      min_php: "8.1"  # Optional: Set minimum PHP version
 
       # Command to install more dependencies
       extra_plugin_runners: |
