@@ -29,8 +29,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_wbinstaller';
-$plugin->supported = [401, 405];
+$plugin->supported = [405, 503];
 $plugin->release = '0.9';
 $plugin->version = 2026031600;
-$plugin->requires = 2022112800;
+$plugin->requires = 2024100700; // Requires this Moodle version. Current: Moodle 4.5.
 $plugin->maturity = MATURITY_BETA;
