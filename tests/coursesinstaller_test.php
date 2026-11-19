@@ -63,19 +63,26 @@ final class coursesinstaller_test extends advanced_testcase {
         // Mock the parent parameter.
         $mockparent = $this->createMock(\tool_wbinstaller\wbCheck::class);
 
-        // Expect install_course to be called exactly 2 times.
+        // Expect install_course to be called exactly 2 times. The arguments of each call are recorded and
+        // compared after execute(): withConsecutive() was removed in PHPUnit 10 (Moodle 5.0 and later).
+        $installcalls = [];
         $installer->expects($this->exactly(2))
             ->method('install_course')
-            ->withConsecutive(
-                [$this->equalTo($testcourse1), $this->equalTo($mockparent)],
-                [$this->equalTo($testcourse2), $this->equalTo($mockparent)]
-            );
+            ->willReturnCallback(function ($coursefile, $parent) use (&$installcalls) {
+                $installcalls[] = [$coursefile, $parent];
+                return 1;
+            });
 
         $installer->expects($this->once())
             ->method('change_courses_mod_urls');
 
         // Run the execute method.
         $installer->execute($extractpath, $mockparent);
+
+        // Both course files were installed, in this order, each with the parent that was passed in.
+        $this->assertSame([$testcourse1, $testcourse2], array_column($installcalls, 0));
+        $this->assertSame($mockparent, $installcalls[0][1]);
+        $this->assertSame($mockparent, $installcalls[1][1]);
 
         // Clean up created directories and files after the test.
         @unlink($testcourse1);
@@ -227,15 +234,19 @@ final class coursesinstaller_test extends advanced_testcase {
         // Test case: Both parent and subcategory do not exist.
         $DB->expects($this->exactly(2))
             ->method('get_record')
-            ->will($this->onConsecutiveCalls(null, null));
+            ->willReturnOnConsecutiveCalls(null, null);
 
+        // The arguments of each call are recorded and compared after the method ran:
+        // withConsecutive() was removed in PHPUnit 10 (Moodle 5.0 and later).
+        $categorycalls = [];
         $installer->expects($this->exactly(2))
             ->method('set_course_category')
-            ->withConsecutive(
-                ['WbInstall', null],
-                ['2024-11-20_SubCategory', $expectedparentcategory]
-            )
-            ->will($this->onConsecutiveCalls($expectedparentcategory, $expectedsubcategory));
+            ->willReturnCallback(
+                function ($name, $parentcategory) use (&$categorycalls, $expectedparentcategory, $expectedsubcategory) {
+                    $categorycalls[] = [$name, $parentcategory];
+                    return count($categorycalls) === 1 ? $expectedparentcategory : $expectedsubcategory;
+                }
+            );
 
         $reflection = new \ReflectionClass($installer);
         $method = $reflection->getMethod('get_course_category');
@@ -243,6 +254,15 @@ final class coursesinstaller_test extends advanced_testcase {
 
         // Invoke the protected method.
         $result = $method->invoke($installer, 'SubCategory');
+
+        // First the parent category is created (without a parent), then the subcategory below it.
+        $this->assertSame(
+            [
+                ['WbInstall', null],
+                ['2024-11-20_SubCategory', $expectedparentcategory],
+            ],
+            $categorycalls
+        );
 
         // Assert the returned subcategory.
         $this->assertEquals($expectedsubcategory->name, $result->name, 'Expected subcategory was not returned.');
